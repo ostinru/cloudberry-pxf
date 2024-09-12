@@ -116,7 +116,7 @@ start_hbase() {
   cp /home/gpadmin/automation_tmp_lib/pxf-hbase.jar "${GPHD_ROOT}/hbase/lib/" 2>/dev/null || true
   if [ ! -f "${GPHD_ROOT}/hbase/lib/pxf-hbase.jar" ]; then
     pxf_app=$(ls -1v /usr/local/pxf/application/pxf-app-*.jar 2>/dev/null | grep -v 'plain' | tail -n 1)
-    [ -n "${pxf_app}" ] && unzip -qq -j "${pxf_app}" 'BOOT-INF/lib/pxf-hbase-*.jar' -d "${GPHD_ROOT}/hbase/lib/" || true
+    [ -n "${pxf_app}" ] && unzip -qq -j "${pxf_app}" 'BOOT-INF/lib/pxf-hbase-lib*.jar' -d "${GPHD_ROOT}/hbase/lib/" || true
   fi
   if pgrep -f HMaster >/dev/null 2>&1; then
     echo "[run_tests] HBase HMaster already running, skipping start"

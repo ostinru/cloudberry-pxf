@@ -38,7 +38,7 @@ export HADOOP_CONF_DIR="/etc/gphd/hadoop/conf"
 export HBASE_CONF_DIR="/etc/gphd/hbase/conf"
 
 # Extra Java CLASSPATH elements.  Optional.
-export HBASE_CLASSPATH=${HBASE_CLASSPATH}:${HADOOP_CONF_DIR}:/usr/lib/gphd/pxf/pxf-hbase-*[0-9].jar
+export HBASE_CLASSPATH=${HBASE_CLASSPATH}:${HADOOP_CONF_DIR}:/usr/lib/gphd/pxf/pxf-hbase-lib-*[0-9].jar
 
 # File naming hosts on which HRegionServers will run.  $HBASE_HOME/conf/regionservers by default.
 export HBASE_REGIONSERVERS=${HBASE_CONF_DIR}/regionservers
