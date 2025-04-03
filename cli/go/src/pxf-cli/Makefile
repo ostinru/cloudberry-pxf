@@ -47,6 +47,9 @@ install: build
 test: build
 	ginkgo cmd end_to_end
 
+lint:
+	golangci-lint run --timeout 5m
+
 clean:
 	rm -rf $(PXF_CLI_DIR)/build
 	go clean -i
