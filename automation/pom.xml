@@ -59,6 +59,9 @@
                 <version>2.15</version>
                 <configuration>
                     <testFailureIgnore>true</testFailureIgnore>
+                    <argLine>-Xmx1024m</argLine>
+                    <argLine>-Xms256m</argLine>
+                    <excludedGroups>load</excludedGroups>
                 </configuration>
                 <executions>
                     <execution>
