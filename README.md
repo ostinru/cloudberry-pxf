@@ -21,7 +21,6 @@ This project is forked from [greenplum/pxf](https://github.com/greenplum-db/pxf-
 * `server/` : Contains the server side code of PXF along with the PXF Service and all the Plugins
 * `cli/` : Contains command line interface code for PXF
 * `automation/` : Contains the automation and integration tests for PXF against the various datasources
-* `singlecluster/` : Hadoop testing environment to exercise the pxf automation tests
 * `regression/` : Contains the end-to-end (integration) tests for PXF against the various datasources, utilizing the PostgreSQL testing framework `pg_regress`
 * `downloads/` : An empty directory that serves as a staging location for Cloudberry RPMs for the development Docker image
 
