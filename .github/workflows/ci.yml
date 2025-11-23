@@ -140,6 +140,12 @@ jobs:
           # For RPM packages, no copy step needed - files are already in downloads/
           docker compose build singlecluster
           docker compose build universe
+
+      - name: Run automation tests
+        if: matrix.target.pxf == 'rpm-pxf-cbdb1-rocky9'  # FIXME: support other PXF versions
+        run: |
+          echo "Running automation tests..."
+          cd automation
           docker compose up
 
       - name: Extract test artifacts from container
