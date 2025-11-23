@@ -31,11 +31,13 @@ jobs:
           key: ${{ runner.os }}-${{ matrix.target }}-${{ steps.get-date.outputs.week }}
 
       - name: Checkout code
+        if: steps.cache-packages.outputs.cache-hit != 'true'
         uses: actions/checkout@v4
         with:
           submodules: true
 
       - name: Build Cloudberry package
+        if: steps.cache-packages.outputs.cache-hit != 'true'
         run: make -C package ${{ matrix.target }}
 
 

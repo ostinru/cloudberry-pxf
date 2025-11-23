@@ -90,6 +90,7 @@ RUN useradd -m -s /bin/bash gpadmin && \
   echo "root           ALL=(ALL)       NOPASSWD: ALL" >> /etc/sudoers
 
 COPY automation/docker/universe/configs/90-cbdb-limits.conf  /etc/security/limits.d/90-cbdb-limits.conf
+COPY automation/docker/universe/configs/90-cbdb-sysctl.conf  /etc/sysctl.conf
 
 # Base system setup complete, switch to gpadmin to set up everything else
 USER gpadmin
