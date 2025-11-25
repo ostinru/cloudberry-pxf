@@ -22,7 +22,7 @@ import java.util.List;
 public class Gpdb extends DbSystemObject {
 
 	private static final String DEFAULT_PORT = "5432";
-	private static final String GREENPLUM_DATABASE_PREFIX = "Greenplum Database ";
+    private static final String GREENPLUM_DATABASE_PREFIX = "Apache Cloudberry "; // for 2.x
 	private static final String IF_NOT_EXISTS_OPTION = "IF NOT EXISTS";
 
 	private String sshUserName;
