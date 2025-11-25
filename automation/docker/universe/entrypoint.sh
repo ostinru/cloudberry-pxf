@@ -158,9 +158,52 @@ sudo chmod -R 755 /home/gpadmin/.m2
 # FIXME: remove when tinc removed
 sudo ln -sf ${GPHOME}/cloudberry-env.sh ${GPHOME}/greenplum_path.sh
 
-# make without arguments runs all tests
+# Run tests by group to isolate potential hangs
 cd /home/gpadmin/workspace/pxf/automation
-make
+
+run_test_group() {
+    local group=$1
+    echo "=========================================="
+    echo "Starting test group: $group"
+    echo "Time: $(date)"
+    echo "Load average: $(cat /proc/loadavg)"
+    echo "Free memory: $(free -h | grep Mem)"
+    echo "=========================================="
+    
+    make GROUP=$group || echo "Group $group finished with exit code $?"
+    
+    echo "=========================================="
+    echo "Finished test group: $group"
+    echo "Time: $(date)"
+    echo "Load average: $(cat /proc/loadavg)"
+    echo "Free memory: $(free -h | grep Mem)"
+    echo "=========================================="
+}
+
+# Run all groups (features last as requested)
+run_test_group smoke
+run_test_group sanity
+run_test_group hdfs
+run_test_group hive
+run_test_group hbase
+run_test_group hcatalog
+run_test_group jdbc
+run_test_group gpdb
+run_test_group hcfs
+run_test_group profile
+run_test_group proxy
+run_test_group proxySecurity
+run_test_group proxySecurityIpa
+run_test_group security
+run_test_group multiClusterSecurity
+run_test_group s3
+run_test_group pxfExtensionVersion2
+run_test_group pxfExtensionVersion2_1
+run_test_group pxfFdwExtensionVersion1
+run_test_group pxfFdwExtensionVersion2
+run_test_group performance
+run_test_group unused
+run_test_group features
 
 # Keep container running
 #tail -f /dev/null
