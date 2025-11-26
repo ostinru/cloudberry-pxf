@@ -15,6 +15,8 @@ RUN  dnf install -y \
   glibc-locale-source \
   wget \
   sudo \
+  procps-ng \
+  net-tools \
   diffutils
 
 # Install Go
