@@ -82,6 +82,9 @@ echo 'local all testuser trust' >> /data0/database/master/gpseg-1/pg_hba.conf
 echo "listen_addresses = '*'" >> /data0/database/master/gpseg-1/postgresql.conf
 echo "port = 5432" >> /data0/database/master/gpseg-1/postgresql.conf
 
+# Under the hood, stack traces printed using addr2line that can consume 3GB, that it too much for dev/ci stands
+gpconfig -c gp_log_stack_trace_lines -v off --skipvalidation
+
 gpstop -u && echo "pg_hba.conf has been reloaded"
 
 psql -d template1 \
