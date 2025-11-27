@@ -189,13 +189,13 @@ run_test "External-Table" "/home/gpadmin/workspace/cloudberry-pxf/external-table
 run_test "Server" "/home/gpadmin/workspace/cloudberry-pxf/server" "./gradlew test"
 
 # Run Automation setup
-run_test "Automation-Setup" "/home/gpadmin/workspace/cloudberry-pxf/automation" "make"
+# run_test "Automation-Setup" "/home/gpadmin/workspace/cloudberry-pxf/automation" "make"
 
 # Run Smoke tests
-#run_test "Smoke-Test" "/home/gpadmin/workspace/cloudberry-pxf/automation" "make TEST=HdfsSmokeTest"
+run_test "Smoke-Test" "/home/gpadmin/workspace/cloudberry-pxf/automation" "make GROUP=smoke"
 
 # Run GPDB group tests (allow failure)
-#run_test "GPDB-Group" "/home/gpadmin/workspace/cloudberry-pxf/automation" "make GROUP=gpdb"
+run_test "GPDB-Group" "/home/gpadmin/workspace/cloudberry-pxf/automation" "make GROUP=gpdb"
 
 # Copy additional test artifacts to mounted directory
 echo "Collecting additional test artifacts..."
