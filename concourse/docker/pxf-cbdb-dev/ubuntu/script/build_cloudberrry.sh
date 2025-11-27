@@ -115,8 +115,8 @@ cd ~/workspace/cloudberry
             --with-includes=/usr/include/xercesc
 
 # Build and install Cloudberry and its contrib modules
-make -j$(nproc) -C ~/workspace/cloudberry
-make -j$(nproc) -C ~/workspace/cloudberry/contrib
+make -s -j$(nproc) -C ~/workspace/cloudberry
+make -s -j$(nproc) -C ~/workspace/cloudberry/contrib
 make install -C ~/workspace/cloudberry
 make install -C ~/workspace/cloudberry/contrib
 
