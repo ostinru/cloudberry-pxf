@@ -62,6 +62,12 @@
                     <argLine>-Xmx1024m</argLine>
                     <argLine>-Xms256m</argLine>
                     <excludedGroups>load</excludedGroups>
+                    <properties>
+                        <property>
+                            <name>surefire.testng.verbose</name>
+                            <value>5</value>
+                        </property>
+                    </properties>
                 </configuration>
                 <executions>
                     <execution>
