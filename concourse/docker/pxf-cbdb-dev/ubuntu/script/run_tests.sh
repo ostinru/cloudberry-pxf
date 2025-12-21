@@ -555,6 +555,8 @@ gpdb_test() {
 save_test_reports() {
   local group="$1"
   local surefire_dir="${REPO_ROOT}/automation/target/surefire-reports"
+  local logs_dir="${REPO_ROOT}/automation/automation_logs"
+  local regress_dir="${REPO_ROOT}/automation/pxf_regress"
   local artifacts_dir="${REPO_ROOT}/automation/test_artifacts"
   local group_dir="${artifacts_dir}/${group}"
 
@@ -565,6 +567,20 @@ save_test_reports() {
     cp -r "$surefire_dir"/* "$group_dir/" 2>/dev/null || true
   else
     echo "[run_tests] No surefire reports found for $group"
+  fi
+
+  if [ -d "$logs_dir" ] && [ "$(ls -A "$logs_dir" 2>/dev/null)" ]; then
+    echo "[run_tests] Saving $group test logs to $group_dir"
+    cp -r "$logs_dir" "$group_dir/" 2>/dev/null || true
+  else
+    echo "[run_tests] No automation logs found for $group"
+  fi
+
+  if [ -d "$regress_dir" ] && [ "$(ls -A "$regress_dir" 2>/dev/null)" ]; then
+    echo "[run_tests] Saving $group regress_dir to $group_dir"
+    cp -r "$regress_dir" "$group_dir/" 2>/dev/null || true
+  else
+    echo "[run_tests] No regress logs found for $group"
   fi
 }
 
