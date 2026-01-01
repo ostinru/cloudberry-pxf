@@ -870,7 +870,7 @@ run_single_group() {
       make GROUP="proxy"
       save_test_reports "proxy"
       ;;
-    sanity|smoke|hdfs|hcatalog|hcfs|profile|jdbc|unused)
+    sanity|smoke|hdfs|hcatalog|hcfs|profile|jdbc|unused|security)
       export PROTOCOL=
       make GROUP="$group"
       save_test_reports "$group"
