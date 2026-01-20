@@ -121,6 +121,7 @@ jobs:
           - gpdb
           - load
           - pxf_extension
+          - fdw
     steps:
     - name: Free disk space
       run: |

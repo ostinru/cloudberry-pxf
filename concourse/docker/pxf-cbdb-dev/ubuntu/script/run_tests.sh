@@ -549,6 +549,7 @@ feature_test(){
 }
 
 gpdb_test() {
+  local extra_args="$1"
   export PROTOCOL=HDFS
   export PXF_HOME=${PXF_HOME:-/usr/local/pxf}
   export PATH="${PXF_HOME}/bin:${PATH}"
@@ -571,7 +572,7 @@ gpdb_test() {
   configure_pxf_default_hdfs_server
 
   echo "[run_tests] Starting GROUP=gpdb"
-  make GROUP="gpdb" || true
+  make GROUP="gpdb" $extra_args || true
   save_test_reports "gpdb"
   echo "[run_tests] GROUP=gpdb finished"
 }
@@ -896,9 +897,12 @@ run_single_group() {
       make GROUP="$group"
       save_test_reports "$group"
       ;;
+    fdw)
+      gpdb_test "USE_FDW=true"
+      ;;
     *)
       echo "Unknown test group: $group"
-      echo "Available groups: cli, external-table, server, sanity, smoke, hdfs, hcatalog, hcfs, hive, hbase, profile, jdbc, proxy, unused, s3, features, gpdb, load, performance, bench, pxf_extension"
+      echo "Available groups: cli, external-table, server, sanity, smoke, hdfs, hcatalog, hcfs, hive, hbase, profile, jdbc, proxy, unused, s3, features, gpdb, load, performance, bench, pxf_extension and fdw"
       exit 1
       ;;
   esac
