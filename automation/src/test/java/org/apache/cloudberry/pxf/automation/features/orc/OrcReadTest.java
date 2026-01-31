@@ -168,7 +168,7 @@ public class OrcReadTest extends BaseFeature {
      * TODO Do we need to do some changes to make sure the external-table behaves the same way as GPDB/FDW?
      *
      */
-    @FailsWithFDW
+    // FIXME
     @Test(groups = {"features", "gpdb", "security", "hcfs"})
     public void orcReadStringsContainingNullByte() throws Exception {
         prepareReadableExternalTable("pxf_orc_null_in_string", ORC_NULL_IN_STRING_COLUMNS, hdfsPath + ORC_NULL_IN_STRING);
