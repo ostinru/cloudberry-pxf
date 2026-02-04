@@ -263,6 +263,7 @@ public class HBaseAccessor extends BasePlugin implements Accessor {
      * Opens the region of the fragment to be scanned.
      * Updates the Scan object to retrieve only rows from that region.
      */
+    @SuppressWarnings("deprecation")
     private boolean openCurrentRegion() throws IOException {
         if (split == null) {
             return false;
