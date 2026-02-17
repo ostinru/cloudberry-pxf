@@ -50,6 +50,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 
 import static org.apache.parquet.hadoop.ParquetOutputFormat.BLOCK_SIZE;
 import static org.apache.parquet.hadoop.ParquetOutputFormat.DICTIONARY_PAGE_SIZE;
@@ -2214,6 +2215,51 @@ public class ParquetWriteTest {
                 "12345.12345"
         };
         writeNumericValues(values, configurationOption, columnName, precision, scale);
+    }
+
+    @Test
+    public void testWriteUUID() throws Exception {
+        String path = temp + "/out/uuid/";
+
+        columnDescriptors.add(new ColumnDescriptor("id", DataType.UUID.getOID(), 0, DataType.UUID.name(), null));
+
+        context.setDataSource(path);
+        context.setTransactionId("XID-XYZ-123500");
+        context.addOption("PARQUET_VERSION", "v2");
+
+        accessor.setRequestContext(context);
+        accessor.afterPropertiesSet();
+        resolver.setRequestContext(context);
+        resolver.afterPropertiesSet();
+
+        assertTrue(accessor.openForWrite());
+
+        UUID uuid = UUID.fromString("00112233-4455-6677-8899-aabbccddeeff");
+        List<OneField> record = Collections.singletonList(new OneField(DataType.UUID.getOID(), uuid));
+        OneRow rowToWrite = resolver.setFields(record);
+        assertTrue(accessor.writeNextObject(rowToWrite));
+
+        accessor.closeForWrite();
+
+        // Validate write
+        Path expectedFile = new Path(HcfsType.FILE.getUriForWrite(context) + ".snappy.parquet");
+        assertTrue(expectedFile.getFileSystem(configuration).exists(expectedFile));
+
+        MessageType schema = validateFooter(expectedFile, 1, 1);
+
+        ParquetReader<Group> fileReader = ParquetReader.builder(new GroupReadSupport(), expectedFile)
+                .withConf(configuration)
+                .build();
+
+        Type type = schema.getType(0);
+        assertEquals(PrimitiveType.PrimitiveTypeName.FIXED_LEN_BYTE_ARRAY, type.asPrimitiveType().getPrimitiveTypeName());
+        assertEquals(LogicalTypeAnnotation.uuidType(), type.getLogicalTypeAnnotation());
+        byte[] raw =  fileReader.read().getBinary("id", 0).getBytes();
+        System.out.println(Arrays.toString(raw));
+        assertEquals(16, raw.length);
+        assertEquals(uuid, UUID.nameUUIDFromBytes(raw));
+        assertNull(fileReader.read());
+        fileReader.close();
     }
 
     private MessageType validateFooter(Path parquetFile) throws IOException {

@@ -588,6 +588,11 @@ public class ParquetFileAccessor extends BasePlugin implements Accessor {
                 primitiveTypeName = PrimitiveTypeName.BINARY;
                 logicalTypeAnnotation = LogicalTypeAnnotation.stringType();
                 break;
+            case UUID:
+                primitiveTypeName = PrimitiveTypeName.FIXED_LEN_BYTE_ARRAY;
+                logicalTypeAnnotation = LogicalTypeAnnotation.uuidType();
+                length = LogicalTypeAnnotation.UUIDLogicalTypeAnnotation.BYTES;
+                break;
             default:
                 throw new UnsupportedTypeException(
                         String.format("Type %d for column %s is not supported for writing Parquet.", columnTypeCode, columnName));

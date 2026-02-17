@@ -21,6 +21,7 @@ package org.apache.cloudberry.pxf.plugins.hdfs;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import org.apache.cloudberry.pxf.plugins.hdfs.utilities.ParquetUUID;
 import org.apache.hadoop.hive.common.type.HiveDecimal;
 import org.apache.parquet.example.data.Group;
 import org.apache.parquet.example.data.simple.SimpleGroupFactory;
@@ -48,6 +49,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.UUID;
 import java.util.regex.Pattern;
 
 import static org.apache.parquet.schema.LogicalTypeAnnotation.DateLogicalTypeAnnotation;
@@ -241,11 +243,18 @@ public class ParquetResolver extends BasePlugin implements Resolver {
                 group.add(columnIndex, (Float) fieldValue);
                 break;
             case FIXED_LEN_BYTE_ARRAY:
-                byte[] fixedLenByteArray = getFixedLenByteArray((String) fieldValue, primitiveType, columnDescriptors.get(columnIndex).columnName());
-                if (fixedLenByteArray == null) {
-                    return;
+                if (logicalTypeAnnotation instanceof LogicalTypeAnnotation.UUIDLogicalTypeAnnotation) {
+                    if (fieldValue == null) {
+                        return;
+                    }
+                    group.add(columnIndex, Binary.fromReusedByteArray(ParquetUUID.toBytes((UUID) fieldValue)));
+                } else {
+                    byte[] fixedLenByteArray = getFixedLenByteArray((String) fieldValue, primitiveType, columnDescriptors.get(columnIndex).columnName());
+                    if (fixedLenByteArray == null) {
+                        return;
+                    }
+                    group.add(columnIndex, Binary.fromReusedByteArray(fixedLenByteArray));
                 }
-                group.add(columnIndex, Binary.fromReusedByteArray(fixedLenByteArray));
                 break;
             case INT96:  // SQL standard timestamp string value with or without time zone literals: https://www.postgresql.org/docs/9.4/datatype-datetime.html
                 String timestamp = (String) fieldValue;
