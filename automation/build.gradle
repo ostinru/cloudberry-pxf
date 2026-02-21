@@ -6,8 +6,8 @@ group = 'org.apache.cloudberry.pxf.automation'
 version = '0.0.1-SNAPSHOT'
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_1_8
-    targetCompatibility = JavaVersion.VERSION_1_8
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
 }
 
 repositories {
@@ -132,6 +132,10 @@ dependencies {
     // Test-only
     testImplementation "org.powermock:powermock-module-testng:${powermockVersion}"
     testImplementation "org.powermock:powermock-api-mockito:${powermockVersion}"
+
+    // TestContainers for host-driven integration tests
+    testImplementation 'org.testcontainers:testcontainers:2.0.3'
+    testImplementation 'org.slf4j:slf4j-simple:2.0.16'
 }
 
 test {
@@ -184,12 +188,58 @@ test {
     // Also forward any -D property whose key starts with a known prefix
     System.properties.each { k, v ->
         if (k.startsWith('PROTOCOL') || k.startsWith('pxf.') || k.startsWith('fs.') ||
-            k.startsWith('hadoop.') || k.startsWith('AWS_') || k.startsWith('PXF_')) {
+            k.startsWith('hadoop.') || k.startsWith('AWS_') || k.startsWith('PXF_') ||
+            k.startsWith('testcontainers.')) {
             systemProperty k, v
         }
     }
 }
 
+// When running on the host, PXF JARs in automation_tmp_lib may not exist or
+// may be empty stubs. Try to copy real JARs from the server build artifacts;
+// fall back to creating empty stubs so compilation still succeeds (classes
+// referencing PXF APIs won't be exercised at runtime in TestContainers tests).
+task ensurePxfJars {
+    doLast {
+        def libDir = file(pxfLib)
+        libDir.mkdirs()
+        def serverRoot = rootDir.parentFile  // cloudberry-pxf repo root
+        def mapping = [
+            'pxf-api'   : 'pxf-api',
+            'pxf-hbase' : 'pxf-hbase',
+            'pxf-hdfs'  : 'pxf-hdfs',
+            'pxf-hive'  : 'pxf-hive',
+            'pxf-extras': null
+        ]
+        mapping.each { shortName, serverModule ->
+            def target = new File(libDir, "${shortName}.jar")
+            def isStub = target.exists() && target.length() < 1024
+            if (!target.exists() || isStub) {
+                if (serverModule != null) {
+                    def buildLibs = new File(serverRoot, "server/${serverModule}/build/libs")
+                    if (buildLibs.isDirectory()) {
+                        def candidates = buildLibs.listFiles().findAll {
+                            it.name.endsWith('.jar') && !it.name.contains('plain') &&
+                            !it.name.contains('SNAPSHOT') && !it.name.endsWith('-1.0.0.jar')
+                        }
+                        if (candidates) {
+                            def src = candidates.sort { it.name }.last()
+                            ant.copy(file: src, tofile: target, overwrite: true)
+                            println "Copied ${src} -> ${target}"
+                            return
+                        }
+                    }
+                }
+                if (!target.exists()) {
+                    ant.jar(destfile: target) { manifest {} }
+                    println "Created stub ${target}"
+                }
+            }
+        }
+    }
+}
+
 tasks.withType(JavaCompile) {
+    dependsOn ensurePxfJars
     options.encoding = 'UTF-8'
 }

@@ -74,6 +74,7 @@ relax_pg_hba() {
     cat >> "${pg_hba}" <<'EOF'
 host all all 127.0.0.1/32 trust
 host all all ::1/128 trust
+host all all 0.0.0.0/0 trust
 EOF
     source /usr/local/cloudberry-db/cloudberry-env.sh >/dev/null 2>&1 || true
     GPPORT=${GPPORT:-7000}

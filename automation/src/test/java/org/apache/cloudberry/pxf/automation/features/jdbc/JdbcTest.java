@@ -7,17 +7,27 @@ import annotations.WorksWithFDW;
 import org.apache.cloudberry.pxf.automation.structures.tables.basic.Table;
 import org.apache.cloudberry.pxf.automation.structures.tables.pxf.ExternalTable;
 import org.apache.cloudberry.pxf.automation.structures.tables.utils.TableFactory;
+import org.apache.cloudberry.pxf.automation.testcontainers.CbdbApplication;
+import org.apache.cloudberry.pxf.automation.testcontainers.RegressApplication;
+import org.apache.cloudberry.pxf.automation.testcontainers.PXFCBDBContainer;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import org.apache.cloudberry.pxf.automation.enums.EnumPartitionType;
 
-import org.apache.cloudberry.pxf.automation.features.BaseFeature;
-
 @WorksWithFDW
-public class JdbcTest extends BaseFeature {
+public class JdbcTest {
 
     private static final String POSTGRES_DRIVER_CLASS = "org.postgresql.Driver";
-    private static final String GPDB_PXF_AUTOMATION_DB_JDBC = "jdbc:postgresql://";
+    private static final String CBDB_PXF_AUTOMATION_DB_JDBC = "jdbc:postgresql://";
+
+    private static final String INTERNAL_CBDB_HOST = "localhost";
+    private static final int INTERNAL_CBDB_PORT = PXFCBDBContainer.CBDB_PORT;
+    private static final String INTERNAL_JDBC_URL =
+            CBDB_PXF_AUTOMATION_DB_JDBC + INTERNAL_CBDB_HOST + ":" + INTERNAL_CBDB_PORT + "/pxfautomation";
+    private static final String INTERNAL_USER = PXFCBDBContainer.CBDB_USER;
+
     private static final String[] TYPES_TABLE_FIELDS = new String[]{
             "t1    text",
             "t2    text",
@@ -61,6 +71,14 @@ public class JdbcTest extends BaseFeature {
             "count int",
             "max  int"};
 
+    private static final String localDataResourcesFolder = "src/test/resources/data";
+
+    private PXFCBDBContainer container;
+    private CbdbApplication cbdb;
+    private RegressApplication regress;
+    private String pxfHost;
+    private String pxfPort;
+
     private ExternalTable pxfJdbcSingleFragment;
     private ExternalTable pxfJdbcDateWideRangeOn;
     private ExternalTable pxfJdbcDateWideRangeOff;
@@ -79,16 +97,31 @@ public class JdbcTest extends BaseFeature {
     private ExternalTable pxfJdbcColumnProjectionSuperset;
     private ExternalTable pxfJdbcNamedQuery;
 
-    private static final String gpdbTypesWithDateWideRangeDataFileName = "gpdb_types_with_date_wide_range.txt";
-    private static final String gpdbTypesDataFileName = "gpdb_types.txt";
-    private static final String gpdbColumnsDataFileName = "gpdb_columns.txt";
     private Table gpdbNativeTableTypes, gpdbNativeTableTypesWithDateWideRange, gpdbNativeTableColumns, gpdbWritableTargetTable, dateTimeWritableTargetTableWithDateWideRangeOn, dateTimeWritableTargetTableWithDateWideRangeOff;
     private Table gpdbWritableTargetTableNoBatch, gpdbWritableTargetTablePool;
     private Table gpdbDeptTable, gpdbEmpTable;
 
-    @Override
-    protected void beforeClass() throws Exception {
+    @BeforeClass(alwaysRun = true)
+    public void setup() throws Exception {
+        container = PXFCBDBContainer.getInstance();
+
+        pxfHost = container.getPxfInternalHost();
+        pxfPort = String.valueOf(container.getPxfInternalPort());
+
+        cbdb = new CbdbApplication(container);
+        cbdb.connect();
+        cbdb.createExtension("pxf");
+
+        regress = new RegressApplication(container);
+
         prepareData();
+    }
+
+    @AfterClass(alwaysRun = true)
+    public void teardown() throws Exception {
+        if (cbdb != null) {
+            cbdb.close();
+        }
     }
 
     protected void prepareData() throws Exception {
@@ -112,66 +145,66 @@ public class JdbcTest extends BaseFeature {
         // create a table prepared for partitioning
         gpdbNativeTableTypes = new Table("gpdb_types", TYPES_TABLE_FIELDS);
         gpdbNativeTableTypes.setDistributionFields(new String[]{"t1"});
-        gpdb.createTableAndVerify(gpdbNativeTableTypes);
-        gpdb.copyFromFile(gpdbNativeTableTypes, new File(localDataResourcesFolder
+        cbdb.createTableAndVerify(gpdbNativeTableTypes);
+        cbdb.copyFromFile(gpdbNativeTableTypes, new File(localDataResourcesFolder
                 + "/gpdb/" + gpdbTypesDataFileName), "E'\\t'", "E'\\\\N'", true);
 
         // create a table that is the same as above but with timestamp with time zone
         gpdbNativeTableTypesWithDateWideRange = new Table("gpdb_types_with_date_wide_range", TYPES_TABLE_FIELDS);
         gpdbNativeTableTypesWithDateWideRange.setDistributionFields(new String[]{"t1"});
-        gpdb.createTableAndVerify(gpdbNativeTableTypesWithDateWideRange);
-        gpdb.copyFromFile(gpdbNativeTableTypesWithDateWideRange, new File(localDataResourcesFolder
+        cbdb.createTableAndVerify(gpdbNativeTableTypesWithDateWideRange);
+        cbdb.copyFromFile(gpdbNativeTableTypesWithDateWideRange, new File(localDataResourcesFolder
                 + "/gpdb/" + gpdbTypesWithDateWideRangeDataFileName), "E'\\t'", "E'\\\\N'", true);
 
         // create a table to be filled by the writable test case
         gpdbWritableTargetTable = new Table("gpdb_types_target", TYPES_TABLE_FIELDS);
         gpdbWritableTargetTable.setDistributionFields(new String[]{"t1"});
-        gpdb.createTableAndVerify(gpdbWritableTargetTable);
+        cbdb.createTableAndVerify(gpdbWritableTargetTable);
 
         // create a table for testing datetime values when DateWideRange is turned on
         dateTimeWritableTargetTableWithDateWideRangeOn = new Table("datetime_writable_with_date_wide_range_on", TYPES_TABLE_FIELDS);
         dateTimeWritableTargetTableWithDateWideRangeOn.setDistributionFields(new String[]{"t1"});
-        gpdb.createTableAndVerify(dateTimeWritableTargetTableWithDateWideRangeOn);
+        cbdb.createTableAndVerify(dateTimeWritableTargetTableWithDateWideRangeOn);
 
         // create a table for testing datetime values when DateWideRange is turned off
         dateTimeWritableTargetTableWithDateWideRangeOff = new Table("datetime_writable_with_date_wide_range_off", TYPES_TABLE_FIELDS);
         dateTimeWritableTargetTableWithDateWideRangeOff.setDistributionFields(new String[]{"t1"});
-        gpdb.createTableAndVerify(dateTimeWritableTargetTableWithDateWideRangeOff);
+        cbdb.createTableAndVerify(dateTimeWritableTargetTableWithDateWideRangeOff);
 
         // create a table to be filled by the writable test case with no batch
         gpdbWritableTargetTableNoBatch = new Table("gpdb_types_nobatch_target", TYPES_TABLE_FIELDS_SMALL);
         gpdbWritableTargetTableNoBatch.setDistributionFields(new String[]{"t1"});
-        gpdb.createTableAndVerify(gpdbWritableTargetTableNoBatch);
+        cbdb.createTableAndVerify(gpdbWritableTargetTableNoBatch);
 
         // create a table to be filled by the writable test case with pool size > 1
         gpdbWritableTargetTablePool = new Table("gpdb_types_pool_target", TYPES_TABLE_FIELDS_SMALL);
         gpdbWritableTargetTablePool.setDistributionFields(new String[]{"t1"});
-        gpdb.createTableAndVerify(gpdbWritableTargetTablePool);
+        cbdb.createTableAndVerify(gpdbWritableTargetTablePool);
 
         // create a table with special column names
         gpdbNativeTableColumns = new Table("gpdb_columns", COLUMNS_TABLE_FIELDS);
         gpdbNativeTableColumns.setDistributionFields(new String[]{"t"});
-        gpdb.createTableAndVerify(gpdbNativeTableColumns);
-        gpdb.copyFromFile(gpdbNativeTableColumns, new File(localDataResourcesFolder
+        cbdb.createTableAndVerify(gpdbNativeTableColumns);
+        cbdb.copyFromFile(gpdbNativeTableColumns, new File(localDataResourcesFolder
                 + "/gpdb/" + gpdbColumnsDataFileName), "E'\\t'", "E'\\\\N'", true);
 
         // create emp and dept tables for named query test
         String[] deptTableFields = new String[]{"name text", "id int"};
         gpdbDeptTable = new Table("gpdb_dept", deptTableFields);
         gpdbDeptTable.setDistributionFields(new String[]{"name"});
-        gpdb.createTableAndVerify(gpdbDeptTable);
+        cbdb.createTableAndVerify(gpdbDeptTable);
         String[][] deptRows = new String[][] {
                 { "sales", "1"},
                 { "finance", "2"},
                 { "it", "3"}};
         Table dataTable = new Table("data", deptTableFields);
         dataTable.addRows(deptRows);
-        gpdb.insertData(dataTable, gpdbDeptTable);
+        cbdb.insertData(dataTable, gpdbDeptTable);
 
         String[] empTableFields = new String[]{"name text", "dept_id int", "salary int"};
         gpdbEmpTable = new Table("gpdb_emp", empTableFields);
         gpdbEmpTable.setDistributionFields(new String[]{"name"});
-        gpdb.createTableAndVerify(gpdbEmpTable);
+        cbdb.createTableAndVerify(gpdbEmpTable);
         final String[][] empRows = new String[][] {
                 { "alice", "1", "115" },
                 { "bob", "1", "120" },
@@ -184,8 +217,12 @@ public class JdbcTest extends BaseFeature {
                 { "ivanka", "3", "70" }};
         dataTable = new Table("data", empTableFields);
         dataTable.addRows(empRows);
-        gpdb.insertData(dataTable, gpdbEmpTable);
+        cbdb.insertData(dataTable, gpdbEmpTable);
     }
+
+    private static final String gpdbTypesWithDateWideRangeDataFileName = "gpdb_types_with_date_wide_range.txt";
+    private static final String gpdbTypesDataFileName = "gpdb_types.txt";
+    private static final String gpdbColumnsDataFileName = "gpdb_columns.txt";
 
     private void prepareSingleFragment() throws Exception {
         pxfJdbcSingleFragment = TableFactory.getPxfJdbcReadableTable(
@@ -193,11 +230,11 @@ public class JdbcTest extends BaseFeature {
                 TYPES_TABLE_FIELDS,
                 gpdbNativeTableTypes.getName(),
                 POSTGRES_DRIVER_CLASS,
-                GPDB_PXF_AUTOMATION_DB_JDBC + gpdb.getMasterHost() + ":" + gpdb.getPort() + "/pxfautomation",
-                gpdb.getUserName());
+                INTERNAL_JDBC_URL,
+                INTERNAL_USER);
         pxfJdbcSingleFragment.setHost(pxfHost);
         pxfJdbcSingleFragment.setPort(pxfPort);
-        gpdb.createTableAndVerify(pxfJdbcSingleFragment);
+        cbdb.createTableAndVerify(pxfJdbcSingleFragment);
     }
 
     private void prepareMultipleFragmentsByEnum() throws Exception {
@@ -207,16 +244,16 @@ public class JdbcTest extends BaseFeature {
                         TYPES_TABLE_FIELDS,
                         gpdbNativeTableTypes.getName(),
                         POSTGRES_DRIVER_CLASS,
-                        GPDB_PXF_AUTOMATION_DB_JDBC + gpdb.getMasterHost() + ":" + gpdb.getPort() + "/pxfautomation",
+                        INTERNAL_JDBC_URL,
                         13,
                         "USD:UAH",
                         "1",
-                        gpdb.getUserName(),
+                        INTERNAL_USER,
                         EnumPartitionType.ENUM,
                         null);
         pxfJdbcMultipleFragmentsByEnum.setHost(pxfHost);
         pxfJdbcMultipleFragmentsByEnum.setPort(pxfPort);
-        gpdb.createTableAndVerify(pxfJdbcMultipleFragmentsByEnum);
+        cbdb.createTableAndVerify(pxfJdbcMultipleFragmentsByEnum);
     }
 
     private void prepareMultipleFragmentsByInt() throws Exception {
@@ -226,16 +263,16 @@ public class JdbcTest extends BaseFeature {
                         TYPES_TABLE_FIELDS,
                         gpdbNativeTableTypes.getName(),
                         POSTGRES_DRIVER_CLASS,
-                        GPDB_PXF_AUTOMATION_DB_JDBC + gpdb.getMasterHost() + ":" + gpdb.getPort() + "/pxfautomation",
+                        INTERNAL_JDBC_URL,
                         2,
                         "1:6",
                         "1",
-                        gpdb.getUserName(),
+                        INTERNAL_USER,
                         EnumPartitionType.INT,
                         null);
         pxfJdbcMultipleFragmentsByInt.setHost(pxfHost);
         pxfJdbcMultipleFragmentsByInt.setPort(pxfPort);
-        gpdb.createTableAndVerify(pxfJdbcMultipleFragmentsByInt);
+        cbdb.createTableAndVerify(pxfJdbcMultipleFragmentsByInt);
     }
 
     private void prepareMultipleFragmentsByDate() throws Exception {
@@ -245,16 +282,16 @@ public class JdbcTest extends BaseFeature {
                         TYPES_TABLE_FIELDS,
                         gpdbNativeTableTypes.getName(),
                         POSTGRES_DRIVER_CLASS,
-                        GPDB_PXF_AUTOMATION_DB_JDBC + gpdb.getMasterHost() + ":" + gpdb.getPort() + "/pxfautomation",
+                        INTERNAL_JDBC_URL,
                         11,
                         "2015-03-06:2015-03-20",
                         "1:DAY",
-                        gpdb.getUserName(),
+                        INTERNAL_USER,
                         EnumPartitionType.DATE,
                         null);
         pxfJdbcMultipleFragmentsByDate.setHost(pxfHost);
         pxfJdbcMultipleFragmentsByDate.setPort(pxfPort);
-        gpdb.createTableAndVerify(pxfJdbcMultipleFragmentsByDate);
+        cbdb.createTableAndVerify(pxfJdbcMultipleFragmentsByDate);
     }
 
     private void prepareServerBasedMultipleFragmentsByInt() throws Exception {
@@ -273,7 +310,7 @@ public class JdbcTest extends BaseFeature {
                         "database");
         pxfJdbcReadServerConfigAll.setHost(pxfHost);
         pxfJdbcReadServerConfigAll.setPort(pxfPort);
-        gpdb.createTableAndVerify(pxfJdbcReadServerConfigAll);
+        cbdb.createTableAndVerify(pxfJdbcReadServerConfigAll);
     }
 
     private void prepareViewBasedForTestingSessionParams() throws Exception {
@@ -284,7 +321,7 @@ public class JdbcTest extends BaseFeature {
                 "database");
         pxfJdbcReadViewNoParams.setHost(pxfHost);
         pxfJdbcReadViewNoParams.setPort(pxfPort);
-        gpdb.createTableAndVerify(pxfJdbcReadViewNoParams);
+        cbdb.createTableAndVerify(pxfJdbcReadViewNoParams);
 
         pxfJdbcReadViewSessionParams = TableFactory.getPxfJdbcReadableTable(
                 "pxf_jdbc_read_view_session_params",
@@ -293,7 +330,7 @@ public class JdbcTest extends BaseFeature {
                 "db-session-params");
         pxfJdbcReadViewSessionParams.setHost(pxfHost);
         pxfJdbcReadViewSessionParams.setPort(pxfPort);
-        gpdb.createTableAndVerify(pxfJdbcReadViewSessionParams);
+        cbdb.createTableAndVerify(pxfJdbcReadViewSessionParams);
     }
 
     private void prepareWritable() throws Exception {
@@ -302,58 +339,58 @@ public class JdbcTest extends BaseFeature {
                 TYPES_TABLE_FIELDS,
                 gpdbWritableTargetTable.getName(),
                 POSTGRES_DRIVER_CLASS,
-                GPDB_PXF_AUTOMATION_DB_JDBC + gpdb.getMasterHost() + ":" + gpdb.getPort() + "/pxfautomation",
-                gpdb.getUserName(), null);
+                INTERNAL_JDBC_URL,
+                INTERNAL_USER, null);
         pxfJdbcWritable.setHost(pxfHost);
         pxfJdbcWritable.setPort(pxfPort);
         pxfJdbcWritable.addUserParameter("date_wide_range=false");
-        gpdb.createTableAndVerify(pxfJdbcWritable);
+        cbdb.createTableAndVerify(pxfJdbcWritable);
 
         pxfJdbcDateTimeWritableWithDateWideRangeOn = TableFactory.getPxfJdbcWritableTable(
                 "pxf_jdbc_datetime_writable_date_wide_range_on",
                 TYPES_TABLE_FIELDS,
                 dateTimeWritableTargetTableWithDateWideRangeOn.getName(),
                 POSTGRES_DRIVER_CLASS,
-                GPDB_PXF_AUTOMATION_DB_JDBC + gpdb.getMasterHost() + ":" + gpdb.getPort() + "/pxfautomation",
-                gpdb.getUserName(), null);
+                INTERNAL_JDBC_URL,
+                INTERNAL_USER, null);
         pxfJdbcDateTimeWritableWithDateWideRangeOn.setHost(pxfHost);
         pxfJdbcDateTimeWritableWithDateWideRangeOn.setPort(pxfPort);
         pxfJdbcDateTimeWritableWithDateWideRangeOn.addUserParameter("date_wide_range=true");
-        gpdb.createTableAndVerify(pxfJdbcDateTimeWritableWithDateWideRangeOn);
+        cbdb.createTableAndVerify(pxfJdbcDateTimeWritableWithDateWideRangeOn);
 
         pxfJdbcDateTimeWritableWithDateWideRangeOff = TableFactory.getPxfJdbcWritableTable(
                 "pxf_jdbc_datetime_writable_date_wide_range_off",
                 TYPES_TABLE_FIELDS,
                 dateTimeWritableTargetTableWithDateWideRangeOff.getName(),
                 POSTGRES_DRIVER_CLASS,
-                GPDB_PXF_AUTOMATION_DB_JDBC + gpdb.getMasterHost() + ":" + gpdb.getPort() + "/pxfautomation",
-                gpdb.getUserName(), null);
+                INTERNAL_JDBC_URL,
+                INTERNAL_USER, null);
         pxfJdbcDateTimeWritableWithDateWideRangeOff.setHost(pxfHost);
         pxfJdbcDateTimeWritableWithDateWideRangeOff.setPort(pxfPort);
         pxfJdbcDateTimeWritableWithDateWideRangeOff.addUserParameter("date_wide_range=false");
-        gpdb.createTableAndVerify(pxfJdbcDateTimeWritableWithDateWideRangeOff);
+        cbdb.createTableAndVerify(pxfJdbcDateTimeWritableWithDateWideRangeOff);
 
         pxfJdbcWritableNoBatch = TableFactory.getPxfJdbcWritableTable(
                 "pxf_jdbc_writable_nobatch",
                 TYPES_TABLE_FIELDS_SMALL,
                 gpdbWritableTargetTableNoBatch.getName(),
                 POSTGRES_DRIVER_CLASS,
-                GPDB_PXF_AUTOMATION_DB_JDBC + gpdb.getMasterHost() + ":" + gpdb.getPort() + "/pxfautomation",
-                gpdb.getUserName(), "BATCH_SIZE=1");
+                INTERNAL_JDBC_URL,
+                INTERNAL_USER, "BATCH_SIZE=1");
         pxfJdbcWritableNoBatch.setHost(pxfHost);
         pxfJdbcWritableNoBatch.setPort(pxfPort);
-        gpdb.createTableAndVerify(pxfJdbcWritableNoBatch);
+        cbdb.createTableAndVerify(pxfJdbcWritableNoBatch);
 
         pxfJdbcWritablePool = TableFactory.getPxfJdbcWritableTable(
                 "pxf_jdbc_writable_pool",
                 TYPES_TABLE_FIELDS_SMALL,
                 gpdbWritableTargetTablePool.getName(),
                 POSTGRES_DRIVER_CLASS,
-                GPDB_PXF_AUTOMATION_DB_JDBC + gpdb.getMasterHost() + ":" + gpdb.getPort() + "/pxfautomation",
-                gpdb.getUserName(), "POOL_SIZE=2");
+                INTERNAL_JDBC_URL,
+                INTERNAL_USER, "POOL_SIZE=2");
         pxfJdbcWritablePool.setHost(pxfHost);
         pxfJdbcWritablePool.setPort(pxfPort);
-        gpdb.createTableAndVerify(pxfJdbcWritablePool);
+        cbdb.createTableAndVerify(pxfJdbcWritablePool);
     }
 
     private void prepareColumns() throws Exception {
@@ -362,11 +399,11 @@ public class JdbcTest extends BaseFeature {
                 COLUMNS_TABLE_FIELDS,
                 gpdbNativeTableColumns.getName(),
                 POSTGRES_DRIVER_CLASS,
-                GPDB_PXF_AUTOMATION_DB_JDBC + gpdb.getMasterHost() + ":" + gpdb.getPort() + "/pxfautomation",
-                gpdb.getUserName());
+                INTERNAL_JDBC_URL,
+                INTERNAL_USER);
         pxfJdbcColumns.setHost(pxfHost);
         pxfJdbcColumns.setPort(pxfPort);
-        gpdb.createTableAndVerify(pxfJdbcColumns);
+        cbdb.createTableAndVerify(pxfJdbcColumns);
     }
 
     private void prepareColumnProjectionSubsetInDifferentOrder() throws Exception {
@@ -375,11 +412,11 @@ public class JdbcTest extends BaseFeature {
                 COLUMNS_TABLE_FIELDS_IN_DIFFERENT_ORDER_SUBSET,
                 gpdbNativeTableColumns.getName(),
                 POSTGRES_DRIVER_CLASS,
-                GPDB_PXF_AUTOMATION_DB_JDBC + gpdb.getMasterHost() + ":" + gpdb.getPort() + "/pxfautomation",
-                gpdb.getUserName());
+                INTERNAL_JDBC_URL,
+                INTERNAL_USER);
         pxfJdbcColumnProjectionSubset.setHost(pxfHost);
         pxfJdbcColumnProjectionSubset.setPort(pxfPort);
-        gpdb.createTableAndVerify(pxfJdbcColumnProjectionSubset);
+        cbdb.createTableAndVerify(pxfJdbcColumnProjectionSubset);
     }
 
     private void prepareColumnProjectionSuperset() throws Exception {
@@ -388,11 +425,11 @@ public class JdbcTest extends BaseFeature {
                 COLUMNS_TABLE_FIELDS_SUPERSET,
                 gpdbNativeTableColumns.getName(),
                 POSTGRES_DRIVER_CLASS,
-                GPDB_PXF_AUTOMATION_DB_JDBC + gpdb.getMasterHost() + ":" + gpdb.getPort() + "/pxfautomation",
-                gpdb.getUserName());
+                INTERNAL_JDBC_URL,
+                INTERNAL_USER);
         pxfJdbcColumnProjectionSuperset.setHost(pxfHost);
         pxfJdbcColumnProjectionSuperset.setPort(pxfPort);
-        gpdb.createTableAndVerify(pxfJdbcColumnProjectionSuperset);
+        cbdb.createTableAndVerify(pxfJdbcColumnProjectionSuperset);
     }
 
     private void prepareFetchSizeZero() throws Exception {
@@ -401,11 +438,11 @@ public class JdbcTest extends BaseFeature {
                 TYPES_TABLE_FIELDS,
                 gpdbNativeTableTypes.getName(),
                 POSTGRES_DRIVER_CLASS,
-                GPDB_PXF_AUTOMATION_DB_JDBC + gpdb.getMasterHost() + ":" + gpdb.getPort() + "/pxfautomation",
-                gpdb.getUserName(), "FETCH_SIZE=0");
+                INTERNAL_JDBC_URL,
+                INTERNAL_USER, "FETCH_SIZE=0");
         pxfJdbcSingleFragment.setHost(pxfHost);
         pxfJdbcSingleFragment.setPort(pxfPort);
-        gpdb.createTableAndVerify(pxfJdbcSingleFragment);
+        cbdb.createTableAndVerify(pxfJdbcSingleFragment);
     }
 
     private void prepareDateWideRange() throws Exception {
@@ -414,24 +451,24 @@ public class JdbcTest extends BaseFeature {
                 TYPES_TABLE_FIELDS,
                 gpdbNativeTableTypesWithDateWideRange.getName(),
                 POSTGRES_DRIVER_CLASS,
-                GPDB_PXF_AUTOMATION_DB_JDBC + gpdb.getMasterHost() + ":" + gpdb.getPort() + "/pxfautomation",
-                gpdb.getUserName());
+                INTERNAL_JDBC_URL,
+                INTERNAL_USER);
         pxfJdbcDateWideRangeOn.setHost(pxfHost);
         pxfJdbcDateWideRangeOn.setPort(pxfPort);
         pxfJdbcDateWideRangeOn.addUserParameter("date_wide_range=true");
-        gpdb.createTableAndVerify(pxfJdbcDateWideRangeOn);
+        cbdb.createTableAndVerify(pxfJdbcDateWideRangeOn);
 
         pxfJdbcDateWideRangeOff = TableFactory.getPxfJdbcReadableTable(
                 "pxf_jdbc_readable_date_wide_range_off",
                 TYPES_TABLE_FIELDS,
                 gpdbNativeTableTypesWithDateWideRange.getName(),
                 POSTGRES_DRIVER_CLASS,
-                GPDB_PXF_AUTOMATION_DB_JDBC + gpdb.getMasterHost() + ":" + gpdb.getPort() + "/pxfautomation",
-                gpdb.getUserName());
+                INTERNAL_JDBC_URL,
+                INTERNAL_USER);
         pxfJdbcDateWideRangeOff.setHost(pxfHost);
         pxfJdbcDateWideRangeOff.setPort(pxfPort);
         pxfJdbcDateWideRangeOff.addUserParameter("date_wide_range=false");
-        gpdb.createTableAndVerify(pxfJdbcDateWideRangeOff);
+        cbdb.createTableAndVerify(pxfJdbcDateWideRangeOff);
     }
 
     private void prepareNamedQuery() throws Exception {
@@ -442,7 +479,7 @@ public class JdbcTest extends BaseFeature {
                 "database");
         pxfJdbcNamedQuery.setHost(pxfHost);
         pxfJdbcNamedQuery.setPort(pxfPort);
-        gpdb.createTableAndVerify(pxfJdbcNamedQuery);
+        cbdb.createTableAndVerify(pxfJdbcNamedQuery);
 
         pxfJdbcNamedQuery = TableFactory.getPxfJdbcReadablePartitionedTable(
                 "pxf_jdbc_read_named_query_partitioned",
@@ -458,81 +495,75 @@ public class JdbcTest extends BaseFeature {
                 "database");
         pxfJdbcNamedQuery.setHost(pxfHost);
         pxfJdbcNamedQuery.setPort(pxfPort);
-        gpdb.createTableAndVerify(pxfJdbcNamedQuery);
+        cbdb.createTableAndVerify(pxfJdbcNamedQuery);
     }
 
-    @Test(groups = {"features", "gpdb", "security", "jdbc"})
+    @Test(groups = {"jdbc"})
     public void singleFragmentTable() throws Exception {
-        runSqlTest("features/jdbc/single_fragment");
+        regress.runSqlTest("features/jdbc/single_fragment");
     }
 
-    @Test(groups = {"features", "gpdb", "security", "jdbc"})
+    @Test(groups = {"jdbc"})
     public void multipleFragmentsTables() throws Exception {
-        runSqlTest("features/jdbc/multiple_fragments");
+        regress.runSqlTest("features/jdbc/multiple_fragments");
     }
 
-    @Test(groups = {"features", "gpdb", "security", "jdbc"})
+    @Test(groups = {"jdbc"})
     public void readServerConfig() throws Exception {
-        runSqlTest("features/jdbc/server_config");
+        regress.runSqlTest("features/jdbc/server_config");
     }
 
-    @Test(groups = {"features", "gpdb", "security", "jdbc"})
+    @Test(groups = {"jdbc"})
     public void readViewSessionParams() throws Exception {
-        runSqlTest("features/jdbc/session_params");
+        regress.runSqlTest("features/jdbc/session_params");
     }
 
     @FailsWithFDW
-    // All the Writable Tests are failing with this Error:
-    // ERROR:  PXF server error : class java.io.DataInputStream cannot be cast to class
-    // [B (java.io.DataInputStream and [B are in module java.base of loader 'bootstrap')
-    @Test(groups = {"features", "gpdb", "security", "jdbc"})
+    @Test(groups = {"jdbc"})
     public void jdbcWritableTable() throws Exception {
-        runSqlTest("features/jdbc/writable");
+        regress.runSqlTest("features/jdbc/writable");
     }
 
     @FailsWithFDW
-    // All the Writable Tests are failing with this Error:
-    // ERROR:  PXF server error : class java.io.DataInputStream cannot be cast to class
-    // [B (java.io.DataInputStream and [B are in module java.base of loader 'bootstrap')
-    @Test(groups = {"features", "gpdb", "security", "jdbc"})
+    @Test(groups = {"jdbc"})
     public void jdbcWritableTableWithDateWideRange() throws Exception {
-        runSqlTest("features/jdbc/writable_date_wide_range");
+        regress.runSqlTest("features/jdbc/writable_date_wide_range");
     }
 
     @FailsWithFDW
-    @Test(groups = {"features", "gpdb", "security", "jdbc"})
+    @Test(groups = {"jdbc"})
     public void jdbcWritableTableNoBatch() throws Exception {
-        runSqlTest("features/jdbc/writable_nobatch");
+        regress.runSqlTest("features/jdbc/writable_nobatch");
     }
 
     @FailsWithFDW
-    @Test(groups = {"features", "gpdb", "security", "jdbc"})
+    @Test(groups = {"jdbc"})
     public void jdbcWritableTablePool() throws Exception {
-        runSqlTest("features/jdbc/writable_pool");
+        regress.runSqlTest("features/jdbc/writable_pool");
     }
 
-    @Test(groups = {"features", "gpdb", "security", "jdbc"})
+    @Test(groups = {"jdbc"})
     public void jdbcColumns() throws Exception {
-        runSqlTest("features/jdbc/columns");
+        regress.runSqlTest("features/jdbc/columns");
     }
 
-    @Test(groups = {"features", "gpdb", "security", "jdbc"})
+    @Test(groups = {"jdbc"})
     public void jdbcColumnProjection() throws Exception {
-        runSqlTest("features/jdbc/column_projection");
+        regress.runSqlTest("features/jdbc/column_projection");
     }
 
-    @Test(groups = {"features", "gpdb", "security", "jdbc"})
+    @Test(groups = {"jdbc"})
     public void jdbcReadableTableNoBatch() throws Exception {
-        runSqlTest("features/jdbc/readable_nobatch");
+        regress.runSqlTest("features/jdbc/readable_nobatch");
     }
 
-    @Test(groups = {"features", "gpdb", "security", "jdbc"})
+    @Test(groups = {"jdbc"})
     public void jdbcReadableTableWithDateWideRange() throws Exception {
-        runSqlTest("features/jdbc/readable_date_wide_range");
+        regress.runSqlTest("features/jdbc/readable_date_wide_range");
     }
 
-    @Test(groups = {"features", "gpdb", "security", "jdbc"})
+    @Test(groups = {"jdbc"})
     public void jdbcNamedQuery() throws Exception {
-        runSqlTest("features/jdbc/named_query");
+        regress.runSqlTest("features/jdbc/named_query");
     }
 }
