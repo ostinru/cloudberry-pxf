@@ -226,9 +226,9 @@ jobs:
         docker exec pxf-cbdb-dev bash -c "cp -r /usr/local/pxf/logs/* /tmp/pxf-logs/ 2>/dev/null || true" || true
         docker cp pxf-cbdb-dev:/tmp/pxf-logs artifacts/logs/ 2>/dev/null || true
         
-        # Parse surefire reports for automation tests
+        # Parse Gradle test reports for automation tests
         if [[ "$TEST_GROUP" != "cli" && "$TEST_GROUP" != "server" ]]; then
-          for xml in cloudberry-pxf/automation/target/surefire-reports/TEST-*.xml; do
+          for xml in cloudberry-pxf/automation/build/test-results/test/TEST-*.xml; do
             if [ -f "$xml" ]; then
               tests=$(grep -oP 'tests="\K\d+' "$xml" 2>/dev/null | head -1 || echo "0")
               failures=$(grep -oP 'failures="\K\d+' "$xml" 2>/dev/null | head -1 || echo "0")

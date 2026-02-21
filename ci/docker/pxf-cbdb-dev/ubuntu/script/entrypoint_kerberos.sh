@@ -392,10 +392,10 @@ for h in root.findall("hbase"):
         el.text = f"{gphd_root}/hbase"
 tree.write(path)
 PY
-    mkdir -p /home/gpadmin/workspace/cloudberry-pxf/automation/target/test-classes/sut
-    mkdir -p /home/gpadmin/workspace/cloudberry-pxf/automation/target/classes/sut
-    cp "${sut_generated}" /home/gpadmin/workspace/cloudberry-pxf/automation/target/test-classes/sut/default.xml
-    cp "${sut_generated}" /home/gpadmin/workspace/cloudberry-pxf/automation/target/classes/sut/default.xml
+    mkdir -p /home/gpadmin/workspace/cloudberry-pxf/automation/build/classes/java/test/sut
+    mkdir -p /home/gpadmin/workspace/cloudberry-pxf/automation/build/classes/java/main/sut
+    cp "${sut_generated}" /home/gpadmin/workspace/cloudberry-pxf/automation/build/classes/java/test/sut/default.xml
+    cp "${sut_generated}" /home/gpadmin/workspace/cloudberry-pxf/automation/build/classes/java/main/sut/default.xml
     # If IPA configs are missing, add local hdfsIpa/hiveIpa entries to avoid IPA group NPE.
     if ! grep -q "<hdfsIpa>" "${sut_generated}"; then
       python3 - "$sut_generated" "$host_fqdn_local" "$REALM" <<'PY'
@@ -424,8 +424,8 @@ add_block("hiveIpa", {
 })
 tree.write(path)
 PY
-      cp "${sut_generated}" /home/gpadmin/workspace/cloudberry-pxf/automation/target/test-classes/sut/default.xml
-      cp "${sut_generated}" /home/gpadmin/workspace/cloudberry-pxf/automation/target/classes/sut/default.xml
+      cp "${sut_generated}" /home/gpadmin/workspace/cloudberry-pxf/automation/build/classes/java/test/sut/default.xml
+      cp "${sut_generated}" /home/gpadmin/workspace/cloudberry-pxf/automation/build/classes/java/main/sut/default.xml
     fi
     export SUT_FILE="${sut_generated}"
   else
@@ -1087,12 +1087,12 @@ init_test_env() {
   export HDFS_URI="hdfs://${HOST_FQDN_LOCAL}:8020"
   export HADOOP_OPTS="-Dfs.defaultFS=${HDFS_URI} -Dhadoop.security.authentication=kerberos ${s3_opts}"
   export HADOOP_CLIENT_OPTS="${HADOOP_OPTS}"
-  export MAVEN_OPTS="-Dfs.defaultFS=${HDFS_URI} -Dhadoop.security.authentication=kerberos ${s3_opts} -Dpxf.host=${PXF_HOST} -Dpxf.port=${PXF_PORT}"
+  export GRADLE_OPTS="-Dfs.defaultFS=${HDFS_URI} -Dhadoop.security.authentication=kerberos ${s3_opts} -Dpxf.host=${PXF_HOST} -Dpxf.port=${PXF_PORT}"
   export PGOPTIONS="${PGOPTIONS:---client-min-messages=error}"
   export AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:-admin}
   export AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:-password}
   export EXCLUDE_GROUPS_LOCAL=${EXCLUDED_GROUPS:-multiClusterSecurity}
-  DEFAULT_MAVEN_TEST_OPTS="-Dpxf.host=${PXF_HOST} -Dpxf.port=${PXF_PORT} -DPXF_SINGLE_NODE=true -DexcludedGroups=${EXCLUDE_GROUPS_LOCAL}"
+  DEFAULT_GRADLE_TEST_OPTS="-Dpxf.host=${PXF_HOST} -Dpxf.port=${PXF_PORT} -DPXF_SINGLE_NODE=true -DexcludedGroups=${EXCLUDE_GROUPS_LOCAL}"
 }
 
 ensure_test_kerberos() {
@@ -1222,10 +1222,10 @@ prepare_runtime_state() {
 
 run_proxy_groups() {
   wait_for_port "${HOST_FQDN_LOCAL}" "${PXF_PORT:-5888}" 20 3 || die "PXF actuator not reachable before tests"
-  local proxy_opts="${DEFAULT_MAVEN_TEST_OPTS} -Dgroups=proxySecurity"
-  local ipa_opts="${DEFAULT_MAVEN_TEST_OPTS} -Dgroups=proxySecurityIpa"
-  make GROUP="proxySecurity"    MAVEN_TEST_OPTS="${MAVEN_TEST_OPTS_PROXY:-${proxy_opts}}"
-  make GROUP="proxySecurityIpa" MAVEN_TEST_OPTS="${MAVEN_TEST_OPTS_IPA:-${ipa_opts}}"
+  local proxy_opts="${DEFAULT_GRADLE_TEST_OPTS} -Dgroups=proxySecurity"
+  local ipa_opts="${DEFAULT_GRADLE_TEST_OPTS} -Dgroups=proxySecurityIpa"
+  make GROUP="proxySecurity"    GRADLE_SYS_PROPS="${GRADLE_SYS_PROPS_PROXY:-${proxy_opts}}"
+  make GROUP="proxySecurityIpa" GRADLE_SYS_PROPS="${GRADLE_SYS_PROPS_IPA:-${ipa_opts}}"
 }
 
 security_test(){

@@ -52,7 +52,7 @@ export HBASE_CONF_DIR=${HBASE_CONF_DIR:-${HBASE_HOME}/conf}
 export HDFS_URI=${HDFS_URI:-hdfs://localhost:8020}
 export HADOOP_OPTS="-Dfs.defaultFS=${HDFS_URI} ${HADOOP_OPTS:-}"
 export HADOOP_CLIENT_OPTS="${HADOOP_OPTS}"
-export MAVEN_OPTS="-Dfs.defaultFS=${HDFS_URI} ${MAVEN_OPTS:-}"
+export GRADLE_OPTS="-Dfs.defaultFS=${HDFS_URI} ${GRADLE_OPTS:-}"
 
 # Force Hive endpoints to localhost unless explicitly overridden (default sut points to cdw)
 export HIVE_HOST=${HIVE_HOST:-localhost}
@@ -475,7 +475,7 @@ ensure_gpupgrade_helpers() {
   export PXF_HOME=${PXF_HOME:-/usr/local/pxf}
   export PXF_BASE=${PXF_BASE:-/home/gpadmin/pxf-base}
   export GPHOME=${GPHOME:-/usr/local/cloudberry-db}
-  # Provide wrappers so mvn child processes see the binaries on PATH
+  # Provide wrappers so Gradle child processes see the binaries on PATH
   for helper in pxf-pre-gpupgrade pxf-post-gpupgrade; do
     if [ ! -x "/usr/local/bin/${helper}" ]; then
       cat <<EOF | sudo tee "/usr/local/bin/${helper}" >/dev/null
@@ -507,8 +507,8 @@ ensure_testplugin_jar() {
   export PXF_HOME=${PXF_HOME:-/usr/local/pxf}
   if [ ! -f "${PXF_BASE}/lib/pxf-automation-test.jar" ]; then
     pushd "${REPO_ROOT}/automation" >/dev/null
-    mvn -q -DskipTests test-compile
-    jar cf "${PXF_BASE}/lib/pxf-automation-test.jar" -C target/classes org/apache/cloudberry/pxf/automation/testplugin
+    ./gradlew testClasses -q
+    jar cf "${PXF_BASE}/lib/pxf-automation-test.jar" -C build/classes/java/main org/apache/cloudberry/pxf/automation/testplugin
     popd >/dev/null
     JAVA_HOME="${JAVA_BUILD}" "${PXF_HOME}/bin/pxf" restart >/dev/null || true
   fi
@@ -665,7 +665,7 @@ bench_test(){
 # Save test reports for a specific group to avoid overwriting
 save_test_reports() {
   local group="$1"
-  local surefire_dir="${REPO_ROOT}/automation/target/surefire-reports"
+  local test_results_dir="${REPO_ROOT}/automation/build/test-results/test"
   local logs_dir="${REPO_ROOT}/automation/automation_logs"
   local pxf_logs_dir="${PXF_BASE:-/home/gpadmin/pxf-base}/logs"
   local artifacts_dir="${REPO_ROOT}/automation/test_artifacts"
@@ -673,11 +673,11 @@ save_test_reports() {
 
   mkdir -p "$group_dir"
 
-  if [ -d "$surefire_dir" ] && [ "$(ls -A "$surefire_dir" 2>/dev/null)" ]; then
+  if [ -d "$test_results_dir" ] && [ "$(ls -A "$test_results_dir" 2>/dev/null)" ]; then
     echo "[run_tests] Saving $group test reports to $group_dir"
-    cp -r "$surefire_dir"/* "$group_dir/" 2>/dev/null || true
+    cp -r "$test_results_dir"/* "$group_dir/" 2>/dev/null || true
   else
-    echo "[run_tests] No surefire reports found for $group"
+    echo "[run_tests] No test reports found for $group"
   fi
 
   if [ -d "$logs_dir" ] && [ "$(ls -A "$logs_dir" 2>/dev/null)" ]; then
@@ -697,7 +697,7 @@ save_test_reports() {
   fi
 }
 
-# Generate test summary from surefire reports
+# Generate test summary from Gradle test reports
 generate_test_summary() {
   local artifacts_dir="${REPO_ROOT}/automation/test_artifacts"
   local summary_file="${artifacts_dir}/test_summary.json"
