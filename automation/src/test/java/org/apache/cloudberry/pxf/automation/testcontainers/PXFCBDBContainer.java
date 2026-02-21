@@ -1,5 +1,10 @@
 package org.apache.cloudberry.pxf.automation.testcontainers;
 
+import com.github.dockerjava.api.DockerClient;
+import com.github.dockerjava.api.async.ResultCallback;
+import com.github.dockerjava.api.command.ExecCreateCmdResponse;
+import com.github.dockerjava.api.model.Frame;
+import org.testcontainers.DockerClientFactory;
 import org.testcontainers.containers.BindMode;
 import org.testcontainers.containers.Container.ExecResult;
 import org.testcontainers.containers.GenericContainer;
@@ -9,6 +14,7 @@ import org.testcontainers.utility.MountableFile;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 
 /**
@@ -90,16 +96,39 @@ public class PXFCBDBContainer extends GenericContainer<PXFCBDBContainer> {
 
     private void runEntrypoint() throws IOException, InterruptedException {
         logger().info("Running entrypoint.sh inside container (this takes several minutes)...");
-        ExecResult result = execInContainer(
+        int exitCode = execWithLiveOutput(
                 "bash", "-l", "-c",
                 "cd /home/gpadmin/workspace/cloudberry-pxf/ci/docker/pxf-cbdb-dev/ubuntu "
                         + "&& ./script/entrypoint.sh 2>&1");
-        if (result.getExitCode() != 0) {
-            throw new RuntimeException(
-                    "entrypoint.sh failed (exit " + result.getExitCode() + "):\n"
-                            + result.getStdout() + "\n" + result.getStderr());
+        if (exitCode != 0) {
+            throw new RuntimeException("entrypoint.sh failed (exit " + exitCode + ")");
         }
         logger().info("entrypoint.sh completed successfully");
+    }
+
+    /**
+     * Runs a command inside the container, streaming stdout/stderr to
+     * {@code System.out} in real time. Returns the process exit code.
+     */
+    private int execWithLiveOutput(String... command) throws InterruptedException {
+        DockerClient client = DockerClientFactory.instance().client();
+        ExecCreateCmdResponse exec = client.execCreateCmd(getContainerId())
+                .withCmd(command)
+                .withAttachStdout(true)
+                .withAttachStderr(true)
+                .exec();
+
+        client.execStartCmd(exec.getId())
+                .exec(new ResultCallback.Adapter<Frame>() {
+                    @Override
+                    public void onNext(Frame frame) {
+                        System.out.print(new String(frame.getPayload(), StandardCharsets.UTF_8));
+                    }
+                })
+                .awaitCompletion();
+
+        Long exitCode = client.inspectExecCmd(exec.getId()).exec().getExitCodeLong();
+        return exitCode != null ? exitCode.intValue() : -1;
     }
 
     /**
