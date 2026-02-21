@@ -53,7 +53,10 @@ sudo chown -R gpadmin:gpadmin "$PXF_HOME"
 make all
 
 # Install PXF
-make install
+make -C external-table install
+make -C fdw install
+make -C cli install
+make -C server install-server
 
 # Set up PXF environment
 
