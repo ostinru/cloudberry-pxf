@@ -135,20 +135,42 @@ dependencies {
 }
 
 test {
+    // avro-tools:1.7.7 is a fat JAR that bundles old Hadoop 1.x classes.
+    // Move it to the end of the classpath so the correct hadoop-hdfs-client
+    // classes are found first by the classloader.
+    classpath = files(
+        classpath.files.findAll { !it.name.startsWith('avro-tools') },
+        classpath.files.findAll { it.name.startsWith('avro-tools') }
+    )
+
     useTestNG {
         def groups = System.getProperty('groups')
         if (groups) {
-            includeGroups groups.split(',') as List
+            includeGroups = groups.split(',') as Set
         }
         def excluded = System.getProperty('excludedGroups')
         if (excluded) {
-            excludeGroups excluded.split(',') as List
+            excludeGroups = excluded.split(',') as Set
         }
     }
 
     ignoreFailures = true
     maxHeapSize = '4096m'
     forkEvery = 1
+
+    // Generate jsystem.properties before tests run (jsystem framework needs it
+    // to locate SUT XML files; Maven used target/test-classes, Gradle uses build/)
+    doFirst {
+        def props = new Properties()
+        def propsFile = file('jsystem.properties')
+        if (propsFile.exists()) {
+            propsFile.withInputStream { props.load(it) }
+        }
+        props.setProperty('tests.dir', "${buildDir}/resources/main")
+        props.setProperty('sutFile', 'default.xml')
+        props.setProperty('sutClassName', 'jsystem.framework.sut.SutImpl')
+        propsFile.withOutputStream { props.store(it, null) }
+    }
 
     // Forward system properties from the Gradle JVM to the test JVM
     systemProperties System.properties.subMap([
