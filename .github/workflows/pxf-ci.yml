@@ -104,9 +104,14 @@ jobs:
       run: |
         cd cloudberry-pxf/ci/singlecluster
         docker build -t pxf/singlecluster:3 .
-        docker save pxf/singlecluster:3 > /tmp/singlecluster-image.tar
 
-    - name: Upload singlecluster image
+    - name: Build cbdb-dev image
+      run: |
+        cd cloudberry-pxf/ci/docker/pxf-cbdb-dev/ubuntu
+        docker build -t pxf/cbdb-dev:1 .
+        docker save pxf/cbdb-dev:1 > /tmp/singlecluster-image.tar
+
+    - name: Upload cbdb-dev image
       uses: actions/upload-artifact@v4
       with:
         name: singlecluster-image
@@ -173,13 +178,13 @@ jobs:
         name: cloudberry-source
         path: /tmp
 
-    - name: Download singlecluster image
+    - name: Download cbdb-dev image
       uses: actions/download-artifact@v4
       with:
         name: singlecluster-image
         path: /tmp
 
-    - name: Load singlecluster image
+    - name: Load cbdb-dev image
       run: |
         docker load < /tmp/singlecluster-image.tar
 

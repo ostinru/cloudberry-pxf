@@ -1,12 +1,16 @@
 package org.apache.cloudberry.pxf.automation.features.cloud;
 
+import org.apache.cloudberry.pxf.automation.BasePXFTest;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.cloudberry.pxf.automation.components.hdfs.Hdfs;
-import org.apache.cloudberry.pxf.automation.features.BaseFeature;
 import org.apache.cloudberry.pxf.automation.structures.tables.pxf.ReadableExternalTable;
-import org.apache.cloudberry.pxf.automation.utils.system.ProtocolEnum;
-import org.apache.cloudberry.pxf.automation.utils.system.ProtocolUtils;
+import org.apache.cloudberry.pxf.automation.testcontainers.CbdbApplication;
+import org.apache.cloudberry.pxf.automation.testcontainers.MinIOContainer;
+import org.apache.cloudberry.pxf.automation.testcontainers.PXFCBDBContainer;
+import org.apache.cloudberry.pxf.automation.testcontainers.RegressApplication;
+import org.testng.annotations.AfterClass;
+import org.testng.annotations.BeforeClass;
 import org.testng.annotations.Test;
 
 import java.net.URI;
@@ -15,13 +19,11 @@ import java.util.UUID;
 import static org.apache.cloudberry.pxf.automation.features.tpch.LineItem.LINEITEM_SCHEMA;
 
 /**
- * Functional S3 Select Test
+ * S3 Select tests driven by TestContainers (MinIO + CBDB/PXF).
  */
-public class S3SelectTest extends BaseFeature {
+public class S3SelectTest extends BasePXFTest {
 
     private static final String PROTOCOL_S3 = "s3a://";
-    private static final String S3_ENDPOINT =
-            System.getProperty("S3_ENDPOINT", System.getenv().getOrDefault("S3_ENDPOINT", "http://localhost:9000"));
 
     private static final String[] PXF_S3_SELECT_INVALID_COLS = {
             "invalid_orderkey       BIGINT",
@@ -42,9 +44,6 @@ public class S3SelectTest extends BaseFeature {
             "invalid_comment        VARCHAR(44)"
     };
 
-    private Hdfs s3Server;
-    private String s3Path;
-
     private static final String sampleCsvFile = "sample.csv";
     private static final String sampleGzippedCsvFile = "sample.csv.gz";
     private static final String sampleBzip2CsvFile = "sample.csv.bz2";
@@ -53,30 +52,51 @@ public class S3SelectTest extends BaseFeature {
     private static final String sampleParquetSnappyFile = "sample.snappy.parquet";
     private static final String sampleParquetGzipFile = "sample.gz.parquet";
 
-    /**
-     * Prepare all server configurations and components
-     */
-    @Override
-    public void beforeClass() throws Exception {
-        if (ProtocolUtils.getProtocol() == ProtocolEnum.HDFS) {
-            return;
-        }
-        // Initialize server objects
-        s3Path = String.format("gpdb-ud-scratch/tmp/pxf_automation_data/%s/s3select/", UUID.randomUUID().toString());
-        Configuration s3Configuration = new Configuration();
-        s3Configuration.set("fs.s3a.access.key", ProtocolUtils.getAccess());
-        s3Configuration.set("fs.s3a.secret.key", ProtocolUtils.getSecret());
-        applyS3Defaults(s3Configuration);
+    private static final String localDataResourcesFolder = "src/test/resources/data";
 
-        FileSystem fs2 = FileSystem.get(URI.create(PROTOCOL_S3 + s3Path + fileName), s3Configuration);
-        s3Server = new Hdfs(fs2, s3Configuration, true);
+    private PXFCBDBContainer container;
+    private MinIOContainer minio;
+    private CbdbApplication cbdb;
+    private RegressApplication regress;
+    private Hdfs s3Server;
+    private String s3Path;
+    private ReadableExternalTable exTable;
+
+    @BeforeClass(alwaysRun = true)
+    public void setup() throws Exception {
+        container = PXFCBDBContainer.getInstance();
+        minio = MinIOContainer.getInstance(PXFCBDBContainer.getSharedNetwork());
+
+        container.configureS3Servers(minio);
+
+        cbdb = new CbdbApplication(container);
+        cbdb.connect();
+        cbdb.createExtension("pxf");
+
+        regress = new RegressApplication(container);
+
+        s3Path = String.format("gpdb-ud-scratch/tmp/pxf_automation_data/%s/s3select/", UUID.randomUUID());
+        Configuration s3Config = new Configuration();
+        s3Config.set("fs.s3a.access.key", minio.getAccessKey());
+        s3Config.set("fs.s3a.secret.key", minio.getSecretKey());
+        s3Config.set("fs.s3a.endpoint", minio.getHostEndpoint());
+        s3Config.set("fs.s3a.path.style.access", "true");
+        s3Config.set("fs.s3a.connection.ssl.enabled", "false");
+        s3Config.set("fs.s3a.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem");
+        s3Config.set("fs.s3a.aws.credentials.provider",
+                "org.apache.hadoop.fs.s3a.SimpleAWSCredentialsProvider");
+
+        FileSystem fs = FileSystem.get(URI.create(PROTOCOL_S3 + s3Path), s3Config);
+        s3Server = new Hdfs(fs, s3Config, true);
     }
 
-    @Override
-    protected void afterClass() throws Exception {
-        super.afterClass();
+    @AfterClass(alwaysRun = true)
+    public void teardown() throws Exception {
         if (s3Server != null) {
             s3Server.removeDirectory(PROTOCOL_S3 + s3Path);
+        }
+        if (cbdb != null) {
+            cbdb.close();
         }
     }
 
@@ -161,42 +181,18 @@ public class S3SelectTest extends BaseFeature {
     }
 
     private void runTestScenario(
-            String name,
-            String server,
-            String format,
-            String s3Path,
-            String srcPath,
-            String filename,
-            String delimiter,
-            String[] userParameters)
-            throws Exception {
+            String name, String server, String format, String s3Path,
+            String srcPath, String filename, String delimiter,
+            String[] userParameters) throws Exception {
 
-        runTestScenario("",
-                name,
-                server,
-                format,
-                s3Path,
-                srcPath,
-                filename,
-                "/" + s3Path + filename,
-                delimiter,
-                userParameters,
-                LINEITEM_SCHEMA);
+        runTestScenario("", name, server, format, s3Path, srcPath, filename,
+                "/" + s3Path + filename, delimiter, userParameters, LINEITEM_SCHEMA);
     }
 
     private void runTestScenario(
-            String qualifier,
-            String name,
-            String server,
-            String format,
-            String s3Path,
-            String srcPath,
-            String filename,
-            String locationPath,
-            String delimiter,
-            String[] userParameters,
-            String[] fields)
-            throws Exception {
+            String qualifier, String name, String server, String format,
+            String s3Path, String srcPath, String filename, String locationPath,
+            String delimiter, String[] userParameters, String[] fields) throws Exception {
 
         String tableName = "s3select_" + name;
         String serverParam = (server == null) ? null : "server=" + server;
@@ -212,17 +208,8 @@ public class S3SelectTest extends BaseFeature {
         if (userParameters != null)
             exTable.setUserParameters(userParameters);
 
-        gpdb.createTableAndVerify(exTable);
+        cbdb.createTableAndVerify(exTable);
 
-        runSqlTest(String.format("features/s3_select/%s%s", qualifier, name));
-    }
-
-    private void applyS3Defaults(Configuration configuration) {
-        configuration.set("fs.s3a.endpoint", S3_ENDPOINT);
-        configuration.set("fs.s3a.path.style.access", "true");
-        configuration.set("fs.s3a.connection.ssl.enabled", "false");
-        configuration.set("fs.s3a.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem");
-        configuration.set("fs.s3a.aws.credentials.provider",
-                "org.apache.hadoop.fs.s3a.SimpleAWSCredentialsProvider");
+        regress.runSqlTest(String.format("features/s3_select/%s%s", qualifier, name));
     }
 }

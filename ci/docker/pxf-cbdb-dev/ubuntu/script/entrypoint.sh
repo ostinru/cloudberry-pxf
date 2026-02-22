@@ -70,9 +70,8 @@ EOF'
 
 relax_pg_hba() {
   local pg_hba=/home/gpadmin/workspace/cloudberry/gpAux/gpdemo/datadirs/qddir/demoDataDir-1/pg_hba.conf
-  if [ -f "${pg_hba}" ] && ! grep -q "127.0.0.1/32 trust" "${pg_hba}"; then
+  if [ -f "${pg_hba}" ] && ! grep -q "0.0.0.0/0 trust" "${pg_hba}"; then
     cat >> "${pg_hba}" <<'EOF'
-host all all 127.0.0.1/32 trust
 host all all ::1/128 trust
 host all all 0.0.0.0/0 trust
 EOF
@@ -204,9 +203,22 @@ build_cloudberry() {
   "${PXF_SCRIPTS}/build_cloudberrry.sh"
 }
 
+create_demo_cluster() {
+  log "creating demo cluster"
+  rm -rf /home/gpadmin/workspace/cloudberry/gpAux/gpdemo/datadirs
+  rm -f /tmp/.s.PGSQL.700*
+  source /usr/local/cloudberry-db/cloudberry-env.sh
+  make create-demo-cluster -C ~/workspace/cloudberry
+  source ~/workspace/cloudberry/gpAux/gpdemo/gpdemo-env.sh
+  psql -P pager=off template1 -c 'SELECT * from gp_segment_configuration'
+  psql template1 -c 'SELECT version()'
+}
+
 setup_cloudberry() {
-  # Auto-detect: if deb exists, install it; otherwise build from source
-  if [ -f /tmp/apache-cloudberry-db*.deb ]; then
+  if [ -x /usr/local/cloudberry-db/bin/postgres ]; then
+    log "Cloudberry already installed (pre-built image), creating demo cluster only"
+    create_demo_cluster
+  elif [ -f /tmp/apache-cloudberry-db*.deb ]; then
     log "detected .deb package, using fast install"
     install_cloudberry_from_deb
   elif [ "${CLOUDBERRY_USE_DEB:-}" = "true" ]; then
@@ -296,52 +308,6 @@ EOF
         </plugins>
     </profile>
 </profiles>
-EOF
-
-  # Configure S3 settings
-  mkdir -p "$PXF_BASE/servers/s3" "$PXF_HOME/servers/s3"
-  
-  for s3_site in "$PXF_BASE/servers/s3/s3-site.xml" "$PXF_BASE/servers/default/s3-site.xml" "$PXF_HOME/servers/s3/s3-site.xml"; do
-    mkdir -p "$(dirname "$s3_site")"
-    cat > "$s3_site" <<'EOF'
-<?xml version="1.0" encoding="UTF-8"?>
-<configuration>
-    <property>
-        <name>fs.s3a.endpoint</name>
-        <value>http://localhost:9000</value>
-    </property>
-    <property>
-        <name>fs.s3a.access.key</name>
-        <value>admin</value>
-    </property>
-    <property>
-        <name>fs.s3a.secret.key</name>
-        <value>password</value>
-    </property>
-    <property>
-        <name>fs.s3a.path.style.access</name>
-        <value>true</value>
-    </property>
-    <property>
-        <name>fs.s3a.connection.ssl.enabled</name>
-        <value>false</value>
-    </property>
-    <property>
-        <name>fs.s3a.impl</name>
-        <value>org.apache.hadoop.fs.s3a.S3AFileSystem</value>
-    </property>
-    <property>
-        <name>fs.s3a.aws.credentials.provider</name>
-        <value>org.apache.hadoop.fs.s3a.SimpleAWSCredentialsProvider</value>
-    </property>
-</configuration>
-EOF
-  done
-  mkdir -p /home/gpadmin/.aws/
-  cat > "/home/gpadmin/.aws/credentials" <<'EOF'
-[default]
-aws_access_key_id = admin
-aws_secret_access_key = password
 EOF
 
 }
@@ -467,11 +433,6 @@ start_hive_services() {
   done
 }
 
-deploy_minio() {
-  log "deploying MinIO"
-  bash "${PXF_SCRIPTS}/start_minio.bash"
-}
-
 main() {
   detect_java_paths
   setup_locale_and_packages
@@ -481,7 +442,6 @@ main() {
   build_pxf
   configure_pxf
   prepare_hadoop_stack
-  deploy_minio
   health_check
   log "entrypoint finished; environment ready for tests"
 }

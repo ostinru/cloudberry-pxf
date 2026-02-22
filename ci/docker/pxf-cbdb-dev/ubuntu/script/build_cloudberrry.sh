@@ -125,10 +125,3 @@ make install -C ~/workspace/cloudberry/contrib
 /usr/local/cloudberry-db/bin/postgres --gp-version
 /usr/local/cloudberry-db/bin/postgres --version
 ldd /usr/local/cloudberry-db/bin/postgres
-
-# Set up a Cloudberry demo cluster
-source /usr/local/cloudberry-db/cloudberry-env.sh
-make create-demo-cluster -C ~/workspace/cloudberry
-source ~/workspace/cloudberry/gpAux/gpdemo/gpdemo-env.sh
-psql -P pager=off template1 -c 'SELECT * from gp_segment_configuration'
-psql template1 -c 'SELECT version()'

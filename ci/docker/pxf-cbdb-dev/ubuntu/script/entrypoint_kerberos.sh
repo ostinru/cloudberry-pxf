@@ -291,11 +291,6 @@ setup_ssl_material() {
   sudo chown gpadmin:gpadmin "${SSL_KEYSTORE}" "${SSL_TRUSTSTORE}"
 }
 
-deploy_minio() {
-  log "deploying MinIO (for S3 tests)"
-  bash "${PXF_SCRIPTS}/start_minio.bash"
-}
-
 configure_pxf_s3() {
   log "configuring S3 server definitions for PXF"
   local servers_base=${PXF_BASE:-/home/gpadmin/pxf-base}
@@ -1260,7 +1255,6 @@ main() {
   configure_pxf
   configure_pxf_servers
   configure_pxf_s3
-  deploy_minio
   configure_pg_hba
   start_hdfs_secure
   start_hive_secure

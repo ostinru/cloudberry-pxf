@@ -6,31 +6,37 @@ import com.github.dockerjava.api.command.ExecCreateCmdResponse;
 import com.github.dockerjava.api.model.Frame;
 import org.testcontainers.DockerClientFactory;
 import org.testcontainers.containers.BindMode;
-import org.testcontainers.containers.Container.ExecResult;
 import org.testcontainers.containers.GenericContainer;
+import org.testcontainers.containers.Network;
 import org.testcontainers.containers.wait.strategy.AbstractWaitStrategy;
 import org.testcontainers.utility.DockerImageName;
 import org.testcontainers.utility.MountableFile;
 
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 
 /**
- * TestContainers wrapper around the {@code pxf/singlecluster:3} Docker image.
+ * TestContainers wrapper around the {@code pxf/cbdb-dev:1} Docker image.
  * Exposes Cloudberry DB (port 7000) and PXF (port 5888), runs the full
- * entrypoint that installs Cloudberry, builds PXF, and starts Hadoop/Hive/HBase/MinIO.
+ * entrypoint that installs Cloudberry, builds PXF, and starts Hadoop/Hive/HBase.
  * <p>
  * Use {@link #getInstance()} to obtain a singleton that is started once per JVM.
+ * The container shares a Docker {@link Network} with other test containers
+ * (e.g. {@link MinIOContainer}) so they can communicate by hostname.
  */
 public class PXFCBDBContainer extends GenericContainer<PXFCBDBContainer> {
 
-    private static final String IMAGE_NAME = "pxf/singlecluster:3";
+    private static final String IMAGE_NAME = "pxf/cbdb-dev:1";
+    private static final String SINGLECLUSTER_IMAGE = "pxf/singlecluster:3";
     public static final int CBDB_PORT = 7000;
     public static final int PXF_PORT = 5888;
     public static final String CBDB_USER = "gpadmin";
 
+    private static final Network network = Network.newNetwork();
     private static PXFCBDBContainer instance;
 
     private final String repoPath;
@@ -46,6 +52,8 @@ public class PXFCBDBContainer extends GenericContainer<PXFCBDBContainer> {
     }
 
     private void init() {
+        withNetwork(network);
+        withNetworkAliases("mdw");
         withExposedPorts(CBDB_PORT, PXF_PORT);
         withFileSystemBind(repoPath, "/home/gpadmin/workspace/cloudberry-pxf", BindMode.READ_WRITE);
         withFileSystemBind(cloudberryPath, "/home/gpadmin/workspace/cloudberry", BindMode.READ_WRITE);
@@ -76,12 +84,15 @@ public class PXFCBDBContainer extends GenericContainer<PXFCBDBContainer> {
             String cbdb = resolveProperty("pxf.test.cloudberry.path", findCloudberryPath(repo));
             String deb = resolveProperty("pxf.test.deb.path", findDebPath());
 
+            ensureImageExists(repo);
+
             instance = new PXFCBDBContainer(repo, cbdb, deb);
             instance.start();
             Runtime.getRuntime().addShutdownHook(new Thread(instance::stop));
 
             try {
                 instance.runEntrypoint();
+                instance.createTestDatabases();
                 instance.configureJdbcServers();
             } catch (Exception e) {
                 instance.stop();
@@ -93,6 +104,24 @@ public class PXFCBDBContainer extends GenericContainer<PXFCBDBContainer> {
     }
 
     // ---- environment initialization ----------------------------------------
+
+    private void createTestDatabases() throws IOException, InterruptedException {
+        logger().info("Creating test databases...");
+        String script = String.join("\n",
+                "set -e",
+                "source /usr/local/cloudberry-db/cloudberry-env.sh",
+                "export COORDINATOR_DATA_DIRECTORY=/home/gpadmin/workspace/cloudberry/gpAux/gpdemo/datadirs/qddir/demoDataDir-1",
+                "createdb -p " + CBDB_PORT + " pxfautomation || echo 'pxfautomation may already exist'",
+                "createdb -p " + CBDB_PORT + " -T template0 -E UTF8 pxfautomation_encoding || echo 'pxfautomation_encoding may already exist'",
+                "psql -p " + CBDB_PORT + " -d pxfautomation -c 'SELECT 1'");
+        ExecResult result = execInContainer("bash", "-l", "-c", script);
+        System.out.println("[createTestDatabases] stdout: " + result.getStdout());
+        System.out.println("[createTestDatabases] stderr: " + result.getStderr());
+        if (result.getExitCode() != 0) {
+            throw new RuntimeException("Failed to create test databases (exit " + result.getExitCode() + ")");
+        }
+        logger().info("Test databases created");
+    }
 
     private void runEntrypoint() throws IOException, InterruptedException {
         logger().info("Running entrypoint.sh inside container (this takes several minutes)...");
@@ -179,7 +208,98 @@ public class PXFCBDBContainer extends GenericContainer<PXFCBDBContainer> {
         logger().info("JDBC servers configured and PXF restarted");
     }
 
+    /**
+     * Configures PXF S3 servers ({@code s3}, {@code s3-invalid}, and {@code default})
+     * to point at a MinIO container reachable via the shared Docker network.
+     * Removes HDFS/Hive/HBase configs from the default server so that S3 tests
+     * that rely on the default server path work correctly, then restarts PXF.
+     */
+    public void configureS3Servers(MinIOContainer minio) throws IOException, InterruptedException {
+        String endpoint = minio.getInternalEndpoint();
+        String accessKey = minio.getAccessKey();
+        String secretKey = minio.getSecretKey();
+
+        String script = String.join("\n",
+                "set -e",
+                "source /home/gpadmin/workspace/cloudberry-pxf/ci/docker/pxf-cbdb-dev/ubuntu/script/pxf-env.sh",
+                "PXF_BASE_SERVERS=${PXF_BASE}/servers",
+                "",
+                "# --- s3 server ---",
+                "mkdir -p ${PXF_BASE_SERVERS}/s3",
+                "cat > ${PXF_BASE_SERVERS}/s3/s3-site.xml <<'S3SITEEOF'",
+                "<?xml version=\"1.0\" encoding=\"UTF-8\"?>",
+                "<configuration>",
+                "  <property><name>fs.s3a.endpoint</name><value>" + endpoint + "</value></property>",
+                "  <property><name>fs.s3a.access.key</name><value>" + accessKey + "</value></property>",
+                "  <property><name>fs.s3a.secret.key</name><value>" + secretKey + "</value></property>",
+                "  <property><name>fs.s3a.path.style.access</name><value>true</value></property>",
+                "  <property><name>fs.s3a.connection.ssl.enabled</name><value>false</value></property>",
+                "  <property><name>fs.s3a.impl</name><value>org.apache.hadoop.fs.s3a.S3AFileSystem</value></property>",
+                "  <property><name>fs.s3a.aws.credentials.provider</name><value>org.apache.hadoop.fs.s3a.SimpleAWSCredentialsProvider</value></property>",
+                "</configuration>",
+                "S3SITEEOF",
+                "",
+                "cat > ${PXF_BASE_SERVERS}/s3/core-site.xml <<'CORESITEEOF'",
+                "<?xml version=\"1.0\" encoding=\"UTF-8\"?>",
+                "<configuration>",
+                "  <property><name>fs.defaultFS</name><value>s3a://</value></property>",
+                "  <property><name>fs.s3a.endpoint</name><value>" + endpoint + "</value></property>",
+                "  <property><name>fs.s3a.access.key</name><value>" + accessKey + "</value></property>",
+                "  <property><name>fs.s3a.secret.key</name><value>" + secretKey + "</value></property>",
+                "  <property><name>fs.s3a.path.style.access</name><value>true</value></property>",
+                "  <property><name>fs.s3a.connection.ssl.enabled</name><value>false</value></property>",
+                "  <property><name>fs.s3a.impl</name><value>org.apache.hadoop.fs.s3a.S3AFileSystem</value></property>",
+                "  <property><name>fs.s3a.aws.credentials.provider</name><value>org.apache.hadoop.fs.s3a.SimpleAWSCredentialsProvider</value></property>",
+                "</configuration>",
+                "CORESITEEOF",
+                "",
+                "# --- default server (S3 config) ---",
+                "cp ${PXF_BASE_SERVERS}/s3/s3-site.xml ${PXF_BASE_SERVERS}/default/s3-site.xml",
+                "cp ${PXF_BASE_SERVERS}/s3/core-site.xml ${PXF_BASE_SERVERS}/default/core-site.xml",
+                "",
+                "# --- s3-invalid server (bogus credentials) ---",
+                "mkdir -p ${PXF_BASE_SERVERS}/s3-invalid",
+                "cat > ${PXF_BASE_SERVERS}/s3-invalid/s3-site.xml <<'INVALIDEOF'",
+                "<?xml version=\"1.0\" encoding=\"UTF-8\"?>",
+                "<configuration>",
+                "  <property><name>fs.s3a.access.key</name><value>INVALID_KEY</value></property>",
+                "  <property><name>fs.s3a.secret.key</name><value>INVALID_SECRET</value></property>",
+                "  <property><name>fs.s3a.fast.upload</name><value>true</value></property>",
+                "</configuration>",
+                "INVALIDEOF",
+                "",
+                "# --- AWS credentials file ---",
+                "mkdir -p /home/gpadmin/.aws",
+                "cat > /home/gpadmin/.aws/credentials <<'AWSEOF'",
+                "[default]",
+                "aws_access_key_id = " + accessKey,
+                "aws_secret_access_key = " + secretKey,
+                "AWSEOF",
+                "",
+                "# Remove HDFS/Hive/HBase configs from default so it is treated as S3-only",
+                "for f in hdfs-site.xml mapred-site.xml yarn-site.xml hive-site.xml hbase-site.xml; do",
+                "  [ -f \"${PXF_BASE_SERVERS}/default/${f}\" ] && rm -f \"${PXF_BASE_SERVERS}/default/${f}\"",
+                "done",
+                "",
+                "$PXF_HOME/bin/pxf restart"
+        );
+
+        logger().info("Configuring PXF S3 servers (endpoint={})...", endpoint);
+        ExecResult result = execInContainer("bash", "-l", "-c", script);
+        if (result.getExitCode() != 0) {
+            throw new RuntimeException(
+                    "S3 server configuration failed (exit " + result.getExitCode() + "):\n"
+                            + result.getStdout() + "\n" + result.getStderr());
+        }
+        logger().info("PXF S3 servers configured and PXF restarted");
+    }
+
     // ---- public accessors --------------------------------------------------
+
+    /** The shared Docker network used by all test containers. */
+    public static Network getSharedNetwork() {
+        return network;
+    }
 
     /** JDBC URL reachable from the host (uses the mapped port). */
     public String getCbdbJdbcUrl() {
@@ -208,6 +328,47 @@ public class PXFCBDBContainer extends GenericContainer<PXFCBDBContainer> {
     /** PXF port as seen from inside the container. */
     public int getPxfInternalPort() {
         return PXF_PORT;
+    }
+
+    // ---- Docker image auto-build --------------------------------------------
+
+    /**
+     * Always runs {@code docker build} for all images so that any Dockerfile
+     * or script changes are picked up. Docker layer cache makes this near-instant
+     * when nothing has changed.
+     */
+    private static void ensureImageExists(String repoPath) {
+        dockerBuild(new File(repoPath, "ci/singlecluster"), SINGLECLUSTER_IMAGE);
+        dockerBuild(new File(repoPath, "ci/docker/pxf-cbdb-dev/ubuntu"), IMAGE_NAME);
+    }
+
+    private static void dockerBuild(File contextDir, String tag) {
+        System.out.println("=== docker build -t " + tag + " " + contextDir + " ===");
+        try {
+            ProcessBuilder pb = new ProcessBuilder(
+                    "docker", "build",
+                    "--cache-from", tag,
+                    "-t", tag, ".")
+                    .directory(contextDir)
+                    .redirectErrorStream(true);
+            Process process = pb.start();
+            try (BufferedReader reader = new BufferedReader(
+                    new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8))) {
+                String line;
+                while ((line = reader.readLine()) != null) {
+                    System.out.println(line);
+                }
+            }
+            int exitCode = process.waitFor();
+            if (exitCode != 0) {
+                throw new RuntimeException(
+                        "docker build failed for '" + tag + "' (exit " + exitCode + "). "
+                                + "Context dir: " + contextDir.getAbsolutePath());
+            }
+            System.out.println("=== Image '" + tag + "' built successfully ===");
+        } catch (IOException | InterruptedException e) {
+            throw new RuntimeException("Failed to build Docker image '" + tag + "'", e);
+        }
     }
 
     // ---- path resolution helpers -------------------------------------------

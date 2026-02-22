@@ -207,19 +207,21 @@ public class CbdbApplication implements AutoCloseable {
             params.append("CSV ");
         }
         if (delimiter != null) {
-            String delim = delimiter;
-            if (delim.startsWith("E'")) {
-                delim = delim.substring(2, delim.length() - 1);
-            }
-            params.append("DELIMITER '").append(delim).append("' ");
+            params.append("DELIMITER E'").append(stripEQuote(delimiter)).append("' ");
         }
         if (nullChar != null) {
-            String nc = nullChar;
-            if (nc.startsWith("E'")) {
-                nc = nc.substring(2, nc.length() - 1);
-            }
-            params.append("NULL '").append(nc).append("' ");
+            params.append("NULL E'").append(stripEQuote(nullChar)).append("' ");
         }
         return params.toString().trim();
+    }
+
+    private static String stripEQuote(String value) {
+        if (value.startsWith("E'") && value.endsWith("'")) {
+            return value.substring(2, value.length() - 1);
+        }
+        if (value.startsWith("'") && value.endsWith("'")) {
+            return value.substring(1, value.length() - 1);
+        }
+        return value;
     }
 }

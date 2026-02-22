@@ -4,6 +4,7 @@ import java.io.File;
 
 import annotations.FailsWithFDW;
 import annotations.WorksWithFDW;
+import org.apache.cloudberry.pxf.automation.BasePXFTest;
 import org.apache.cloudberry.pxf.automation.structures.tables.basic.Table;
 import org.apache.cloudberry.pxf.automation.structures.tables.pxf.ExternalTable;
 import org.apache.cloudberry.pxf.automation.structures.tables.utils.TableFactory;
@@ -17,7 +18,7 @@ import org.testng.annotations.Test;
 import org.apache.cloudberry.pxf.automation.enums.EnumPartitionType;
 
 @WorksWithFDW
-public class JdbcTest {
+public class JdbcTest extends BasePXFTest {
 
     private static final String POSTGRES_DRIVER_CLASS = "org.postgresql.Driver";
     private static final String CBDB_PXF_AUTOMATION_DB_JDBC = "jdbc:postgresql://";
