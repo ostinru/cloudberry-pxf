@@ -75,6 +75,8 @@ public class HBase extends BaseSystemObject implements IDbFunctionality {
             config.addResource(new Path(getHbaseRoot() + "/conf/hbase-site.xml"));
         } else {
             config.set("hbase.rootdir", "hdfs://" + host + ":8020/hbase");
+            config.set("zookeeper.recovery.retry", "100");  //  Zookeeper start time can be significant
+            config.set("zookeeper.recovery.retry.intervalmill", "500");
         }
 
         HBaseAdmin.checkHBaseAvailable(config);
