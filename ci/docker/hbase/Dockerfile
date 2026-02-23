@@ -13,11 +13,16 @@ RUN apt-get update && \
       openjdk-11-jdk-headless curl ca-certificates && \
     rm -rf /var/lib/apt/lists/*
 
-RUN mkdir -p $HBASE_ROOT && \
-    curl -fSL "$HBASE_URL" -o hbase.tar.gz && \
-    echo "$HBASE_SHA512 hbase.tar.gz" | sha512sum -c && \
-    tar xvf hbase.tar.gz -C $HBASE_ROOT --strip-components 1 --exclude="docs/*" --exclude="lib/*-tests.jar" --exclude="lib/shaded-clients" && \
-    rm hbase.tar.gz
+RUN mkdir -p ${HBASE_HOME} && \
+    curl -fsSL \
+      "https://archive.apache.org/dist/hbase/${HBASE_VERSION}/hbase-${HBASE_VERSION}-bin.tar.gz" \
+      -o /tmp/hbase.tar.gz && \
+    echo "${HBASE_SHA512}  /tmp/hbase.tar.gz" | sha512sum -c && \
+    tar xzf /tmp/hbase.tar.gz -C ${HBASE_HOME} --strip-components=1 \
+      --exclude='docs/*' \
+      --exclude='lib/*-tests.jar' \
+      --exclude='lib/shaded-clients' && \
+    rm /tmp/hbase.tar.gz
 
 COPY hbase-site.xml ${HBASE_HOME}/conf/hbase-site.xml
 

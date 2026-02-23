@@ -1,7 +1,6 @@
 package org.apache.cloudberry.pxf.automation.components.hbase;
 
 import java.io.IOException;
-import java.security.Permission;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,7 +22,6 @@ import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
 import org.apache.hadoop.hbase.client.TableDescriptorBuilder;
-import org.apache.hadoop.hbase.mapreduce.ImportTsv;
 import org.apache.hadoop.hbase.security.access.Permission.Action;
 import org.apache.hadoop.hbase.util.Bytes;
 
@@ -204,38 +202,30 @@ public class HBase extends BaseSystemObject implements IDbFunctionality {
         ReportUtils.startLevel(report, getClass(),
                 "Load Bulk from " + inputPath + " to Table: " + table.getName());
 
-        List<String> argsList = new ArrayList<>();
-        StringBuilder sb = new StringBuilder("-Dimporttsv.columns=HBASE_ROW_KEY,");
-        for (int i = 0; i < cols.length; i++) {
-            sb.append(cols[i]);
-            if (i != cols.length - 1) sb.append(",");
-        }
-        argsList.add(sb.toString());
-        argsList.add(table.getName());
-        argsList.add("/" + inputPath);
+        org.apache.hadoop.hbase.client.Table hTable =
+                connection.getTable(TableName.valueOf(table.getName()));
 
-        try {
-            forbidSystemExitCall();
-            ImportTsv.main(argsList.toArray(new String[0]));
-        } catch (ExitTrappedException e) {
-            System.out.println("Prevented System.exit(0)");
-        }
-        ReportUtils.stopLevel(report);
-    }
-
-    private static class ExitTrappedException extends SecurityException {
-        private static final long serialVersionUID = 1L;
-    }
-
-    private static void forbidSystemExitCall() {
-        System.setSecurityManager(new SecurityManager() {
-            @Override
-            public void checkPermission(Permission permission) {
-                if ("exitVM.0".equals(permission.getName())) {
-                    throw new ExitTrappedException();
+        org.apache.hadoop.fs.FileSystem fs = org.apache.hadoop.fs.FileSystem.get(config);
+        try (java.io.BufferedReader reader = new java.io.BufferedReader(
+                new java.io.InputStreamReader(fs.open(new Path("/" + inputPath))))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                String[] parts = line.split("\t", -1);
+                if (parts.length < 1) continue;
+                org.apache.hadoop.hbase.client.Put put =
+                        new org.apache.hadoop.hbase.client.Put(Bytes.toBytes(parts[0]));
+                for (int i = 0; i < cols.length && i + 1 < parts.length; i++) {
+                    String[] cfq = cols[i].split(":", 2);
+                    if (cfq.length == 2) {
+                        put.addColumn(Bytes.toBytes(cfq[0]), Bytes.toBytes(cfq[1]),
+                                Bytes.toBytes(parts[i + 1]));
+                    }
                 }
+                hTable.put(put);
             }
-        });
+        }
+        hTable.close();
+        ReportUtils.stopLevel(report);
     }
 
     @Override
