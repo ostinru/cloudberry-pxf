@@ -13,7 +13,7 @@ RUN sudo apt-get update && \
     sudo apt-get install -y --no-install-recommends \
       openjdk-8-jdk-headless \
       openjdk-11-jdk-headless \
-      curl ca-certificates git && \
+      curl ca-certificates git unzip && \
     sudo rm -rf /var/lib/apt/lists/*
 
 # Env vars that scripts expect
@@ -36,10 +36,20 @@ ARG CLOUDBERRY_BRANCH=main
 RUN git clone --depth 1 -b ${CLOUDBERRY_BRANCH} \
       ${CLOUDBERRY_REPO} /home/gpadmin/workspace/cloudberry
 
-# execute random command to bake in gradle
-RUN sudo -u gpadmin bash -lc "cd /home/gpadmin/workspace/cloudberry-pxf/server && ./gradlew javaToolchains"
-
 # Copy and run the build script (without demo cluster creation)
 COPY script/build_cloudberrry.sh /tmp/build_cloudberrry.sh
 ENV SKIP_DEMO_CLUSTER=true
 RUN bash /tmp/build_cloudberrry.sh
+
+
+# Install Gradle and warm wrapper cache (it will download GRADLE_VERSION again)
+# (version must match server/gradle/wrapper/gradle-wrapper.properties)
+ARG GRADLE_VERSION=7.6
+RUN curl -fsSL "https://services.gradle.org/distributions/gradle-${GRADLE_VERSION}-bin.zip" \
+      -o /tmp/gradle.zip && \
+    sudo unzip -q /tmp/gradle.zip -d /opt && \
+    sudo ln -s "/opt/gradle-${GRADLE_VERSION}/bin/gradle" /usr/local/bin/gradle && \
+    rm /tmp/gradle.zip
+RUN cd /tmp && gradle init && gradle wrapper --gradle-version ${GRADLE_VERSION} && ./gradlew javaToolchains
+RUN rm -rf /tmp/gradle /tmp/gradlew /tmp/gradlew.bat /tmp/.gradle
+ENV GRADLE_HOME="/opt/gradle-${GRADLE_VERSION}"
