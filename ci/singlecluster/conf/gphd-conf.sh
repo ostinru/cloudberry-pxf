@@ -27,12 +27,6 @@ export SLAVES=${SLAVES:-1}
 # Automatically start HBase during GPHD startup
 export START_HBASE=true
 
-# Automatically start Stargate during HBase startup
-export START_STARGATE=false
-
-# HBase REST service (Stargate) port
-export STARGATE_PORT=60009
-
 # Automatically start MapReduce
 export START_YARN=true
 
