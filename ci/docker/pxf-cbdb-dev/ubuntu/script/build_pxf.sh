@@ -9,7 +9,7 @@ source /usr/local/cloudberry-db/cloudberry-env.sh
 export PATH=$GPHOME/bin:$PATH
 
 sudo apt update
-sudo apt install -y openjdk-11-jdk
+sudo apt install -y openjdk-11-jdk-headless
 
 cd /home/gpadmin/workspace/cloudberry-pxf
 
@@ -48,9 +48,6 @@ mkdir -p $GOPATH
 export PXF_HOME=/usr/local/pxf
 sudo mkdir -p "$PXF_HOME"
 sudo chown -R gpadmin:gpadmin "$PXF_HOME"
-
-# Build all PXF components
-make all
 
 # Install PXF
 make -C external-table install
