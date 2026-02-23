@@ -13,7 +13,6 @@ source "${PXF_SCRIPTS}/utils.sh"
 HADOOP_ROOT=${GPHD_ROOT}/hadoop
 HIVE_ROOT=${GPHD_ROOT}/hive
 HBASE_ROOT=${GPHD_ROOT}/hbase
-ZOOKEEPER_ROOT=${GPHD_ROOT}/zookeeper
 
 JAVA_11_ARM=/usr/lib/jvm/java-11-openjdk-arm64
 JAVA_11_AMD=/usr/lib/jvm/java-11-openjdk-amd64
@@ -372,9 +371,6 @@ prepare_hadoop_stack() {
   fi
   if ! ${GPHD_ROOT}/bin/start-gphd.sh; then
     log "start-gphd.sh returned non-zero (services may already be running), continue"
-  fi
-  if ! ${GPHD_ROOT}/bin/start-zookeeper.sh; then
-    log "start-zookeeper.sh returned non-zero (may already be running)"
   fi
   # ensure HBase is up
   if ! ${GPHD_ROOT}/bin/start-hbase.sh; then
