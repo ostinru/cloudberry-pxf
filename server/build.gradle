@@ -212,8 +212,9 @@ configure(javaProjects) {
                 entry("avro")
                 entry("avro-mapred")
             }
-            // Zstd support for Avro
+            // Compression support for Avro
             dependency("com.github.luben:zstd-jni:1.5.7-6")
+            dependency("at.yawk.lz4:lz4-java:1.10.3")
 
             // Jackson 1.x dependencies
             dependencySet(group:"org.codehaus.jackson", version:"1.9.13") {
