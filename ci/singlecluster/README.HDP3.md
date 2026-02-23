@@ -6,7 +6,7 @@ It contains the following versions:
 
 - Hadoop 3.3.6
 - Hive 3.1.3
-- HBase 2.3.7 (standalone mode, with embeded ZooKeeper)
+- HBase 2.3.7
 - Tez 0.9.2
 
 This version of Single cluster requires users to make some manual changes to the configuration files once the tarball has been unpacked (see Initialization steps below).
@@ -51,7 +51,7 @@ Usage
   - `$GPHD_ROOT/bin/start-hdfs.sh`
 - Start PXF only (Install pxf first to make this work. [See Install PXF session here](https://cwiki.apache.org/confluence/display/HAWQ/PXF+Build+and+Install))
   - `$GPHD_ROOT/bin/start-pxf.sh`
-- Start HBase only (standalone, no external dependencies)
+- Start HBase only (HBase master + HBase region-server + ZooKeeper)
   - `$GPHD_ROOT/bin/start-hbase.sh`
 - Start YARN only
   - `$GPHD_ROOT/bin/start-yarn.sh`
