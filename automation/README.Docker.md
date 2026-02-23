@@ -61,6 +61,9 @@ cd automation
 # S3 tests (starts a MinIO container automatically)
 ./gradlew test -Dgroups=s3
 
+# HBase tests (starts a standalone HBase container automatically)
+./gradlew test -Dgroups=hbase
+
 # Single test method
 ./gradlew test -Dgroups=jdbc \
   --tests 'org.apache.cloudberry.pxf.automation.features.jdbc.JdbcTest.singleFragmentTable'

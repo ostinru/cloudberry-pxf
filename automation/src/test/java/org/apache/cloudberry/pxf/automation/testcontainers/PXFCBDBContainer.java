@@ -294,6 +294,41 @@ public class PXFCBDBContainer extends GenericContainer<PXFCBDBContainer> {
         logger().info("PXF S3 servers configured and PXF restarted");
     }
 
+    /**
+     * Writes a {@code hbase-site.xml} into PXF's default server directory
+     * pointing the ZooKeeper quorum to the HBase container on the shared
+     * Docker network, then restarts PXF.
+     */
+    public void configureHBaseServer(HBaseContainer hbase) throws IOException, InterruptedException {
+        String zkQuorum = hbase.getInternalZookeeperQuorum();
+        int zkPort = hbase.getInternalZookeeperPort();
+
+        String script = String.join("\n",
+                "set -e",
+                "source /home/gpadmin/workspace/cloudberry-pxf/ci/docker/pxf-cbdb-dev/ubuntu/script/pxf-env.sh",
+                "PXF_BASE_SERVERS=${PXF_BASE}/servers",
+                "",
+                "cat > ${PXF_BASE_SERVERS}/default/hbase-site.xml <<'HBASEEOF'",
+                "<?xml version=\"1.0\" encoding=\"UTF-8\"?>",
+                "<configuration>",
+                "  <property><name>hbase.zookeeper.quorum</name><value>" + zkQuorum + "</value></property>",
+                "  <property><name>hbase.zookeeper.property.clientPort</name><value>" + zkPort + "</value></property>",
+                "</configuration>",
+                "HBASEEOF",
+                "",
+                "$PXF_HOME/bin/pxf restart"
+        );
+
+        logger().info("Configuring PXF HBase server (ZK={}:{})...", zkQuorum, zkPort);
+        ExecResult result = execInContainer("bash", "-l", "-c", script);
+        if (result.getExitCode() != 0) {
+            throw new RuntimeException(
+                    "HBase server configuration failed (exit " + result.getExitCode() + "):\n"
+                            + result.getStdout() + "\n" + result.getStderr());
+        }
+        logger().info("PXF HBase server configured and PXF restarted");
+    }
+
     // ---- public accessors --------------------------------------------------
 
     /** The shared Docker network used by all test containers. */

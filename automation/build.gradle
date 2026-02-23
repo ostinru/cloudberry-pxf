@@ -36,7 +36,7 @@ configurations.all {
 
 ext {
     hdpHadoopVersion = '2.10.2'
-    hdpHbaseVersion  = '1.3.2.1'
+    hdpHbaseVersion  = '2.3.7'
     hdpHiveVersion   = '1.1.0'
     orcVersion       = '1.6.13'
     snappyVersion    = '1.1.10.4'
@@ -109,12 +109,14 @@ dependencies {
 
     implementation 'org.apache.avro:avro-tools:1.7.7'
 
-    // HBase
+    // HBase 2.x (matching server/gradle.properties hbaseVersion=2.3.7)
     implementation "org.apache.hbase:hbase-common:${hdpHbaseVersion}"
-    implementation "org.apache.hbase:hbase-protocol:${hdpHbaseVersion}"
     implementation "org.apache.hbase:hbase-client:${hdpHbaseVersion}"
-    implementation "org.apache.hbase:hbase-thrift:${hdpHbaseVersion}"
     implementation "org.apache.hbase:hbase-server:${hdpHbaseVersion}"
+    implementation "org.apache.hbase:hbase-protocol:${hdpHbaseVersion}"
+    implementation "org.apache.hbase:hbase-protocol-shaded:${hdpHbaseVersion}"
+    implementation 'org.apache.hbase.thirdparty:hbase-shaded-protobuf:3.3.0'
+    implementation 'org.apache.hbase.thirdparty:hbase-shaded-miscellaneous:3.3.0'
 
     // Hive
     implementation "org.apache.hive:hive-exec:${hdpHiveVersion}"

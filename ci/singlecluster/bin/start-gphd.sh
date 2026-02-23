@@ -24,11 +24,3 @@ fi
 if [ "$START_PXF" == "true" ]; then
 	${bin}/start-pxf.sh || exit 1
 fi
-
-if [ "$START_HBASE" != "true" ]; then
-	echo HBase wont be started
-	exit 0
-fi
-
-${bin}/start-zookeeper.sh || exit 1
-${bin}/start-hbase.sh || exit 1

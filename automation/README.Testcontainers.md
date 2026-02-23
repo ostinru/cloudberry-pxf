@@ -18,7 +18,7 @@ to manage Docker containers for Cloudberry DB + PXF and supporting services (Min
 ### Building the image
 
 The `pxf/cbdb-dev:1` image is a multistage build that includes:
-- **Hadoop/Hive/HBase/ZK/Tez stack** copied from `pxf/singlecluster:3`
+- **Hadoop/Hive/Tez stack** copied from `pxf/singlecluster:3`
 - **Cloudberry DB pre-built** from source (demo cluster is created at runtime)
 
 ```bash
@@ -43,6 +43,9 @@ From the `automation/` directory:
 
 # Run all S3 tests (uses MinIO container)
 ./gradlew test -Dgroups=s3
+
+# Run all HBase tests (uses standalone HBase container)
+./gradlew test -Dgroups=hbase
 
 # Run a single test method
 ./gradlew test -Dgroups=jdbc \
@@ -131,6 +134,15 @@ S3SelectTest / CloudAccessTest        (TestNG test classes, group "s3")
   ├── CbdbApplication                 (JDBC client for table DDL)
   ├── RegressApplication              (runs pxf_regress SQL tests)
   └── Hdfs (S3A)                      (uploads test data from host to MinIO)
+
+HBaseTest                             (TestNG test class, group "hbase")
+  ├── PXFCBDBContainer                (shared singleton — same as JDBC/S3)
+  │     └── configures HBase server   (hbase-site.xml → hbase:2181)
+  ├── HBaseContainer                  (standalone HBase 2.3.7 on shared network)
+  │     └── embedded ZK + local FS    (no HDFS dependency)
+  ├── HBase component                 (Java client from host via mapped ZK port)
+  ├── CbdbApplication                 (JDBC client for external table DDL)
+  └── RegressApplication              (runs pxf_regress SQL tests)
 ```
 
 ## Docker network
@@ -138,21 +150,24 @@ S3SelectTest / CloudAccessTest        (TestNG test classes, group "s3")
 All test containers share a Docker network so they can communicate by hostname:
 
 ```
-┌─────────────────────────────────┐
-│       Shared Docker Network     │
-│                                 │
-│  ┌──────────────┐  ┌─────────┐ │
-│  │ PXFCBDBCont. │  │  MinIO  │ │
-│  │ alias: mdw   │──│ alias:  │ │
-│  │ :7000 :5888  │  │ minio   │ │
-│  └──────────────┘  │ :9000   │ │
-│                    └─────────┘ │
-└─────────────────────────────────┘
+┌─────────────────────────────────────────────┐
+│            Shared Docker Network            │
+│                                             │
+│  ┌──────────────┐  ┌─────────┐ ┌─────────┐ │
+│  │ PXFCBDBCont. │  │  MinIO  │ │  HBase  │ │
+│  │ alias: mdw   │──│ alias:  │ │ alias:  │ │
+│  │ :7000 :5888  │  │ minio   │ │ hbase   │ │
+│  └──────────────┘  │ :9000   │ │ :2181   │ │
+│                    └─────────┘ │ :16000  │ │
+│                                │ :16020  │ │
+│                                └─────────┘ │
+└─────────────────────────────────────────────┘
         ↕ mapped ports ↕
    ┌─────────────────────┐
    │    Host (tests)     │
    │  JDBC → :mapped     │
    │  S3A  → :mapped     │
+   │  ZK   → :mapped     │
    └─────────────────────┘
 ```
 
@@ -162,8 +177,10 @@ All test containers share a Docker network so they can communicate by hostname:
 |------|-------------|
 | `src/test/java/.../testcontainers/PXFCBDBContainer.java` | Singleton CBDB+PXF Docker container management |
 | `src/test/java/.../testcontainers/MinIOContainer.java` | Singleton MinIO Docker container (S3-compatible) |
+| `src/test/java/.../testcontainers/HBaseContainer.java` | Singleton HBase 2.3.7 Docker container (standalone) |
 | `src/test/java/.../testcontainers/CbdbApplication.java` | Host-side JDBC CBDB client |
 | `src/test/java/.../testcontainers/RegressApplication.java` | Runs `pxf_regress` inside container |
 | `src/test/java/.../features/jdbc/JdbcTest.java` | 14 JDBC tests |
 | `src/test/java/.../features/cloud/S3SelectTest.java` | 10 S3 Select tests (CSV, Parquet) |
 | `src/test/java/.../features/cloud/CloudAccessTest.java` | 6 S3 cloud access tests + 7 HDFS+S3 tests |
+| `src/test/java/.../features/hbase/HBaseTest.java` | HBase connector tests (filter pushdown, lookups, etc.) |

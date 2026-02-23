@@ -20,7 +20,7 @@ RUN sudo apt-get update && \
 ENV GPHD_ROOT=/home/gpadmin/workspace/singlecluster
 ENV GPHOME=/usr/local/cloudberry-db
 
-# Copy GPHD_ROOT (Hadoop/Hive/HBase/ZK/Tez stack) from singlecluster
+# Copy GPHD_ROOT (Hadoop/Hive/Tez stack) from singlecluster
 COPY --from=singlecluster ${GPHD_ROOT} ${GPHD_ROOT}
 
 # Copy Go toolchain from singlecluster

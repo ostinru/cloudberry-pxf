@@ -12,8 +12,6 @@ source "${PXF_SCRIPTS}/utils.sh"
 
 HADOOP_ROOT=${GPHD_ROOT}/hadoop
 HIVE_ROOT=${GPHD_ROOT}/hive
-HBASE_ROOT=${GPHD_ROOT}/hbase
-ZOOKEEPER_ROOT=${GPHD_ROOT}/zookeeper
 
 JAVA_11_ARM=/usr/lib/jvm/java-11-openjdk-arm64
 JAVA_11_AMD=/usr/lib/jvm/java-11-openjdk-amd64
@@ -243,7 +241,7 @@ configure_pxf() {
   echo "JAVA_HOME=${JAVA_BUILD}" >> "$PXF_BASE/conf/pxf-env.sh"
   sed -i 's/# server.address=localhost/server.address=0.0.0.0/' "$PXF_BASE/conf/pxf-application.properties"
   echo -e "\npxf.profile.dynamic.regex=test:.*" >> "$PXF_BASE/conf/pxf-application.properties"
-  cp -v "$PXF_HOME"/templates/{hdfs,mapred,yarn,core,hbase,hive}-site.xml "$PXF_BASE/servers/default"
+  cp -v "$PXF_HOME"/templates/{hdfs,mapred,yarn,core,hive}-site.xml "$PXF_BASE/servers/default"
   # Some templates do not ship pxf-site.xml per server; create a minimal one when missing.
   for server_dir in "$PXF_BASE/servers/default" "$PXF_BASE/servers/default-no-impersonation"; do
     if [ ! -d "$server_dir" ]; then
@@ -313,18 +311,12 @@ EOF
 }
 
 prepare_hadoop_stack() {
-  log "prepare Hadoop/Hive/HBase stack"
+  log "prepare Hadoop/Hive stack"
   export JAVA_HOME="${JAVA_HADOOP}"
   export PATH="$JAVA_HOME/bin:$HADOOP_ROOT/bin:$HIVE_ROOT/bin:$PATH"
   source "${GPHD_ROOT}/bin/gphd-env.sh"
   cd "${REPO_DIR}/automation"
   make symlink_pxf_jars
-  cp /home/gpadmin/automation_tmp_lib/pxf-hbase.jar "$GPHD_ROOT/hbase/lib/" || true
-  # Ensure HBase sees PXF comparator classes even if automation_tmp_lib was empty
-  if [ ! -f "${GPHD_ROOT}/hbase/lib/pxf-hbase.jar" ]; then
-    pxf_app=$(ls -1v /usr/local/pxf/application/pxf-app-*.jar | grep -v 'plain' | tail -n 1)
-    unzip -qq -j "${pxf_app}" 'BOOT-INF/lib/pxf-hbase-*.jar' -d "${GPHD_ROOT}/hbase/lib/"
-  fi
   # clean stale Hive locks and stop any leftover services to avoid start failures
   rm -f "${GPHD_ROOT}/storage/hive/metastore_db/"*.lck 2>/dev/null || true
   rm -f "${GPHD_ROOT}/storage/pids"/hive-*.pid 2>/dev/null || true
@@ -339,13 +331,6 @@ prepare_hadoop_stack() {
   fi
   if ! ${GPHD_ROOT}/bin/start-gphd.sh; then
     log "start-gphd.sh returned non-zero (services may already be running), continue"
-  fi
-  if ! ${GPHD_ROOT}/bin/start-zookeeper.sh; then
-    log "start-zookeeper.sh returned non-zero (may already be running)"
-  fi
-  # ensure HBase is up
-  if ! ${GPHD_ROOT}/bin/start-hbase.sh; then
-    log "start-hbase.sh returned non-zero (services may already be running), continue"
   fi
   start_hive_services
 }

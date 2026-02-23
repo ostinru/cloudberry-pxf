@@ -24,7 +24,7 @@ export PXF_TEST_KEEP_DATA=${PXF_TEST_KEEP_DATA:-true}
 export AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:-admin}
 export AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:-password}
 
-# Hadoop/Hive/HBase env
+# Hadoop/Hive env
 export JAVA_HOME="${JAVA_HADOOP}"
 export PATH="$JAVA_HOME/bin:$PATH"
 source "${GPHD_ROOT}/bin/gphd-env.sh"
@@ -41,14 +41,12 @@ export PGOPTIONS=${PGOPTIONS:-"-c extra_float_digits=0 -c timezone='GMT-1'"}
 export GPHOME=${GPHOME:-/usr/local/cloudberry-db}
 export PATH="${GPHOME}/bin:${PATH}"
 
-# Add Hadoop/HBase/Hive bins
+# Add Hadoop/Hive bins
 export HADOOP_HOME=${HADOOP_HOME:-${GPHD_ROOT}/hadoop}
-export HBASE_HOME=${HBASE_HOME:-${GPHD_ROOT}/hbase}
 export HIVE_HOME=${HIVE_HOME:-${GPHD_ROOT}/hive}
-export PATH="${HADOOP_HOME}/bin:${HBASE_HOME}/bin:${HIVE_HOME}/bin:${PATH}"
+export PATH="${HADOOP_HOME}/bin:${HIVE_HOME}/bin:${PATH}"
 export HADOOP_CONF_DIR=${HADOOP_CONF_DIR:-${HADOOP_HOME}/etc/hadoop}
 export YARN_CONF_DIR=${YARN_CONF_DIR:-${HADOOP_HOME}/etc/hadoop}
-export HBASE_CONF_DIR=${HBASE_CONF_DIR:-${HBASE_HOME}/conf}
 export HDFS_URI=${HDFS_URI:-hdfs://localhost:8020}
 export HADOOP_OPTS="-Dfs.defaultFS=${HDFS_URI} ${HADOOP_OPTS:-}"
 export HADOOP_CLIENT_OPTS="${HADOOP_OPTS}"
@@ -90,18 +88,6 @@ cleanup_hive_state() {
   " >/dev/null 2>&1 || true
   hdfs dfs -rm -r -f /hive/warehouse/hive_small_data >/dev/null 2>&1 || true
   hdfs dfs -rm -r -f /hive/warehouse/hive_small_data_orc >/dev/null 2>&1 || true
-}
-
-cleanup_hbase_state() {
-  echo "disable 'pxflookup'; drop 'pxflookup';
-        disable 'hbase_table'; drop 'hbase_table';
-        disable 'hbase_table_allowed'; drop 'hbase_table_allowed';
-        disable 'hbase_table_prohibited'; drop 'hbase_table_prohibited';
-        disable 'hbase_table_multi_regions'; drop 'hbase_table_multi_regions';
-        disable 'hbase_null_table'; drop 'hbase_null_table';
-        disable 'long_qualifiers_hbase_table'; drop 'long_qualifiers_hbase_table';
-        disable 'empty_table'; drop 'empty_table';" \
-    | hbase shell -n >/dev/null 2>&1 || true
 }
 
 restart_hiveserver2() {
@@ -347,7 +333,7 @@ EOF
 </configuration>
 EOF
     # hide HDFS/Hive configs so default server is treated as S3-only
-    for f in hdfs-site.xml mapred-site.xml yarn-site.xml hive-site.xml hbase-site.xml; do
+    for f in hdfs-site.xml mapred-site.xml yarn-site.xml hive-site.xml; do
       [ -f "${PXF_BASE}/servers/default/${f}" ] && rm -f "${PXF_BASE}/servers/default/${f}"
     done
     "${PXF_HOME}/bin/pxf" restart >/dev/null
@@ -426,11 +412,6 @@ base_test(){
   save_test_reports "hive"
   echo "[run_tests] GROUP=hive finished"
 
-  cleanup_hbase_state
-  make GROUP="hbase" || true
-  save_test_reports "hbase"
-  echo "[run_tests] GROUP=hbase finished"
-
   make GROUP="profile" || true
   save_test_reports "profile"
   echo "[run_tests] GROUP=profile finished"
@@ -458,7 +439,7 @@ base_test(){
   echo "[run_tests] GROUP=s3 finished"
 }
 
-# Restore default PXF server to local HDFS/Hive/HBase configuration
+# Restore default PXF server to local HDFS/Hive configuration
 configure_pxf_default_hdfs_server() {
   local server_dir="${PXF_BASE}/servers/default"
   mkdir -p "${server_dir}"
@@ -466,7 +447,6 @@ configure_pxf_default_hdfs_server() {
   ln -sf "${HADOOP_CONF_DIR}/hdfs-site.xml" "${server_dir}/hdfs-site.xml"
   ln -sf "${HADOOP_CONF_DIR}/mapred-site.xml" "${server_dir}/mapred-site.xml"
   ln -sf "${HADOOP_CONF_DIR}/yarn-site.xml" "${server_dir}/yarn-site.xml"
-  ln -sf "${HBASE_CONF_DIR}/hbase-site.xml" "${server_dir}/hbase-site.xml"
   ln -sf "${HIVE_HOME}/conf/hive-site.xml" "${server_dir}/hive-site.xml"
   JAVA_HOME="${JAVA_BUILD}" "${PXF_HOME}/bin/pxf" restart >/dev/null || true
 }
@@ -531,9 +511,8 @@ feature_test(){
   cleanup_hdfs_test_data
   hdfs dfs -rm -r -f /tmp/pxf_automation_data >/dev/null 2>&1 || true
   cleanup_hive_state
-  cleanup_hbase_state
 
-  # Prepare MinIO/S3 and restore default server to local HDFS/Hive/HBase
+  # Prepare MinIO/S3 and restore default server to local HDFS/Hive
   ensure_minio_bucket
   ensure_hadoop_s3a_config
   configure_pxf_s3_server
@@ -566,9 +545,8 @@ gpdb_test() {
   cleanup_hdfs_test_data
   hdfs dfs -rm -r -f /tmp/pxf_automation_data >/dev/null 2>&1 || true
   cleanup_hive_state
-  cleanup_hbase_state
 
-  # Ensure PXF points to local HDFS/Hive/HBase configs
+  # Ensure PXF points to local HDFS/Hive configs
   configure_pxf_default_hdfs_server
 
   local extra_args=""
@@ -872,10 +850,9 @@ run_single_group() {
       save_test_reports "hive"
       ;;
     hbase)
-      cleanup_hbase_state
-      export PROTOCOL=
-      make GROUP="hbase"
-      save_test_reports "hbase"
+      echo "HBase tests are now run via TestContainers from the host."
+      echo "Run: cd automation && ./gradlew test -Dgroups=hbase"
+      exit 1
       ;;
     s3)
       ensure_minio_bucket
