@@ -9,7 +9,6 @@ export PXF_VERSION
 export SKIP_EXTERNAL_TABLE_BUILD_REASON
 export SKIP_FDW_BUILD_REASON
 
-SOURCE_EXTENSION_DIR = external-table
 TARGET_EXTENSION_DIR = gpextable
 
 LICENSE ?= ASL 2.0
@@ -46,7 +45,7 @@ cli server:
 
 clean:
 	rm -rf build
-	make -C $(SOURCE_EXTENSION_DIR) clean-all
+	make -C external-table clean-all
 	make -C cli clean
 	make -C server clean
 	make -C fdw clean
@@ -84,17 +83,17 @@ install-server:
 
 stage:
 	rm -rf build/stage
-ifneq ($(SKIP_FDW_BUILD_REASON),)
-	@echo "Skipping staging FDW extension because $(SKIP_FDW_BUILD_REASON)"
-	$(eval PXF_MODULES := $(filter-out fdw,$(PXF_MODULES)))
+ifneq ($(SKIP_EXTERNAL_TABLE_BUILD_REASON),)
+	@echo "Skipping staging external-table extension because $(SKIP_EXTERNAL_TABLE_BUILD_REASON)"
+	$(eval PXF_MODULES := $(filter-out external-table,$(PXF_MODULES)))
 endif
 	set -e ;\
 	for module in $${PXF_MODULES[@]}; do \
 		echo "===> Staging [$${module}] module <===" ;\
 		make -C $${module} stage ;\
 	done ;\
-	GP_MAJOR_VERSION=$$(cat $(SOURCE_EXTENSION_DIR)/build/metadata/gp_major_version) ;\
-	GP_BUILD_ARCH=$$(cat $(SOURCE_EXTENSION_DIR)/build/metadata/build_arch) ;\
+	GP_MAJOR_VERSION=$$(cat fdw/build/metadata/gp_major_version) ;\
+	GP_BUILD_ARCH=$$(cat fdw/build/metadata/build_arch) ;\
 	PXF_PACKAGE_NAME=pxf-cloudberry$${GP_MAJOR_VERSION}-$${PXF_VERSION}-$${GP_BUILD_ARCH} ;\
 	mkdir -p build/stage/$${PXF_PACKAGE_NAME} ;\
 	for module in $${PXF_MODULES[@]}; do \
@@ -113,15 +112,15 @@ tar: stage
 gppkg-rpm: rpm
 	rm -rf gppkg
 	mkdir -p gppkg/deps
-	GP_MAJOR_VERSION=$$(cat $(SOURCE_EXTENSION_DIR)/build/metadata/gp_major_version)
+	GP_MAJOR_VERSION=$$(cat fdw/build/metadata/gp_major_version)
 	cat package/gppkg_spec.yml.in | sed "s,#arch,`arch`," | sed "s,#os,$(TEST_OS)," | sed "s,#gppkgver,1.0," | sed "s,#gpver,1," > gppkg/gppkg_spec.yml
 	find build/rpmbuild/RPMS -name pxf-cloudberry$(GP_MAJOR_VERSION)-*.rpm -exec cp {} gppkg/ \;
 	source $(GPHOME)/greenplum_path.sh || source $(GPHOME)/cloudberry-env.sh && gppkg --build gppkg
 
 rpm: stage
 	set -e ;\
-	GP_MAJOR_VERSION=$$(cat $(SOURCE_EXTENSION_DIR)/build/metadata/gp_major_version) ;\
-	GP_BUILD_ARCH=$$(cat $(SOURCE_EXTENSION_DIR)/build/metadata/build_arch) ;\
+	GP_MAJOR_VERSION=$$(cat fdw/build/metadata/gp_major_version) ;\
+	GP_BUILD_ARCH=$$(cat fdw/build/metadata/build_arch) ;\
 	PXF_PACKAGE_NAME=pxf-cloudberry$${GP_MAJOR_VERSION}-${PXF_VERSION}-$${GP_BUILD_ARCH} ;\
 	PXF_FULL_VERSION=${PXF_VERSION} ;\
 	PXF_MAIN_VERSION=$$(echo $${PXF_FULL_VERSION} | sed -E 's/(-SNAPSHOT|-rc[0-9]+)$$//') ;\
@@ -158,9 +157,9 @@ rpm-tar: rpm
 	echo "===> PXF TAR file with RPM package creation is complete <==="
 
 deb: stage
-ifneq ($(SKIP_FDW_BUILD_REASON),)
-	@echo "Skipping packaging FDW extension because $(SKIP_FDW_BUILD_REASON)"
-	$(eval PXF_MODULES := $(filter-out fdw,$(PXF_MODULES)))
+ifneq ($(SKIP_EXTERNAL_TABLE_BUILD_REASON),)
+	@echo "Skipping packaging external-table extension because $(SKIP_EXTERNAL_TABLE_BUILD_REASON)"
+	$(eval PXF_MODULES := $(filter-out external-table,$(PXF_MODULES)))
 endif
 	rm -rf build/debbuild
 	set -e ;\
@@ -182,7 +181,7 @@ deb-tar: deb
 	rm -rf build/{stagedeb,distdeb}
 	mkdir -p build/{stagedeb,distdeb}
 	set -e ;\
-	GP_MAJOR_VERSION=$$(cat $(SOURCE_EXTENSION_DIR)/build/metadata/gp_major_version) ;\
+	GP_MAJOR_VERSION=$$(cat fdw/build/metadata/gp_major_version) ;\
 	PXF_DEB_FILE=$$(find build/ -name apache-cloudberry-pxf-incubating*.deb) ;\
 	PXF_PACKAGE_NAME=$$(dpkg-deb --field $${PXF_DEB_FILE} Package)-$$(dpkg-deb --field $${PXF_DEB_FILE} Version)-$$(lsb_release -si | tr '[:upper:]' '[:lower:]')$$(lsb_release -rs) ;\
 	mkdir -p build/stagedeb/$${PXF_PACKAGE_NAME} ;\
