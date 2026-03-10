@@ -84,10 +84,6 @@ install-server:
 
 stage:
 	rm -rf build/stage
-ifneq ($(SKIP_EXTERNAL_TABLE_BUILD_REASON),)
-	@echo "Skipping staging external-table extension because $(SKIP_EXTERNAL_TABLE_BUILD_REASON)"
-	$(eval PXF_MODULES := $(filter-out external-table,$(PXF_MODULES)))
-endif
 ifneq ($(SKIP_FDW_BUILD_REASON),)
 	@echo "Skipping staging FDW extension because $(SKIP_FDW_BUILD_REASON)"
 	$(eval PXF_MODULES := $(filter-out fdw,$(PXF_MODULES)))
@@ -97,22 +93,13 @@ endif
 		echo "===> Staging [$${module}] module <===" ;\
 		make -C $${module} stage ;\
 	done ;\
-	if [ -z "$(SKIP_EXTERNAL_TABLE_BUILD_REASON)" ]; then \
-		GP_MAJOR_VERSION=$$(cat $(SOURCE_EXTENSION_DIR)/build/metadata/gp_major_version) ;\
-		GP_BUILD_ARCH=$$(cat $(SOURCE_EXTENSION_DIR)/build/metadata/build_arch) ;\
-	elif [ -z "$(SKIP_FDW_BUILD_REASON)" ]; then \
-		GP_MAJOR_VERSION=$$(cat fdw/build/metadata/gp_major_version) ;\
-		GP_BUILD_ARCH=$$(cat fdw/build/metadata/build_arch) ;\
-	else \
-		echo "PXF packaging requires at least one extension (external-table or fdw). Both are currently skipped." ;\
-		exit 1 ;\
-	fi ;\
+	GP_MAJOR_VERSION=$$(cat $(SOURCE_EXTENSION_DIR)/build/metadata/gp_major_version) ;\
+	GP_BUILD_ARCH=$$(cat $(SOURCE_EXTENSION_DIR)/build/metadata/build_arch) ;\
 	PXF_PACKAGE_NAME=pxf-cloudberry$${GP_MAJOR_VERSION}-$${PXF_VERSION}-$${GP_BUILD_ARCH} ;\
 	mkdir -p build/stage/$${PXF_PACKAGE_NAME} ;\
-	if [ -z "$(SKIP_EXTERNAL_TABLE_BUILD_REASON)" ]; then cp -a $(SOURCE_EXTENSION_DIR)/build/stage/* build/stage/$${PXF_PACKAGE_NAME} ; fi ;\
-	if [ -z "$(SKIP_FDW_BUILD_REASON)" ]; then cp -a fdw/build/stage/* build/stage/$${PXF_PACKAGE_NAME} ; fi ;\
-	cp -a cli/build/stage/* build/stage/$${PXF_PACKAGE_NAME} ;\
-	cp -a server/build/stage/* build/stage/$${PXF_PACKAGE_NAME} ;\
+	for module in $${PXF_MODULES[@]}; do \
+		cp -a $${module}/build/stage/* build/stage/$${PXF_PACKAGE_NAME} ;\
+	done ;\
 	echo $$(git rev-parse --verify HEAD) > build/stage/$${PXF_PACKAGE_NAME}/commit.sha ;\
 	cp package/install_binary build/stage/$${PXF_PACKAGE_NAME}/install_component ;\
 	echo "===> PXF staging is complete <==="
@@ -171,16 +158,19 @@ rpm-tar: rpm
 	echo "===> PXF TAR file with RPM package creation is complete <==="
 
 deb: stage
+ifneq ($(SKIP_FDW_BUILD_REASON),)
+	@echo "Skipping packaging FDW extension because $(SKIP_FDW_BUILD_REASON)"
+	$(eval PXF_MODULES := $(filter-out fdw,$(PXF_MODULES)))
+endif
 	rm -rf build/debbuild
 	set -e ;\
 	PXF_MAIN_VERSION=$${PXF_VERSION//-SNAPSHOT/} ;\
 	if [[ $${PXF_VERSION} == *"-SNAPSHOT" ]]; then PXF_RELEASE=SNAPSHOT; else PXF_RELEASE=1; fi ;\
 	rm -rf build/debbuild ;\
 	mkdir -p build/debbuild/usr/local/cloudberry-pxf/$(TARGET_EXTENSION_DIR) ;\
-	if [ -z "$(SKIP_EXTERNAL_TABLE_BUILD_REASON)" ]; then cp -a $(SOURCE_EXTENSION_DIR)/build/stage/* build/debbuild/usr/local/cloudberry-pxf/ ; fi ;\
-	if [ -z "$(SKIP_FDW_BUILD_REASON)" ]; then cp -a fdw/build/stage/* build/debbuild/usr/local/cloudberry-pxf ; fi ;\
-	cp -a cli/build/stage/* build/debbuild/usr/local/cloudberry-pxf ;\
-	cp -a server/build/stage/* build/debbuild/usr/local/cloudberry-pxf ;\
+	for module in $${PXF_MODULES[@]}; do \
+		cp -a $${module}/build/stage/* build/debbuild/usr/local/cloudberry-pxf ;\
+	done ;\
 	echo $$(git rev-parse --verify HEAD) > build/debbuild/usr/local/cloudberry-pxf/commit.sha ;\
 	mkdir build/debbuild/DEBIAN ;\
 	cp -a package/DEBIAN/* build/debbuild/DEBIAN/ ;\
