@@ -65,7 +65,7 @@ it:
 
 install:
 ifneq ($(SKIP_EXTERNAL_TABLE_BUILD_REASON),)
-	@echo "Skipping installing FDW extension because $(SKIP_EXTERNAL_TABLE_BUILD_REASON)"
+	@echo "Skipping installing external-table extension because $(SKIP_EXTERNAL_TABLE_BUILD_REASON)"
 	$(eval PXF_MODULES := $(filter-out external-table,$(PXF_MODULES)))
 endif
 ifneq ($(SKIP_FDW_BUILD_REASON),)
@@ -84,23 +84,33 @@ install-server:
 
 stage:
 	rm -rf build/stage
-	make -C $(SOURCE_EXTENSION_DIR) stage
-	make -C cli stage  
-	make -C server stage
-ifneq ($(SKIP_EXTERNAL_TABLE_PACKAGE_REASON),)
-	@echo "Skipping staging FDW extension because $(SKIP_EXTERNAL_TABLE_PACKAGE_REASON)"
+ifneq ($(SKIP_EXTERNAL_TABLE_BUILD_REASON),)
+	@echo "Skipping staging external-table extension because $(SKIP_EXTERNAL_TABLE_BUILD_REASON)"
 	$(eval PXF_MODULES := $(filter-out external-table,$(PXF_MODULES)))
 endif
-ifneq ($(SKIP_FDW_PACKAGE_REASON),)
-	@echo "Skipping staging FDW extension because $(SKIP_FDW_PACKAGE_REASON)"
+ifneq ($(SKIP_FDW_BUILD_REASON),)
+	@echo "Skipping staging FDW extension because $(SKIP_FDW_BUILD_REASON)"
 	$(eval PXF_MODULES := $(filter-out fdw,$(PXF_MODULES)))
 endif
 	set -e ;\
-	GP_MAJOR_VERSION=$$(cat $(SOURCE_EXTENSION_DIR)/build/metadata/gp_major_version) ;\
-	GP_BUILD_ARCH=$$(cat $(SOURCE_EXTENSION_DIR)/build/metadata/build_arch) ;\
+	for module in $${PXF_MODULES[@]}; do \
+		echo "===> Staging [$${module}] module <===" ;\
+		make -C $${module} stage ;\
+	done ;\
+	if [ -z "$(SKIP_EXTERNAL_TABLE_BUILD_REASON)" ]; then \
+		GP_MAJOR_VERSION=$$(cat $(SOURCE_EXTENSION_DIR)/build/metadata/gp_major_version) ;\
+		GP_BUILD_ARCH=$$(cat $(SOURCE_EXTENSION_DIR)/build/metadata/build_arch) ;\
+	elif [ -z "$(SKIP_FDW_BUILD_REASON)" ]; then \
+		GP_MAJOR_VERSION=$$(cat fdw/build/metadata/gp_major_version) ;\
+		GP_BUILD_ARCH=$$(cat fdw/build/metadata/build_arch) ;\
+	else \
+		echo "PXF packaging requires at least one extension (external-table or fdw). Both are currently skipped." ;\
+		exit 1 ;\
+	fi ;\
 	PXF_PACKAGE_NAME=pxf-cloudberry$${GP_MAJOR_VERSION}-$${PXF_VERSION}-$${GP_BUILD_ARCH} ;\
 	mkdir -p build/stage/$${PXF_PACKAGE_NAME} ;\
-	cp -a $(SOURCE_EXTENSION_DIR)/build/stage/* build/stage/$${PXF_PACKAGE_NAME} ;\
+	if [ -z "$(SKIP_EXTERNAL_TABLE_BUILD_REASON)" ]; then cp -a $(SOURCE_EXTENSION_DIR)/build/stage/* build/stage/$${PXF_PACKAGE_NAME} ; fi ;\
+	if [ -z "$(SKIP_FDW_BUILD_REASON)" ]; then cp -a fdw/build/stage/* build/stage/$${PXF_PACKAGE_NAME} ; fi ;\
 	cp -a cli/build/stage/* build/stage/$${PXF_PACKAGE_NAME} ;\
 	cp -a server/build/stage/* build/stage/$${PXF_PACKAGE_NAME} ;\
 	echo $$(git rev-parse --verify HEAD) > build/stage/$${PXF_PACKAGE_NAME}/commit.sha ;\
@@ -151,7 +161,6 @@ rpm-tar: rpm
 	rm -rf build/{stagerpm,distrpm}
 	mkdir -p build/{stagerpm,distrpm}
 	set -e ;\
-	GP_MAJOR_VERSION=$$(cat $(SOURCE_EXTENSION_DIR)/build/metadata/gp_major_version) ;\
 	PXF_RPM_FILE=$$(find build/rpmbuild/RPMS -name apache-cloudberry-pxf-incubating-*.rpm) ;\
 	PXF_RPM_BASE_NAME=$$(basename $${PXF_RPM_FILE%*.rpm}) ;\
 	PXF_PACKAGE_NAME=$${PXF_RPM_BASE_NAME%.*} ;\
@@ -168,7 +177,8 @@ deb: stage
 	if [[ $${PXF_VERSION} == *"-SNAPSHOT" ]]; then PXF_RELEASE=SNAPSHOT; else PXF_RELEASE=1; fi ;\
 	rm -rf build/debbuild ;\
 	mkdir -p build/debbuild/usr/local/cloudberry-pxf/$(TARGET_EXTENSION_DIR) ;\
-	cp -a $(SOURCE_EXTENSION_DIR)/build/stage/* build/debbuild/usr/local/cloudberry-pxf/ ;\
+	if [ -z "$(SKIP_EXTERNAL_TABLE_BUILD_REASON)" ]; then cp -a $(SOURCE_EXTENSION_DIR)/build/stage/* build/debbuild/usr/local/cloudberry-pxf/ ; fi ;\
+	if [ -z "$(SKIP_FDW_BUILD_REASON)" ]; then cp -a fdw/build/stage/* build/debbuild/usr/local/cloudberry-pxf ; fi ;\
 	cp -a cli/build/stage/* build/debbuild/usr/local/cloudberry-pxf ;\
 	cp -a server/build/stage/* build/debbuild/usr/local/cloudberry-pxf ;\
 	echo $$(git rev-parse --verify HEAD) > build/debbuild/usr/local/cloudberry-pxf/commit.sha ;\

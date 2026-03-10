@@ -19,9 +19,12 @@ include $(PGXS)
 .PHONY: stage
 stage: pxf_fdw.so
 	mkdir -p build/stage/fdw
+	mkdir -p build/metadata
 	install -c -m 755 pxf_fdw.so build/stage/fdw/pxf_fdw.so
 	install -c -m 644 pxf_fdw.control build/stage/fdw/
 	install -c -m 644 $(DATA) build/stage/fdw/
+	@echo "$(GP_MAJORVERSION)" > build/metadata/gp_major_version
+	@echo "$(shell uname -m)" > build/metadata/build_arch
 	@echo "cloudberry.version=$(GP_VERSION)" > build/stage/fdw/metadata
 	@echo "cloudberry.major-version=$(GP_MAJORVERSION)" >> build/stage/fdw/metadata
 
