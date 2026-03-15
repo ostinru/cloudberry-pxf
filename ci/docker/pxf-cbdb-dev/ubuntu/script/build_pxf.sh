@@ -9,13 +9,13 @@ source /usr/local/cloudberry-db/cloudberry-env.sh
 export PATH=$GPHOME/bin:$PATH
 
 sudo apt update
-sudo apt install -y openjdk-11-jdk maven
+sudo apt install -y openjdk-11-jdk-headless
 
 cd /home/gpadmin/workspace/cloudberry-pxf
 
-# Ensure gpadmin owns the source directory
-sudo chown -R gpadmin:gpadmin /home/gpadmin/workspace/cloudberry-pxf
-sudo chown -R gpadmin:gpadmin /usr/local/cloudberry-db
+# Ensure gpadmin owns the source directory (ignore errors on bind-mounted dirs)
+sudo chown -R gpadmin:gpadmin /home/gpadmin/workspace/cloudberry-pxf || true
+sudo chown -R gpadmin:gpadmin /usr/local/cloudberry-db || true
 
 # mirror
 # If the download fails, you can uncomment the line to switch to another mirror address.
@@ -49,11 +49,11 @@ export PXF_HOME=/usr/local/pxf
 sudo mkdir -p "$PXF_HOME"
 sudo chown -R gpadmin:gpadmin "$PXF_HOME"
 
-# Build all PXF components
-make all
-
 # Install PXF
-make install
+make -C external-table install
+make -C fdw install
+make -C cli install
+make -C server install-server
 
 # Set up PXF environment
 

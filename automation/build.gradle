@@ -1,0 +1,247 @@
+plugins {
+    id 'java'
+}
+
+group = 'org.apache.cloudberry.pxf.automation'
+version = '0.0.1-SNAPSHOT'
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
+}
+
+repositories {
+    mavenCentral()
+    maven { url 'https://maven.top-q.co.il/content/repositories/public/' }
+}
+
+// The pom.xml includes src/test/resources as a main resource so that SUT
+// configs and templates end up on the compile classpath and inside the JAR.
+sourceSets {
+    main {
+        resources {
+            srcDir 'src/test/resources'
+        }
+    }
+}
+
+// Exclude Calcite and its transitive dependencies globally; they are pulled
+// in by multiple Hive modules and the required artifacts (pentaho, eigenbase)
+// are no longer available on Maven Central.
+configurations.all {
+    exclude group: 'org.apache.calcite'
+    exclude group: 'org.pentaho'
+    exclude group: 'eigenbase'
+}
+
+ext {
+    hdpHadoopVersion = '2.10.2'
+    hdpHbaseVersion  = '2.3.7'
+    hdpHiveVersion   = '1.1.0'
+    orcVersion       = '1.6.13'
+    snappyVersion    = '1.1.10.4'
+    powermockVersion = '1.6.4'
+    pxfLib           = System.getProperty('pxf.lib', "${System.getProperty('user.home')}/automation_tmp_lib")
+}
+
+dependencies {
+    // PXF local JARs (were Maven system-scope dependencies)
+    implementation files(
+        "${pxfLib}/pxf-api.jar",
+        "${pxfLib}/pxf-hbase.jar",
+        "${pxfLib}/pxf-hdfs.jar",
+        "${pxfLib}/pxf-hive.jar",
+        "${pxfLib}/pxf-extras.jar"
+    )
+
+    implementation "org.xerial.snappy:snappy-java:${snappyVersion}"
+    implementation 'org.apache.httpcomponents:httpclient:4.5.13'
+    implementation 'junit:junit:4.13.1'
+    implementation 'org.testng:testng:6.14.3'
+    implementation 'org.awaitility:awaitility:4.2.0'
+
+    implementation('org.jsystemtest:jsystemCore:6.1.06') {
+        exclude group: 'javax.comm', module: 'comm'
+    }
+    implementation('org.jsystemtest.systemobjects:cli:6.1.06') {
+        exclude group: 'javax.comm', module: 'comm'
+    }
+
+    implementation 'org.mockito:mockito-core:1.10.19'
+    implementation 'ch.ethz.ganymed:ganymed-ssh2:261'
+    implementation 'org.postgresql:postgresql:42.7.2'
+    implementation 'org.springframework:spring:2.5.6'
+    compileOnly    'org.springframework:spring-web:5.3.33'
+    implementation 'net.sf.opencsv:opencsv:2.3'
+    implementation 'ant:ant-junit:1.6.5'
+    implementation 'org.apache.ant:ant:1.10.11'
+
+    // AWS
+    implementation 'com.amazonaws:aws-java-sdk-s3:1.12.261'
+
+    // Jackson
+    implementation 'com.fasterxml.jackson.core:jackson-core:2.12.6'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.13.4.2'
+    implementation 'com.fasterxml.jackson.core:jackson-annotations:2.12.6'
+
+    implementation 'org.apache.httpcomponents:httpcore:4.4.14'
+
+    // Google Cloud Storage (shaded, no transitive deps)
+    implementation('com.google.cloud.bigdataoss:gcs-connector:hadoop2-1.9.17:shaded') {
+        transitive = false
+    }
+
+    // Azure
+    implementation 'com.microsoft.azure:azure-data-lake-store-sdk:2.2.3'
+    implementation 'com.microsoft.azure:azure-storage:5.5.0'
+
+    // Hadoop
+    implementation "org.apache.hadoop:hadoop-common:${hdpHadoopVersion}"
+    implementation("org.apache.hadoop:hadoop-aws:${hdpHadoopVersion}") {
+        exclude group: 'com.amazonaws', module: 'aws-java-sdk-s3'
+    }
+    implementation "org.apache.hadoop:hadoop-azure:${hdpHadoopVersion}"
+    implementation "org.apache.hadoop:hadoop-azure-datalake:${hdpHadoopVersion}"
+    implementation "org.apache.hadoop:hadoop-auth:${hdpHadoopVersion}"
+    implementation "org.apache.hadoop:hadoop-mapreduce-client-core:${hdpHadoopVersion}"
+    implementation "org.apache.hadoop:hadoop-annotations:${hdpHadoopVersion}"
+    implementation "org.apache.hadoop:hadoop-hdfs:${hdpHadoopVersion}"
+
+    implementation 'org.apache.avro:avro-tools:1.7.7'
+
+    // HBase 2.x (matching server/gradle.properties hbaseVersion=2.3.7)
+    implementation "org.apache.hbase:hbase-common:${hdpHbaseVersion}"
+    implementation "org.apache.hbase:hbase-client:${hdpHbaseVersion}"
+    implementation "org.apache.hbase:hbase-server:${hdpHbaseVersion}"
+    implementation "org.apache.hbase:hbase-protocol:${hdpHbaseVersion}"
+    implementation "org.apache.hbase:hbase-protocol-shaded:${hdpHbaseVersion}"
+    implementation 'org.apache.hbase.thirdparty:hbase-shaded-protobuf:3.3.0'
+    implementation 'org.apache.hbase.thirdparty:hbase-shaded-miscellaneous:3.3.0'
+
+    // Hive
+    implementation "org.apache.hive:hive-exec:${hdpHiveVersion}"
+    implementation "org.apache.hive:hive-service:${hdpHiveVersion}"
+    implementation "org.apache.hive:hive-metastore:${hdpHiveVersion}"
+    implementation "org.apache.hive:hive-common:${hdpHiveVersion}"
+    implementation "org.apache.hive:hive-serde:${hdpHiveVersion}"
+    implementation "org.apache.hive:hive-jdbc:${hdpHiveVersion}"
+
+    // ORC
+    implementation "org.apache.orc:orc-core:${orcVersion}"
+
+    implementation 'org.mockito:mockito-all:1.9.5'
+
+    // Test-only
+    testImplementation "org.powermock:powermock-module-testng:${powermockVersion}"
+    testImplementation "org.powermock:powermock-api-mockito:${powermockVersion}"
+
+    // TestContainers for host-driven integration tests
+    testImplementation 'org.testcontainers:testcontainers:2.0.3'
+    testImplementation 'org.slf4j:slf4j-simple:2.0.16'
+}
+
+test {
+    // avro-tools:1.7.7 is a fat JAR that bundles old Hadoop 1.x classes.
+    // Move it to the end of the classpath so the correct hadoop-hdfs-client
+    // classes are found first by the classloader.
+    classpath = files(
+        classpath.files.findAll { !it.name.startsWith('avro-tools') },
+        classpath.files.findAll { it.name.startsWith('avro-tools') }
+    )
+
+    useTestNG {
+        def groups = System.getProperty('groups')
+        if (groups) {
+            includeGroups = groups.split(',') as Set
+        }
+        def excluded = System.getProperty('excludedGroups')
+        if (excluded) {
+            excludeGroups = excluded.split(',') as Set
+        }
+    }
+
+    ignoreFailures = true
+    maxHeapSize = '4096m'
+    forkEvery = 1
+
+    // Generate jsystem.properties before tests run (jsystem framework needs it
+    // to locate SUT XML files; Maven used target/test-classes, Gradle uses build/)
+    doFirst {
+        def props = new Properties()
+        def propsFile = file('jsystem.properties')
+        if (propsFile.exists()) {
+            propsFile.withInputStream { props.load(it) }
+        }
+        props.setProperty('tests.dir', "${buildDir}/resources/main")
+        props.setProperty('sutFile', 'default.xml')
+        props.setProperty('sutClassName', 'jsystem.framework.sut.SutImpl')
+        propsFile.withOutputStream { props.store(it, null) }
+    }
+
+    // Forward system properties from the Gradle JVM to the test JVM
+    systemProperties System.properties.subMap([
+        'java.awt.headless', 'useFDW', 'user.timezone',
+        'PROTOCOL', 'AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY',
+        'pxf.host', 'pxf.port', 'PXF_SINGLE_NODE',
+        'fs.defaultFS', 'hadoop.security.authentication',
+        'PXF_TEST_KEEP_DATA'
+    ])
+
+    // Also forward any -D property whose key starts with a known prefix
+    System.properties.each { k, v ->
+        if (k.startsWith('PROTOCOL') || k.startsWith('pxf.') || k.startsWith('fs.') ||
+            k.startsWith('hadoop.') || k.startsWith('AWS_') || k.startsWith('PXF_') ||
+            k.startsWith('testcontainers.')) {
+            systemProperty k, v
+        }
+    }
+}
+
+// When running on the host, PXF JARs in automation_tmp_lib may not exist or
+// may be empty stubs. Try to copy real JARs from the server build artifacts;
+// fall back to creating empty stubs so compilation still succeeds (classes
+// referencing PXF APIs won't be exercised at runtime in TestContainers tests).
+task ensurePxfJars {
+    doLast {
+        def libDir = file(pxfLib)
+        libDir.mkdirs()
+        def serverRoot = rootDir.parentFile  // cloudberry-pxf repo root
+        def mapping = [
+            'pxf-api'   : 'pxf-api',
+            'pxf-hbase' : 'pxf-hbase',
+            'pxf-hdfs'  : 'pxf-hdfs',
+            'pxf-hive'  : 'pxf-hive',
+            'pxf-extras': null
+        ]
+        mapping.each { shortName, serverModule ->
+            def target = new File(libDir, "${shortName}.jar")
+            def isStub = target.exists() && target.length() < 1024
+            if (!target.exists() || isStub) {
+                if (serverModule != null) {
+                    def buildLibs = new File(serverRoot, "server/${serverModule}/build/libs")
+                    if (buildLibs.isDirectory()) {
+                        def candidates = buildLibs.listFiles().findAll {
+                            it.name.endsWith('.jar') && !it.name.contains('plain') &&
+                            !it.name.contains('SNAPSHOT') && !it.name.endsWith('-1.0.0.jar')
+                        }
+                        if (candidates) {
+                            def src = candidates.sort { it.name }.last()
+                            ant.copy(file: src, tofile: target, overwrite: true)
+                            println "Copied ${src} -> ${target}"
+                            return
+                        }
+                    }
+                }
+                if (!target.exists()) {
+                    ant.jar(destfile: target) { manifest {} }
+                    println "Created stub ${target}"
+                }
+            }
+        }
+    }
+}
+
+tasks.withType(JavaCompile) {
+    dependsOn ensurePxfJars
+    options.encoding = 'UTF-8'
+}

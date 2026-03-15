@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<?xml-stylesheet type="text/xsl" href="configuration.xsl"?>
+<!--
+  Registers Hadoop FileSystem implementations that are normally discovered via
+  ServiceLoader. Gradle's forked test JVM may not discover them automatically,
+  so we set them explicitly here. When the singlecluster's core-site.xml is
+  loaded via addResource(), it safely overrides these defaults.
+-->
+<configuration>
+  <property>
+    <name>fs.hdfs.impl</name>
+    <value>org.apache.hadoop.hdfs.DistributedFileSystem</value>
+  </property>
+  <property>
+    <name>fs.file.impl</name>
+    <value>org.apache.hadoop.fs.LocalFileSystem</value>
+  </property>
+  <property>
+    <name>fs.s3a.impl</name>
+    <value>org.apache.hadoop.fs.s3a.S3AFileSystem</value>
+  </property>
+</configuration>

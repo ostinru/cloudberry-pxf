@@ -12,8 +12,6 @@ source "${PXF_SCRIPTS}/utils.sh"
 
 HADOOP_ROOT=${GPHD_ROOT}/hadoop
 HIVE_ROOT=${GPHD_ROOT}/hive
-HBASE_ROOT=${GPHD_ROOT}/hbase
-ZOOKEEPER_ROOT=${GPHD_ROOT}/zookeeper
 
 JAVA_11_ARM=/usr/lib/jvm/java-11-openjdk-arm64
 JAVA_11_AMD=/usr/lib/jvm/java-11-openjdk-amd64
@@ -32,7 +30,7 @@ detect_java_paths() {
 setup_locale_and_packages() {
   log "install base packages and locales"
   sudo apt-get update
-  sudo apt-get install -y wget lsb-release locales maven unzip openssh-server iproute2 sudo \
+  sudo apt-get install -y wget lsb-release locales unzip openssh-server iproute2 sudo \
     openjdk-11-jre-headless openjdk-8-jre-headless
   sudo locale-gen en_US.UTF-8 ru_RU.CP1251 ru_RU.UTF-8
   sudo update-locale LANG=en_US.UTF-8
@@ -70,10 +68,10 @@ EOF'
 
 relax_pg_hba() {
   local pg_hba=/home/gpadmin/workspace/cloudberry/gpAux/gpdemo/datadirs/qddir/demoDataDir-1/pg_hba.conf
-  if [ -f "${pg_hba}" ] && ! grep -q "127.0.0.1/32 trust" "${pg_hba}"; then
+  if [ -f "${pg_hba}" ] && ! grep -q "0.0.0.0/0 trust" "${pg_hba}"; then
     cat >> "${pg_hba}" <<'EOF'
-host all all 127.0.0.1/32 trust
 host all all ::1/128 trust
+host all all 0.0.0.0/0 trust
 EOF
     source /usr/local/cloudberry-db/cloudberry-env.sh >/dev/null 2>&1 || true
     GPPORT=${GPPORT:-7000}
@@ -203,9 +201,22 @@ build_cloudberry() {
   "${PXF_SCRIPTS}/build_cloudberrry.sh"
 }
 
+create_demo_cluster() {
+  log "creating demo cluster"
+  rm -rf /home/gpadmin/workspace/cloudberry/gpAux/gpdemo/datadirs
+  rm -f /tmp/.s.PGSQL.700*
+  source /usr/local/cloudberry-db/cloudberry-env.sh
+  make create-demo-cluster -C ~/workspace/cloudberry
+  source ~/workspace/cloudberry/gpAux/gpdemo/gpdemo-env.sh
+  psql -P pager=off template1 -c 'SELECT * from gp_segment_configuration'
+  psql template1 -c 'SELECT version()'
+}
+
 setup_cloudberry() {
-  # Auto-detect: if deb exists, install it; otherwise build from source
-  if [ -f /tmp/apache-cloudberry-db*.deb ]; then
+  if [ -x /usr/local/cloudberry-db/bin/postgres ]; then
+    log "Cloudberry already installed (pre-built image), creating demo cluster only"
+    create_demo_cluster
+  elif [ -f /tmp/apache-cloudberry-db*.deb ]; then
     log "detected .deb package, using fast install"
     install_cloudberry_from_deb
   elif [ "${CLOUDBERRY_USE_DEB:-}" = "true" ]; then
@@ -230,7 +241,7 @@ configure_pxf() {
   echo "JAVA_HOME=${JAVA_BUILD}" >> "$PXF_BASE/conf/pxf-env.sh"
   sed -i 's/# server.address=localhost/server.address=0.0.0.0/' "$PXF_BASE/conf/pxf-application.properties"
   echo -e "\npxf.profile.dynamic.regex=test:.*" >> "$PXF_BASE/conf/pxf-application.properties"
-  cp -v "$PXF_HOME"/templates/{hdfs,mapred,yarn,core,hbase,hive}-site.xml "$PXF_BASE/servers/default"
+  cp -v "$PXF_HOME"/templates/{hdfs,mapred,yarn,core,hive}-site.xml "$PXF_BASE/servers/default"
   # Some templates do not ship pxf-site.xml per server; create a minimal one when missing.
   for server_dir in "$PXF_BASE/servers/default" "$PXF_BASE/servers/default-no-impersonation"; do
     if [ ! -d "$server_dir" ]; then
@@ -297,67 +308,15 @@ EOF
 </profiles>
 EOF
 
-  # Configure S3 settings
-  mkdir -p "$PXF_BASE/servers/s3" "$PXF_HOME/servers/s3"
-  
-  for s3_site in "$PXF_BASE/servers/s3/s3-site.xml" "$PXF_BASE/servers/default/s3-site.xml" "$PXF_HOME/servers/s3/s3-site.xml"; do
-    mkdir -p "$(dirname "$s3_site")"
-    cat > "$s3_site" <<'EOF'
-<?xml version="1.0" encoding="UTF-8"?>
-<configuration>
-    <property>
-        <name>fs.s3a.endpoint</name>
-        <value>http://localhost:9000</value>
-    </property>
-    <property>
-        <name>fs.s3a.access.key</name>
-        <value>admin</value>
-    </property>
-    <property>
-        <name>fs.s3a.secret.key</name>
-        <value>password</value>
-    </property>
-    <property>
-        <name>fs.s3a.path.style.access</name>
-        <value>true</value>
-    </property>
-    <property>
-        <name>fs.s3a.connection.ssl.enabled</name>
-        <value>false</value>
-    </property>
-    <property>
-        <name>fs.s3a.impl</name>
-        <value>org.apache.hadoop.fs.s3a.S3AFileSystem</value>
-    </property>
-    <property>
-        <name>fs.s3a.aws.credentials.provider</name>
-        <value>org.apache.hadoop.fs.s3a.SimpleAWSCredentialsProvider</value>
-    </property>
-</configuration>
-EOF
-  done
-  mkdir -p /home/gpadmin/.aws/
-  cat > "/home/gpadmin/.aws/credentials" <<'EOF'
-[default]
-aws_access_key_id = admin
-aws_secret_access_key = password
-EOF
-
 }
 
 prepare_hadoop_stack() {
-  log "prepare Hadoop/Hive/HBase stack"
+  log "prepare Hadoop/Hive stack"
   export JAVA_HOME="${JAVA_HADOOP}"
   export PATH="$JAVA_HOME/bin:$HADOOP_ROOT/bin:$HIVE_ROOT/bin:$PATH"
   source "${GPHD_ROOT}/bin/gphd-env.sh"
   cd "${REPO_DIR}/automation"
   make symlink_pxf_jars
-  cp /home/gpadmin/automation_tmp_lib/pxf-hbase.jar "$GPHD_ROOT/hbase/lib/" || true
-  # Ensure HBase sees PXF comparator classes even if automation_tmp_lib was empty
-  if [ ! -f "${GPHD_ROOT}/hbase/lib/pxf-hbase.jar" ]; then
-    pxf_app=$(ls -1v /usr/local/pxf/application/pxf-app-*.jar | grep -v 'plain' | tail -n 1)
-    unzip -qq -j "${pxf_app}" 'BOOT-INF/lib/pxf-hbase-*.jar' -d "${GPHD_ROOT}/hbase/lib/"
-  fi
   # clean stale Hive locks and stop any leftover services to avoid start failures
   rm -f "${GPHD_ROOT}/storage/hive/metastore_db/"*.lck 2>/dev/null || true
   rm -f "${GPHD_ROOT}/storage/pids"/hive-*.pid 2>/dev/null || true
@@ -372,13 +331,6 @@ prepare_hadoop_stack() {
   fi
   if ! ${GPHD_ROOT}/bin/start-gphd.sh; then
     log "start-gphd.sh returned non-zero (services may already be running), continue"
-  fi
-  if ! ${GPHD_ROOT}/bin/start-zookeeper.sh; then
-    log "start-zookeeper.sh returned non-zero (may already be running)"
-  fi
-  # ensure HBase is up
-  if ! ${GPHD_ROOT}/bin/start-hbase.sh; then
-    log "start-hbase.sh returned non-zero (services may already be running), continue"
   fi
   start_hive_services
 }
@@ -466,11 +418,6 @@ start_hive_services() {
   done
 }
 
-deploy_minio() {
-  log "deploying MinIO"
-  bash "${PXF_SCRIPTS}/start_minio.bash"
-}
-
 main() {
   detect_java_paths
   setup_locale_and_packages
@@ -480,7 +427,6 @@ main() {
   build_pxf
   configure_pxf
   prepare_hadoop_stack
-  deploy_minio
   health_check
   log "entrypoint finished; environment ready for tests"
 }

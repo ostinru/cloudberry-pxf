@@ -104,9 +104,14 @@ jobs:
       run: |
         cd cloudberry-pxf/ci/singlecluster
         docker build -t pxf/singlecluster:3 .
-        docker save pxf/singlecluster:3 > /tmp/singlecluster-image.tar
 
-    - name: Upload singlecluster image
+    - name: Build cbdb-dev image
+      run: |
+        cd cloudberry-pxf/ci/docker/pxf-cbdb-dev/ubuntu
+        docker build -t pxf/cbdb-dev:1 .
+        docker save pxf/cbdb-dev:1 > /tmp/singlecluster-image.tar
+
+    - name: Upload cbdb-dev image
       uses: actions/upload-artifact@v4
       with:
         name: singlecluster-image
@@ -173,13 +178,13 @@ jobs:
         name: cloudberry-source
         path: /tmp
 
-    - name: Download singlecluster image
+    - name: Download cbdb-dev image
       uses: actions/download-artifact@v4
       with:
         name: singlecluster-image
         path: /tmp
 
-    - name: Load singlecluster image
+    - name: Load cbdb-dev image
       run: |
         docker load < /tmp/singlecluster-image.tar
 
@@ -226,9 +231,9 @@ jobs:
         docker exec pxf-cbdb-dev bash -c "cp -r /usr/local/pxf/logs/* /tmp/pxf-logs/ 2>/dev/null || true" || true
         docker cp pxf-cbdb-dev:/tmp/pxf-logs artifacts/logs/ 2>/dev/null || true
         
-        # Parse surefire reports for automation tests
+        # Parse Gradle test reports for automation tests
         if [[ "$TEST_GROUP" != "cli" && "$TEST_GROUP" != "server" ]]; then
-          for xml in cloudberry-pxf/automation/target/surefire-reports/TEST-*.xml; do
+          for xml in cloudberry-pxf/automation/build/test-results/test/TEST-*.xml; do
             if [ -f "$xml" ]; then
               tests=$(grep -oP 'tests="\K\d+' "$xml" 2>/dev/null | head -1 || echo "0")
               failures=$(grep -oP 'failures="\K\d+' "$xml" 2>/dev/null | head -1 || echo "0")

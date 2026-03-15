@@ -19,42 +19,78 @@ under the License.
 
 # Running Automation in Docker
 
+There are two ways to run automation tests: **from the host** (TestContainers, recommended)
+or **inside the container** (legacy). Both use the same `pxf/cbdb-dev:1` Docker image
+which includes a pre-built Cloudberry DB and the Hadoop/Hive/HBase stack.
+
 ## Prerequisites
 
-Before running the automation tests, ensure you have:
-
 * Docker and Docker Compose installed
-* Both `cloudberry-pxf` and `cloudberry` repositories cloned in the same parent directory (they will be mounted into the Docker container)
+* Both `cloudberry-pxf` and `cloudberry` repositories cloned in the same parent directory
 
-## Running Automation Tests
+### Building Docker images
 
-1. Navigate to the `cloudberry-pxf` directory:
-   ```bash
-   cd cloudberry-pxf
-   ```
+```bash
+cd cloudberry-pxf
 
-2. Stop and remove any existing containers and volumes:
+# 1. Build the singlecluster base image (Hadoop stack)
+docker build -t pxf/singlecluster:3 ci/singlecluster/
+
+# 2. Build the cbdb-dev image (pre-compiled Cloudberry + Hadoop stack)
+docker build -t pxf/cbdb-dev:1 ci/docker/pxf-cbdb-dev/ubuntu/
+
+# Override cloudberry branch if needed:
+docker build --build-arg CLOUDBERRY_BRANCH=my-branch \
+  -t pxf/cbdb-dev:1 ci/docker/pxf-cbdb-dev/ubuntu/
+```
+
+---
+
+## Option A: Host-driven tests with TestContainers (recommended)
+
+Run tests directly from the host machine. TestContainers manages the Docker
+containers automatically. See [README.Testcontainers.md](README.Testcontainers.md)
+for full details.
+
+```bash
+cd automation
+
+# JDBC tests
+./gradlew test -Dgroups=jdbc
+
+# S3 tests (starts a MinIO container automatically)
+./gradlew test -Dgroups=s3
+
+# HBase tests (starts a standalone HBase container automatically)
+./gradlew test -Dgroups=hbase
+
+# Single test method
+./gradlew test -Dgroups=jdbc \
+  --tests 'org.apache.cloudberry.pxf.automation.features.jdbc.JdbcTest.singleFragmentTable'
+```
+
+---
+
+## Option B: Running tests inside the container (legacy)
+
+1. Stop and remove any existing containers and volumes:
    ```bash
    docker compose -f ci/docker/pxf-cbdb-dev/ubuntu/docker-compose.yml down -v
    ```
 
-3. Build the Docker images:
+2. Build and start the containers:
    ```bash
    docker compose -f ci/docker/pxf-cbdb-dev/ubuntu/docker-compose.yml build
-   ```
-
-4. Start the containers in detached mode:
-   ```bash
    docker compose -f ci/docker/pxf-cbdb-dev/ubuntu/docker-compose.yml up -d
    ```
 
-5. Run the entrypoint script to set up the environment:
+3. Run the entrypoint script to set up the environment:
    ```bash
    docker exec pxf-cbdb-dev bash -lc \
       "cd /home/gpadmin/workspace/cloudberry-pxf/ci/docker/pxf-cbdb-dev/ubuntu && ./script/entrypoint.sh"
    ```
 
-6. Execute the test suite:
+4. Execute the test suite:
    ```bash
    docker exec pxf-cbdb-dev bash -lc \
       "cd /home/gpadmin/workspace/cloudberry-pxf/ci/docker/pxf-cbdb-dev/ubuntu && ./script/run_tests.sh"
@@ -62,7 +98,6 @@ Before running the automation tests, ensure you have:
    You can run tests multiple times in one container.
 
 ## Troubleshooting
-When something went wrong:
 
 Jump into container: `docker compose ps` + `docker exec -it <id> bash`
 

@@ -29,31 +29,6 @@ check_jvm_procs() {
   echo "$jps_out" | grep -q DataNode || die "DataNode not running"
 }
 
-check_hbase() {
-  local hbase_host="${HBASE_HOST:-$(hostname -I | awk '{print $1}')}"
-  hbase_host=${hbase_host:-127.0.0.1}
-
-  if ! echo "$jps_out" | grep -q HMaster && ! pgrep -f HMaster >/dev/null 2>&1; then
-    die "HBase HMaster not running"
-  fi
-
-  if ! echo "$jps_out" | grep -q HRegionServer && ! pgrep -f HRegionServer >/dev/null 2>&1; then
-    die "HBase RegionServer not running"
-  fi
-
-  local hbase_ok=true
-  if ! printf "status 'simple'\n" | "${HBASE_ROOT}/bin/hbase" shell -n >/tmp/hbase_status.log 2>&1; then
-    hbase_ok=false
-  fi
-  if ! (echo >/dev/tcp/"${hbase_host}"/16000) >/dev/null 2>&1; then
-    hbase_ok=false
-  fi
-  if [ "${hbase_ok}" != "true" ]; then
-    [ -f /tmp/hbase_status.log ] && cat /tmp/hbase_status.log
-    die "HBase health check failed (status or port 16000 on ${hbase_host})"
-  fi
-}
-
 check_hdfs() {
   hdfs dfs -test -d / || die "HDFS root not accessible"
 }
@@ -89,21 +64,19 @@ check_pxf() {
 }
 
 health_check() {
-  log "sanity check Hadoop/Hive/HBase/PXF"
+  log "sanity check Hadoop/Hive/PXF"
   GPHD_ROOT=${GPHD_ROOT:-/home/gpadmin/workspace/singlecluster}
   HADOOP_ROOT=${HADOOP_ROOT:-${GPHD_ROOT}/hadoop}
-  HBASE_ROOT=${HBASE_ROOT:-${GPHD_ROOT}/hbase}
   HIVE_ROOT=${HIVE_ROOT:-${GPHD_ROOT}/hive}
   JAVA_HADOOP=${JAVA_HADOOP:-/usr/lib/jvm/java-8-openjdk-amd64}
 
   export JAVA_HOME="${JAVA_HADOOP}"
-  export PATH="$JAVA_HOME/bin:$HADOOP_ROOT/bin:$HIVE_ROOT/bin:$HBASE_ROOT/bin:$PATH"
+  export PATH="$JAVA_HOME/bin:$HADOOP_ROOT/bin:$HIVE_ROOT/bin:$PATH"
   [ -f "${GPHD_ROOT}/bin/gphd-env.sh" ] && source "${GPHD_ROOT}/bin/gphd-env.sh"
 
   check_jvm_procs
-  check_hbase
   check_hdfs
   check_hive
   check_pxf
-  log "all components healthy: HDFS/HBase/Hive/PXF"
+  log "all components healthy: HDFS/Hive/PXF"
 }

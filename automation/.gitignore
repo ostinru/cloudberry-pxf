@@ -4,9 +4,11 @@ jsystem.properties
 runnerState.properties
 log/
 target/
+build/
 tempClusterConfDirectory/
 output/
 automation_logs/
 regression.diffs
 /dataTempFolder/
 /jsystem0.log.lck
+.gradle/
