@@ -10,3 +10,4 @@ automation_logs/
 regression.diffs
 /dataTempFolder/
 /jsystem0.log.lck
+.gradle/

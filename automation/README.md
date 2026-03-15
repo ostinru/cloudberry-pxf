@@ -1,7 +1,7 @@
 # Pxf Automation
 
 Contains all the PXF automation tests for the various functionalities of PXF.
-The automation framework uses TestNg APIs and tools to complete automatic testing for PXF. Compiling and running TestNg test cases being used via maven.
+The automation framework uses TestNg APIs and tools to complete automatic testing for PXF. Compiling and running TestNg test cases is done via Gradle 7.6 (`./gradlew`).
 The Automation framework also exposes simple APIs for performing actions on services including GPDB, PXF, HDFS, HBase and Hive or to use utilities such data comparison, reading and writing files , using tools such pxf_regress for query analysis and more.
 
 ## Dependencies

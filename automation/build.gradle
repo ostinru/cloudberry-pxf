@@ -1,0 +1,187 @@
+plugins {
+    id 'java'
+}
+
+group = 'org.apache.cloudberry.pxf.automation'
+version = '0.0.1-SNAPSHOT'
+
+ext {
+    versions = [
+        hadoop    : '2.10.2',
+        hbase     : '1.3.2.1',
+        hive      : '1.1.0',
+        orc       : '1.6.13',
+        snappyJava: '1.1.10.4',
+        powermock : '1.6.4'
+    ]
+}
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_1_8
+    targetCompatibility = JavaVersion.VERSION_1_8
+}
+
+def pxfLib = "${System.getProperty('user.home')}/automation_tmp_lib"
+
+repositories {
+    mavenCentral()
+    maven {
+        url = uri('https://maven.top-q.co.il/content/repositories/public/')
+    }
+}
+
+
+// The pom.xml includes src/test/resources as a main resource so that SUT
+// configs and templates end up on the compile classpath and inside the JAR.
+sourceSets {
+    main {
+        resources {
+            srcDir 'src/test/resources'
+        }
+    }
+}
+
+// Exclude Calcite and its transitive dependencies globally; they are pulled
+// in by multiple Hive modules and the required artifacts (pentaho, eigenbase)
+// are no longer available on Maven Central.
+configurations.configureEach {
+    exclude group: 'javax.comm', module: 'comm'
+    exclude group: 'org.apache.calcite', module: 'calcite-core'
+    exclude group: 'org.apache.calcite', module: 'calcite-avatica'
+}
+
+dependencies {
+    implementation files(
+        "${pxfLib}/pxf-api.jar",
+        "${pxfLib}/pxf-hbase.jar",
+        "${pxfLib}/pxf-hdfs.jar",
+        "${pxfLib}/pxf-hive.jar",
+        "${pxfLib}/pxf-extras.jar"
+    )
+
+    implementation "org.xerial.snappy:snappy-java:${versions.snappyJava}"
+    implementation 'com.github.luben:zstd-jni:1.5.7-6'
+    implementation 'org.apache.httpcomponents:httpclient:4.5.13'
+    testImplementation 'junit:junit:4.13.1'
+    testImplementation "org.powermock:powermock-module-testng:${versions.powermock}"
+    testImplementation "org.powermock:powermock-api-mockito:${versions.powermock}"
+    implementation 'org.testng:testng:6.14.3'
+    implementation 'org.awaitility:awaitility:4.2.0'
+    implementation 'org.jsystemtest:jsystemCore:6.1.06'
+    implementation 'org.jsystemtest.systemobjects:cli:6.1.06'
+    implementation 'org.mockito:mockito-core:1.10.19'
+    implementation 'ch.ethz.ganymed:ganymed-ssh2:261'
+    implementation 'org.postgresql:postgresql:42.7.2'
+    implementation 'org.springframework:spring:2.5.6' //  <scope>provided</scope>??
+    compileOnly 'org.springframework:spring-web:5.3.33'
+    implementation 'net.sf.opencsv:opencsv:2.3'
+    implementation 'ant:ant-junit:1.6.5'
+    implementation 'org.apache.ant:ant:1.10.11'
+    implementation 'com.amazonaws:aws-java-sdk-s3:1.12.261'
+    implementation 'com.fasterxml.jackson.core:jackson-core:2.14.3'
+    implementation 'com.fasterxml.jackson.core:jackson-databind:2.14.3'
+    implementation 'com.fasterxml.jackson.core:jackson-annotations:2.14.3'
+    implementation 'org.apache.httpcomponents:httpcore:4.4.14'
+    implementation('com.google.cloud.bigdataoss:gcs-connector:hadoop2-1.9.17:shaded') { transitive = false }
+    implementation 'com.microsoft.azure:azure-data-lake-store-sdk:2.2.3'
+    implementation 'com.microsoft.azure:azure-storage:5.5.0'
+
+    implementation "org.apache.hadoop:hadoop-common:${versions.hadoop}"
+    implementation("org.apache.hadoop:hadoop-aws:${versions.hadoop}") {
+        exclude group: 'com.amazonaws', module: 'aws-java-sdk-s3'
+    }
+    implementation "org.apache.hadoop:hadoop-azure:${versions.hadoop}"
+    implementation "org.apache.hadoop:hadoop-azure-datalake:${versions.hadoop}"
+    implementation "org.apache.hadoop:hadoop-auth:${versions.hadoop}"
+    implementation "org.apache.hadoop:hadoop-mapreduce-client-core:${versions.hadoop}"
+    implementation "org.apache.hadoop:hadoop-annotations:${versions.hadoop}"
+    implementation "org.apache.hadoop:hadoop-hdfs:${versions.hadoop}"
+
+    implementation 'org.apache.avro:avro:1.11.3'
+    implementation 'org.apache.avro:avro-tools:1.11.3'
+
+    implementation "org.apache.hbase:hbase-common:${versions.hbase}"
+    implementation "org.apache.hbase:hbase-protocol:${versions.hbase}"
+    implementation "org.apache.hbase:hbase-client:${versions.hbase}"
+    implementation "org.apache.hbase:hbase-thrift:${versions.hbase}"
+    implementation "org.apache.hbase:hbase-server:${versions.hbase}"
+
+    implementation("org.apache.hive:hive-exec:${versions.hive}") {
+        exclude group: 'org.apache.calcite', module: 'calcite-core'
+        exclude group: 'org.apache.calcite', module: 'calcite-avatica'
+    }
+    implementation("org.apache.hive:hive-service:${versions.hive}") {
+        exclude group: 'org.apache.calcite', module: 'calcite-core'
+        exclude group: 'org.apache.calcite', module: 'calcite-avatica'
+    }
+    implementation "org.apache.hive:hive-metastore:${versions.hive}"
+    implementation "org.apache.hive:hive-common:${versions.hive}"
+    implementation "org.apache.hive:hive-serde:${versions.hive}"
+    implementation "org.apache.hive:hive-jdbc:${versions.hive}"
+
+    implementation "org.apache.orc:orc-core:${versions.orc}"
+    implementation 'org.mockito:mockito-all:1.9.5'
+}
+
+sourceSets {
+    main {
+        java {
+            destinationDirectory.set(file("$buildDir/classes"))
+        }
+        resources {
+            srcDir 'src/main/resources'
+            srcDir 'src/test/resources'
+        }
+        output.resourcesDir = file("$buildDir/classes")
+    }
+    test {
+        java {
+            destinationDirectory.set(file("$buildDir/test-classes"))
+        }
+        resources {
+            srcDir 'src/test/resources'
+        }
+        output.resourcesDir = file("$buildDir/test-classes")
+    }
+}
+
+buildDir = 'target'
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+}
+
+tasks.withType(ProcessResources).configureEach {
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE
+}
+
+tasks.withType(Test).configureEach {
+    useTestNG()
+    ignoreFailures = true
+    maxHeapSize = '4096m'
+    maxParallelForks = 1
+    forkEvery = 1
+
+    reports {
+        junitXml.required = true
+        junitXml.outputLocation = file("$buildDir/surefire-reports")
+        html.required = false
+    }
+
+    if (System.getenv('PXF_TEST_DEBUG') == 'true' || System.getProperty('PXF_TEST_DEBUG') == 'true') {
+        jvmArgs '-agentlib:jdwp=transport=dt_socket,server=y,suspend=y,address=*:5005'
+    }
+
+    ['groups', 'PROTOCOL', 'AWS_ACCESS_KEY_ID', 'AWS_SECRET_ACCESS_KEY', 'useFDW', 'pxf.host', 'pxf.port', 'PXF_SINGLE_NODE', 'excludedGroups', 'PXF_TEST_KEEP_DATA']
+        .each { key ->
+            def value = System.getProperty(key)
+            if (value != null && !value.isEmpty()) {
+                systemProperty key, value
+            }
+        }
+
+    testLogging {
+        events 'failed', 'skipped'
+        exceptionFormat 'full'
+    }
+}

@@ -2,32 +2,33 @@
 # make ===> run all tests
 # make GROUP=<groupname> ===> run test group <groupname>
 # make TEST=<testname> ===> run <testname>.class
-# make TEST=<class>#<method> ===> run specific <method> from <class>.class
+# make TEST=<class>.<method> ===> run specific <method> from <class>.class
 # make OFFLINE=true ===> run using only cache
 
 SHELL := bash
 UNAME_S := $(shell uname -s)
-MAVEN_TEST_OPTS+= -B -e
-MAVEN_OPTS ?= -Xmx2g -Xms512m
-export MAVEN_OPTS
+GRADLE_TEST_OPTS+= --no-daemon --stacktrace
+GRADLE_OPTS ?= -Xmx2g -Xms512m
+export GRADLE_OPTS
 PXF_TMP_LIB := $(HOME)/automation_tmp_lib
 BASE_PATH   ?= /mnt/nfs/var/nfsshare
 USE_FDW     ?= false
 
 ifneq "$(TEST)" ""
-	MAVEN_TEST_OPTS+= -Dtest=$(TEST)
+	# Gradle test filter expects a pattern; '*' allows matching tests without full package prefix.
+	GRADLE_TEST_OPTS+= --tests *$(TEST)
 endif
 
 ifneq "$(GROUP)" ""
-	MAVEN_TEST_OPTS+= -Dgroups=$(GROUP)
+	GRADLE_TEST_OPTS+= -Dgroups=$(GROUP)
 endif
 
-MAVEN_TEST_OPTS+= -Djava.awt.headless=true -DuseFDW=$(USE_FDW) -Duser.timezone=UTC
+GRADLE_TEST_OPTS+= -Djava.awt.headless=true -DuseFDW=$(USE_FDW) -Duser.timezone=UTC
 
 ifneq "$(OFFLINE)" "true"
-	MAVEN_TEST_OPTS+= -U
+	GRADLE_TEST_OPTS+= --refresh-dependencies
 else
-	MAVEN_TEST_OPTS+= -o
+	GRADLE_TEST_OPTS+= --offline
 endif
 
 # lowercase the protocol
@@ -44,16 +45,16 @@ TEMPLATES_DIR=$(PXF_HOME)/templates
 PXF_BASE_SERVERS=$(PXF_BASE)/servers
 
 ifneq "$(PROTOCOL)" ""
-	MAVEN_TEST_OPTS+= -DPROTOCOL=$(PROTOCOL)
+	GRADLE_TEST_OPTS+= -DPROTOCOL=$(PROTOCOL)
 	PROTOCOL_HOME=$(PXF_BASE_SERVERS)/$(PROTOCOL)
 endif
 
 ifneq "$(ACCESS_KEY_ID)" ""
-	MAVEN_TEST_OPTS+= -DAWS_ACCESS_KEY_ID=$(ACCESS_KEY_ID)
+	GRADLE_TEST_OPTS+= -DAWS_ACCESS_KEY_ID=$(ACCESS_KEY_ID)
 endif
 
 ifneq "$(SECRET_ACCESS_KEY)" ""
-	MAVEN_TEST_OPTS+= -DAWS_SECRET_ACCESS_KEY=$(SECRET_ACCESS_KEY)
+	GRADLE_TEST_OPTS+= -DAWS_SECRET_ACCESS_KEY=$(SECRET_ACCESS_KEY)
 endif
 
 JDBC_HOST ?= localhost
@@ -76,18 +77,18 @@ ifeq ($(UNAME_S),Darwin)
 endif
 
 ifeq "$(PXF_TEST_KEEP_DATA)" "true"
-	MAVEN_DEBUG_OPTS+= -DPXF_TEST_KEEP_DATA=$(PXF_TEST_KEEP_DATA)
+	GRADLE_DEBUG_OPTS+= -DPXF_TEST_KEEP_DATA=$(PXF_TEST_KEEP_DATA)
 endif
 
 # set PXF_TEST_DEBUG to true to remotely debug pxf automation test
 ifeq "$(PXF_TEST_DEBUG)" "true"
-	MAVEN_DEBUG_OPTS+= -Dmaven.surefire.debug
+	GRADLE_DEBUG_OPTS+= -DPXF_TEST_DEBUG=true
 endif
 
 # disables credentials check by artifactregistry-maven-wagon plugin when run inside GCE VM.
 export NO_GCE_CHECK := true
 
-MVN=mvn
+GRADLEW ?= ./gradlew
 
 .PHONY: all test
 
@@ -118,10 +119,10 @@ symlink_pxf_jars: check-env
 	fi
 
 test: check-env clean-logs symlink_pxf_jars sync_cloud_configs sync_jdbc_config pxf_regress
-	$(MVN) $(MAVEN_TEST_OPTS) ${MAVEN_DEBUG_OPTS} test
+	$(GRADLEW) $(GRADLE_TEST_OPTS) $(GRADLE_DEBUG_OPTS) test
 
 clean: clean-logs
-	$(MVN) $(MAVEN_TEST_OPTS) clean
+	$(GRADLEW) --no-daemon clean
 	@rm -rf $(PXF_TMP_LIB)
 
 clean-logs:
@@ -132,7 +133,7 @@ clean-logs:
 	@find sqlrepo -type f -name "*segment_logs" -exec rm -rf {} +
 
 dev: symlink_pxf_jars
-	$(MVN) $(MAVEN_TEST_OPTS) package -DskipTests=true
+	$(GRADLEW) $(GRADLE_TEST_OPTS) classes testClasses -x test
 
 sync_jdbc_config:
 	@mkdir -p $(PXF_BASE_SERVERS)/database
