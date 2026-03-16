@@ -40,7 +40,7 @@ git clone https://github.com/apache/cloudberry-pxf.git
 
 To build PXF, you must have:
 
-1. GCC compiler, `make` system, `unzip` package, `maven` for running integration tests
+1. GCC compiler, `make` system, `unzip` package, Gradle wrapper (`./gradlew`) for running integration tests
 2. Installed Cloudberry
 
     Either download and install Cloudberry RPM or build Cloudberry from the source by following instructions in the [Cloudberry](https://github.com/apache/cloudberry).
@@ -144,10 +144,10 @@ We provide a Docker-based development environment that includes Cloudberry, Hado
 - Make sure you have a JDK (version 1.8) selected.
 - In the `Project Settings > Modules` section, select `Import Module`, pick the `pxf/server` directory and import as a Gradle module. You may see an error saying that there's
 no JDK set for Gradle. Just cancel and retry. It goes away the second time.
-- Import a second module, giving the `pxf/automation` directory, select "Import module from external model", pick `Maven` then click Finish.
+- Import a second module, giving the `pxf/automation` directory, and import it as a Gradle module.
 - Restart IntelliJ
 - Check that it worked by running a unit test (cannot currently run automation tests from IntelliJ) and making sure that imports, variables, and auto-completion function in the two modules.
-- Optionally you can replace `${PXF_TMP_DIR}` with `${GPHOME}/pxf/tmp` in `automation/pom.xml`
+- Optionally you can replace `${PXF_TMP_DIR}` with `${GPHOME}/pxf/tmp` in the automation build configuration.
 - Select `Tools > Create Command-line Launcher...` to enable starting Intellij with the `idea` command, e.g. `cd ~/workspace/pxf && idea .`.
 
 ### Debugging the locally running instance of PXF server using IntelliJ

@@ -32,7 +32,7 @@ detect_java_paths() {
 setup_locale_and_packages() {
   log "install base packages and locales"
   sudo apt-get update
-  sudo apt-get install -y wget lsb-release locales maven unzip openssh-server iproute2 sudo \
+  sudo apt-get install -y wget lsb-release locales unzip openssh-server iproute2 sudo \
     openjdk-11-jre-headless openjdk-8-jre-headless
   sudo locale-gen en_US.UTF-8 ru_RU.CP1251 ru_RU.UTF-8
   sudo update-locale LANG=en_US.UTF-8

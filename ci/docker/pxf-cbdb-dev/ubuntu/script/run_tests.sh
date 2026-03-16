@@ -475,7 +475,7 @@ ensure_gpupgrade_helpers() {
   export PXF_HOME=${PXF_HOME:-/usr/local/pxf}
   export PXF_BASE=${PXF_BASE:-/home/gpadmin/pxf-base}
   export GPHOME=${GPHOME:-/usr/local/cloudberry-db}
-  # Provide wrappers so mvn child processes see the binaries on PATH
+  # Provide wrappers so build child processes see the binaries on PATH
   for helper in pxf-pre-gpupgrade pxf-post-gpupgrade; do
     if [ ! -x "/usr/local/bin/${helper}" ]; then
       cat <<EOF | sudo tee "/usr/local/bin/${helper}" >/dev/null
@@ -507,7 +507,7 @@ ensure_testplugin_jar() {
   export PXF_HOME=${PXF_HOME:-/usr/local/pxf}
   if [ ! -f "${PXF_BASE}/lib/pxf-automation-test.jar" ]; then
     pushd "${REPO_ROOT}/automation" >/dev/null
-    mvn -q -DskipTests test-compile
+    ./gradlew --no-daemon -q testClasses -x test
     jar cf "${PXF_BASE}/lib/pxf-automation-test.jar" -C target/classes org/apache/cloudberry/pxf/automation/testplugin
     popd >/dev/null
     JAVA_HOME="${JAVA_BUILD}" "${PXF_HOME}/bin/pxf" restart >/dev/null || true
