@@ -7,11 +7,12 @@ version = '0.0.1-SNAPSHOT'
 
 ext {
     versions = [
+        avro      : '1.11.3',
         hadoop    : '2.10.2',
         hbase     : '1.3.2.1',
-        hive      : '1.1.0',
-        orc       : '1.6.13',
-        snappyJava: '1.1.10.4',
+        hive      : '2.3.8',
+        orc       : '1.7.11',
+        snappyJava: '1.1.10.7',
         powermock : '1.6.4'
     ]
 }
@@ -97,8 +98,8 @@ dependencies {
     implementation "org.apache.hadoop:hadoop-annotations:${versions.hadoop}"
     implementation "org.apache.hadoop:hadoop-hdfs:${versions.hadoop}"
 
-    implementation 'org.apache.avro:avro:1.11.3'
-    implementation 'org.apache.avro:avro-tools:1.11.3'
+    implementation "org.apache.avro:avro:${versions.avro}"
+    implementation "org.apache.avro:avro-tools:${versions.avro}"
 
     implementation "org.apache.hbase:hbase-common:${versions.hbase}"
     implementation "org.apache.hbase:hbase-protocol:${versions.hbase}"
@@ -106,18 +107,12 @@ dependencies {
     implementation "org.apache.hbase:hbase-thrift:${versions.hbase}"
     implementation "org.apache.hbase:hbase-server:${versions.hbase}"
 
-    implementation("org.apache.hive:hive-exec:${versions.hive}") {
-        exclude group: 'org.apache.calcite', module: 'calcite-core'
-        exclude group: 'org.apache.calcite', module: 'calcite-avatica'
-    }
-    implementation("org.apache.hive:hive-service:${versions.hive}") {
-        exclude group: 'org.apache.calcite', module: 'calcite-core'
-        exclude group: 'org.apache.calcite', module: 'calcite-avatica'
-    }
-    implementation "org.apache.hive:hive-metastore:${versions.hive}"
-    implementation "org.apache.hive:hive-common:${versions.hive}"
-    implementation "org.apache.hive:hive-serde:${versions.hive}"
-    implementation "org.apache.hive:hive-jdbc:${versions.hive}"
+    implementation("org.apache.hive:hive-exec:${versions.hive}:core") { transitive = false }
+    implementation("org.apache.hive:hive-service:${versions.hive}") { transitive = false }
+    implementation("org.apache.hive:hive-metastore:${versions.hive}") { transitive = false }
+    implementation("org.apache.hive:hive-common:${versions.hive}") { transitive = false }
+    implementation("org.apache.hive:hive-serde:${versions.hive}") { transitive = false }
+    implementation("org.apache.hive:hive-jdbc:${versions.hive}") { transitive = false }
 
     implementation "org.apache.orc:orc-core:${versions.orc}"
     implementation 'org.mockito:mockito-all:1.9.5'
