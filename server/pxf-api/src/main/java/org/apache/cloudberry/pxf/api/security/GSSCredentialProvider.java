@@ -175,6 +175,7 @@ public class GSSCredentialProvider {
      * Get current KerberosTicket that is a TGT under the Subject running this code.
      * @return the TGT KerberosTicket
      */
+    @SuppressWarnings("removal") // AccessController path is required for Java 8 compatibility
     private KerberosTicket getCurrentTgt() {
         KerberosTicket tgt = pxfUgi.getTGT(Subject.getSubject(AccessController.getContext()));
         Preconditions.checkNotNull(tgt, "No TGT found in the Subject.");
