@@ -335,8 +335,7 @@ func resultsDiffer(resultsFile string, expectFile string) bool {
 	summaryDiff.Write([]byte(diffHeader))
 	summaryDiff.Write(diffOutput)
 
-	// Temporarily treat differences as acceptable (record diff for investigation, but do not block tests).
-	return false
+	return true
 }
 
 // Filter out GP_IGNORE marked blocks, HINT/CONTEXT/DETAIL lines, and resource queue noise, generating a temporary file path.
