@@ -10,6 +10,7 @@ import (
 	"os/exec"
 	"path"
 	"path/filepath"
+	"regexp"
 	"sort"
 	"strings"
 	"time"
@@ -57,6 +58,9 @@ var successCount int = 0
 var failCount int = 0
 
 var logger *log.Logger
+
+// gpSegLocationSuffix matches Greenplum/Cloudberry "(segN sliceM host:port pid=...)" appended to errors; values differ by run.
+var gpSegLocationSuffix = regexp.MustCompile(`\s*\(seg\d+\s+slice\d+\s+\S+\s+pid=\d+\)`)
 
 func init() {
 	logger = log.New(os.Stdout, "pxf_regress ", log.LstdFlags|log.Lmicroseconds)
@@ -393,6 +397,7 @@ func writeFiltered(src string) (string, error) {
 		if strings.Contains(line, "resource queue required") {
 			continue
 		}
+		line = gpSegLocationSuffix.ReplaceAllString(line, "")
 		filtered = append(filtered, line)
 	}
 	if err := scanner.Err(); err != nil {
