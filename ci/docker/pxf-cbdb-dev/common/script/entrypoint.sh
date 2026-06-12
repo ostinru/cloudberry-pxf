@@ -45,8 +45,8 @@ fi
 detect_java_paths() {
   if [ "$OS_FAMILY" = "deb" ]; then
     case "$(uname -m)" in
-      aarch64|arm64) JAVA_BUILD=/usr/lib/jvm/java-11-openjdk-arm64;  JAVA_HADOOP=/usr/lib/jvm/java-8-openjdk-arm64 ;;
-      *)             JAVA_BUILD=/usr/lib/jvm/java-11-openjdk-amd64;  JAVA_HADOOP=/usr/lib/jvm/java-8-openjdk-amd64 ;;
+      aarch64|arm64) JAVA_BUILD=/usr/lib/jvm/java-21-openjdk-arm64;  JAVA_HADOOP=/usr/lib/jvm/java-8-openjdk-arm64 ;;
+      *)             JAVA_BUILD=/usr/lib/jvm/java-21-openjdk-amd64;  JAVA_HADOOP=/usr/lib/jvm/java-8-openjdk-amd64 ;;
     esac
   else
     JAVA_BUILD=/usr/lib/jvm/java-11-openjdk
@@ -60,7 +60,7 @@ setup_locale_and_packages() {
   if [ "$OS_FAMILY" = "deb" ]; then
     sudo apt-get update
     sudo apt-get install -y wget lsb-release locales maven unzip openssh-server iproute2 sudo \
-      openjdk-11-jre-headless openjdk-8-jre-headless
+      openjdk-21-jre-headless openjdk-8-jre-headless
     sudo locale-gen en_US.UTF-8 ru_RU.CP1251 ru_RU.UTF-8
     sudo update-locale LANG=en_US.UTF-8
   else

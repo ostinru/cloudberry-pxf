@@ -27,7 +27,7 @@ RUN if command -v apt-get >/dev/null 2>&1; then \
       sudo apt-get install -y --no-install-recommends \
         curl ca-certificates \
         openjdk-8-jdk-headless \
-        openjdk-11-jdk-headless; \
+        openjdk-21-jdk-headless; \
     elif command -v dnf >/dev/null 2>&1; then \
       sudo dnf install -y --allowerasing --nobest \
         curl ca-certificates \
