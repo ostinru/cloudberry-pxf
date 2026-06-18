@@ -57,16 +57,16 @@ GPHOME=${GPHOME:-/usr/local/cloudberry-db}
 COORDINATOR_DATA_DIRECTORY=${COORDINATOR_DATA_DIRECTORY:-/home/gpadmin/workspace/cloudberry/gpAux/gpdemo/datadirs/qddir/demoDataDir-1}
 
 # Java locations vary by arch; prefer Java 8 for Hadoop runtime and Java 11 for builds if needed.
-JAVA_11_ARM=/usr/lib/jvm/java-11-openjdk-arm64
-JAVA_11_AMD=/usr/lib/jvm/java-11-openjdk-amd64
+JAVA_21_ARM=/usr/lib/jvm/java-21-openjdk-arm64
+JAVA_21_AMD=/usr/lib/jvm/java-21-openjdk-amd64
 JAVA_8_ARM=/usr/lib/jvm/java-8-openjdk-arm64
 JAVA_8_AMD=/usr/lib/jvm/java-8-openjdk-amd64
 
 detect_java_paths() {
   case "$(uname -m)" in
-    aarch64|arm64) JAVA_BUILD=${JAVA_BUILD:-${JAVA_11_ARM}}; JAVA_HADOOP=${JAVA_HADOOP:-${JAVA_8_ARM}} ;;
-    x86_64|amd64)  JAVA_BUILD=${JAVA_BUILD:-${JAVA_11_AMD}}; JAVA_HADOOP=${JAVA_HADOOP:-${JAVA_8_AMD}} ;;
-    *)             JAVA_BUILD=${JAVA_BUILD:-${JAVA_11_ARM}}; JAVA_HADOOP=${JAVA_HADOOP:-${JAVA_8_ARM}} ;;
+    aarch64|arm64) JAVA_BUILD=${JAVA_BUILD:-${JAVA_21_ARM}}; JAVA_HADOOP=${JAVA_HADOOP:-${JAVA_8_ARM}} ;;
+    x86_64|amd64)  JAVA_BUILD=${JAVA_BUILD:-${JAVA_21_AMD}}; JAVA_HADOOP=${JAVA_HADOOP:-${JAVA_8_AMD}} ;;
+    *)             JAVA_BUILD=${JAVA_BUILD:-${JAVA_21_ARM}}; JAVA_HADOOP=${JAVA_HADOOP:-${JAVA_8_ARM}} ;;
   esac
   export JAVA_BUILD JAVA_HADOOP
 }

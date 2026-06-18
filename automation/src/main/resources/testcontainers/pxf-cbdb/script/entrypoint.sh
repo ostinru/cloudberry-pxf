@@ -41,8 +41,8 @@ fi
 detect_java_paths() {
   if [ "$OS_FAMILY" = "deb" ]; then
     case "$(uname -m)" in
-      aarch64|arm64) JAVA_BUILD=/usr/lib/jvm/java-11-openjdk-arm64; ;;
-      *)             JAVA_BUILD=/usr/lib/jvm/java-11-openjdk-amd64; ;;
+      aarch64|arm64) JAVA_BUILD=/usr/lib/jvm/java-21-openjdk-arm64; ;;
+      *)             JAVA_BUILD=/usr/lib/jvm/java-21-openjdk-amd64; ;;
     esac
   else
     JAVA_BUILD=/usr/lib/jvm/java-11-openjdk

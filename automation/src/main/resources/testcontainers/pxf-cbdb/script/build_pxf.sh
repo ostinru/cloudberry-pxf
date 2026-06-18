@@ -21,10 +21,10 @@
 # Build and install PXF — works on both Ubuntu and Rocky/RHEL
 
 # Auto-detect Java 11 path
-if [ -d /usr/lib/jvm/java-11-openjdk-amd64 ]; then
-  JAVA_HOME=${JAVA_HOME:-/usr/lib/jvm/java-11-openjdk-amd64}
-elif [ -d /usr/lib/jvm/java-11-openjdk-arm64 ]; then
-  JAVA_HOME=${JAVA_HOME:-/usr/lib/jvm/java-11-openjdk-arm64}
+if [ -d /usr/lib/jvm/java-21-openjdk-amd64 ]; then
+  JAVA_HOME=${JAVA_HOME:-/usr/lib/jvm/java-21-openjdk-amd64}
+elif [ -d /usr/lib/jvm/java-21-openjdk-arm64 ]; then
+  JAVA_HOME=${JAVA_HOME:-/usr/lib/jvm/java-21-openjdk-arm64}
 else
   JAVA_HOME=${JAVA_HOME:-/usr/lib/jvm/java-11-openjdk}
 fi
