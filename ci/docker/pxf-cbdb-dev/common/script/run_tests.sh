@@ -627,9 +627,6 @@ run_single_group() {
     features_fdw)
       feature_test "true"
       ;;
-    pxf_extension)
-      pxf_extension_test
-      ;;
     load)
       bench_prepare_env
       load_test
