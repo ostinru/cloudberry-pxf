@@ -20,13 +20,13 @@
 # --------------------------------------------------------------------
 # Build and install PXF — works on both Ubuntu and Rocky/RHEL
 
-# Auto-detect Java 11 path
-if [ -d /usr/lib/jvm/java-11-openjdk-amd64 ]; then
-  JAVA_HOME=${JAVA_HOME:-/usr/lib/jvm/java-11-openjdk-amd64}
-elif [ -d /usr/lib/jvm/java-11-openjdk-arm64 ]; then
-  JAVA_HOME=${JAVA_HOME:-/usr/lib/jvm/java-11-openjdk-arm64}
+# Auto-detect Java 17 path
+if [ -d /usr/lib/jvm/java-17-openjdk-amd64 ]; then
+  JAVA_HOME=${JAVA_HOME:-/usr/lib/jvm/java-17-openjdk-amd64}
+elif [ -d /usr/lib/jvm/java-17-openjdk-arm64 ]; then
+  JAVA_HOME=${JAVA_HOME:-/usr/lib/jvm/java-17-openjdk-arm64}
 else
-  JAVA_HOME=${JAVA_HOME:-/usr/lib/jvm/java-11-openjdk}
+  JAVA_HOME=${JAVA_HOME:-/usr/lib/jvm/java-17-openjdk}
 fi
 export PATH=$JAVA_HOME/bin:$PATH
 export GPHOME=/usr/local/cloudberry-db

@@ -56,17 +56,17 @@ GPHOME=${GPHOME:-/usr/local/cloudberry-db}
 # GPDB demo master path is required by pg_hba reloads; define a default up front.
 COORDINATOR_DATA_DIRECTORY=${COORDINATOR_DATA_DIRECTORY:-/home/gpadmin/workspace/cloudberry/gpAux/gpdemo/datadirs/qddir/demoDataDir-1}
 
-# Java locations vary by arch; prefer Java 8 for Hadoop runtime and Java 11 for builds if needed.
-JAVA_11_ARM=/usr/lib/jvm/java-11-openjdk-arm64
-JAVA_11_AMD=/usr/lib/jvm/java-11-openjdk-amd64
+# Java locations vary by arch; prefer Java 8 for Hadoop runtime and Java 17 for builds if needed.
+JAVA_17_ARM=/usr/lib/jvm/java-17-openjdk-arm64
+JAVA_17_AMD=/usr/lib/jvm/java-17-openjdk-amd64
 JAVA_8_ARM=/usr/lib/jvm/java-8-openjdk-arm64
 JAVA_8_AMD=/usr/lib/jvm/java-8-openjdk-amd64
 
 detect_java_paths() {
   case "$(uname -m)" in
-    aarch64|arm64) JAVA_BUILD=${JAVA_BUILD:-${JAVA_11_ARM}}; JAVA_HADOOP=${JAVA_HADOOP:-${JAVA_8_ARM}} ;;
-    x86_64|amd64)  JAVA_BUILD=${JAVA_BUILD:-${JAVA_11_AMD}}; JAVA_HADOOP=${JAVA_HADOOP:-${JAVA_8_AMD}} ;;
-    *)             JAVA_BUILD=${JAVA_BUILD:-${JAVA_11_ARM}}; JAVA_HADOOP=${JAVA_HADOOP:-${JAVA_8_ARM}} ;;
+    aarch64|arm64) JAVA_BUILD=${JAVA_BUILD:-${JAVA_17_ARM}}; JAVA_HADOOP=${JAVA_HADOOP:-${JAVA_8_ARM}} ;;
+    x86_64|amd64)  JAVA_BUILD=${JAVA_BUILD:-${JAVA_17_AMD}}; JAVA_HADOOP=${JAVA_HADOOP:-${JAVA_8_AMD}} ;;
+    *)             JAVA_BUILD=${JAVA_BUILD:-${JAVA_17_ARM}}; JAVA_HADOOP=${JAVA_HADOOP:-${JAVA_8_ARM}} ;;
   esac
   export JAVA_BUILD JAVA_HADOOP
 }

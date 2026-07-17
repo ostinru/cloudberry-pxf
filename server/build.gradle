@@ -50,8 +50,8 @@ allprojects {
 
 idea {
     project {
-        jdkName = "1.8"
-        languageLevel = "8"
+        jdkName = "17"
+        languageLevel = "17"
         vcs = "Git"
     }
 }
@@ -64,8 +64,8 @@ configure(javaProjects) {
     group = 'org.apache.cloudberry.pxf'
     version = "${version}"
 
-    sourceCompatibility = JavaVersion.VERSION_1_8
-    targetCompatibility = JavaVersion.VERSION_1_8
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
 
     ext['log4j2.version'] = '2.25.4'
 

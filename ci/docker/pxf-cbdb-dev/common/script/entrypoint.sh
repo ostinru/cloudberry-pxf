@@ -45,11 +45,11 @@ fi
 detect_java_paths() {
   if [ "$OS_FAMILY" = "deb" ]; then
     case "$(uname -m)" in
-      aarch64|arm64) JAVA_BUILD=/usr/lib/jvm/java-11-openjdk-arm64;  JAVA_HADOOP=/usr/lib/jvm/java-8-openjdk-arm64 ;;
-      *)             JAVA_BUILD=/usr/lib/jvm/java-11-openjdk-amd64;  JAVA_HADOOP=/usr/lib/jvm/java-8-openjdk-amd64 ;;
+      aarch64|arm64) JAVA_BUILD=/usr/lib/jvm/java-17-openjdk-arm64;  JAVA_HADOOP=/usr/lib/jvm/java-8-openjdk-arm64 ;;
+      *)             JAVA_BUILD=/usr/lib/jvm/java-17-openjdk-amd64;  JAVA_HADOOP=/usr/lib/jvm/java-8-openjdk-amd64 ;;
     esac
   else
-    JAVA_BUILD=/usr/lib/jvm/java-11-openjdk
+    JAVA_BUILD=/usr/lib/jvm/java-17-openjdk
     JAVA_HADOOP=/usr/lib/jvm/java-1.8.0-openjdk
   fi
   export JAVA_BUILD JAVA_HADOOP
@@ -60,12 +60,12 @@ setup_locale_and_packages() {
   if [ "$OS_FAMILY" = "deb" ]; then
     retry sudo apt-get update
     retry sudo apt-get install -y wget lsb-release locales maven unzip openssh-server iproute2 sudo \
-      openjdk-11-jre-headless openjdk-8-jre-headless
+      openjdk-17-jre-headless openjdk-8-jre-headless
     sudo locale-gen en_US.UTF-8 ru_RU.CP1251 ru_RU.UTF-8
     sudo update-locale LANG=en_US.UTF-8
   else
     retry sudo dnf install -y --nobest wget maven unzip openssh-server iproute sudo \
-      java-11-openjdk-headless java-1.8.0-openjdk-headless \
+      java-17-openjdk-headless java-1.8.0-openjdk-headless \
       glibc-langpack-en glibc-locale-source
     sudo localedef -c -i en_US -f UTF-8 en_US.UTF-8 || true
     sudo localedef -c -i ru_RU -f UTF-8 ru_RU.UTF-8 || true
