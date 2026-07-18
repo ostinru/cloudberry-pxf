@@ -84,7 +84,8 @@ endif
 # disables credentials check by artifactregistry-maven-wagon plugin when run inside GCE VM.
 export NO_GCE_CHECK := true
 
-MVN=mvn
+# Allow overrides for JAVA_HOME with JAVA_BUILD
+MVN=JAVA_HOME=$(if $(JAVA_BUILD),$(JAVA_BUILD),$(JAVA_HOME)) mvn
 
 .PHONY: all test
 
