@@ -41,6 +41,9 @@ else
   JAVA_HADOOP=${JAVA_HADOOP:-/usr/lib/jvm/java-1.8.0-openjdk}
 fi
 
+export JAVA_BUILD
+export JAVA_HADOOP
+
 # --------------------------------------------------------------------
 # Core paths
 # --------------------------------------------------------------------
