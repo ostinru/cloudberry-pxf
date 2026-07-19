@@ -69,6 +69,12 @@ public class HBase extends BaseSystemObject implements IDbFunctionality {
 
         ReportUtils.startLevel(report, getClass(), "Init");
 
+        // The ZooKeeper client canonicalizes (reverse-DNS) the quorum address
+        // before connecting. With an IP-based quorum (127.0.0.1) the address is
+        // still unresolved at that point, so canonicalization throws
+        // "Unable to canonicalize address ... not resolvable".
+        System.setProperty("zookeeper.sasl.client.canonicalize.hostname", "false");
+
         config = new Configuration();
 
         // if hbaseRoot root exists in the SUT file, load configuration from it
