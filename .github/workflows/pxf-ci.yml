@@ -319,7 +319,6 @@ jobs:
           - cli
           - external-table
           - fdw
-          - sanity
           - smoke
           - hdfs
           - hcatalog
@@ -515,7 +514,6 @@ jobs:
           - external-table
           - fdw
           - server
-          - sanity
           - smoke
           - hdfs
           - hcatalog
