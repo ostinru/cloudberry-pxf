@@ -339,6 +339,7 @@ ensure_testplugin_jar() {
 }
 
 feature_test(){
+  local use_fdw="${1:-false}"
   # Ensure PXF CLI is available for gpupgrade tests and sanity checks
   export PXF_HOME=${PXF_HOME:-/usr/local/pxf}
   export PATH="${PXF_HOME}/bin:${PATH}"
@@ -359,49 +360,18 @@ feature_test(){
 
   configure_pxf_default_hdfs_server
 
-  export PROTOCOL=
-  make GROUP="features" || true
-  save_test_reports "features"
-  echo "[run_tests] GROUP=features finished"
-}
-
-gpdb_test() {
-  local use_fdw="$1"
   export PROTOCOL=HDFS
-  export PXF_HOME=${PXF_HOME:-/usr/local/pxf}
-  export PATH="${PXF_HOME}/bin:${PATH}"
-  ensure_gpupgrade_helpers
-  ensure_testplugin_jar
-
-  # Make sure core services are alive before preparing configs
-  health_check_with_retry || true
-
-  export PGHOST=127.0.0.1
-  export PATH="${GPHOME}/bin:${PATH}"
-  ensure_testuser_pg_hba
-  # Clean stale state from previous runs so gpdb suite starts fresh
-  cleanup_hdfs_test_data
-  hdfs dfs -rm -r -f /tmp/pxf_automation_data >/dev/null 2>&1 || true
-  cleanup_hive_state
-  cleanup_hbase_state
-
-  # Ensure PXF points to local HDFS/Hive/HBase configs
-  configure_pxf_default_hdfs_server
-
-  local extra_args=""
+  local extra_args="USE_FDW=false"
+  local report_name="features"
   if [[ "$use_fdw" == "true" ]]; then
     extra_args="USE_FDW=true"
-  else
-    extra_args="USE_FDW=false"
+    report_name="features_fdw"
   fi
-  echo "[run_tests] Starting GROUP=gpdb $extra_args"
-  make GROUP="gpdb" $extra_args || true
-  if [[ "$use_fdw" == "true" ]]; then
-      save_test_reports "gpdb_fdw"
-  else
-      save_test_reports "gpdb"
-  fi
-  echo "[run_tests] GROUP=gpdb $extra_args finished"
+  # "features" and "gpdb" tags largely overlap; union them so each test
+  # runs once per USE_FDW mode instead of once per tag
+  make GROUP="features,gpdb" $extra_args || true
+  save_test_reports "$report_name"
+  echo "[run_tests] GROUP=features,gpdb $extra_args finished"
 }
 
 bench_prepare_env() {
@@ -500,7 +470,7 @@ generate_test_summary() {
 
     local group=$(basename "$group_dir")
     # Skip if it's not a test group directory
-    [[ "$group" =~ ^(smoke|hcatalog|hcfs|hdfs|hive|gpdb|hbase|profile|jdbc|proxy|unused|features|load|performance|fdw|gpdb_fdw)$ ]] || continue
+    [[ "$group" =~ ^(smoke|hcatalog|hcfs|hdfs|hive|hbase|profile|jdbc|proxy|unused|features|features_fdw|load|performance|fdw)$ ]] || continue
 
     echo "Processing $group test reports from $group_dir"
 
@@ -636,9 +606,6 @@ run_single_group() {
       cd "${REPO_ROOT}/fdw"
       make test
       ;;
-    gpdb_fdw)
-      gpdb_test "true"
-      ;;
     server)
       cd "${REPO_ROOT}/server"
       ./gradlew test
@@ -659,10 +626,10 @@ run_single_group() {
       save_test_reports "hbase"
       ;;
     features)
-      feature_test
+      feature_test "false"
       ;;
-    gpdb)
-      gpdb_test "false"
+    features_fdw)
+      feature_test "true"
       ;;
     load)
       bench_prepare_env
@@ -685,7 +652,7 @@ run_single_group() {
       ;;
     *)
       echo "Unknown test group: $group"
-      echo "Available groups: cli, external-table, fdw, server, smoke, hdfs, hcatalog, hcfs, hive, hbase, profile, jdbc, proxy, unused, features, gpdb, gpdb_fdw, load, performance, bench"
+      echo "Available groups: cli, external-table, fdw, server, smoke, hdfs, hcatalog, hcfs, hive, hbase, profile, jdbc, proxy, unused, features, features_fdw, load, performance, bench"
       exit 1
       ;;
   esac
@@ -709,8 +676,9 @@ main() {
     # Run base tests (includes smoke, hdfs, hcatalog, hcfs, hive, etc.)
     base_test
 
-    # Run feature tests (includes features, gpdb)
-    feature_test
+    # Run feature tests (union of features + gpdb tags, once per USE_FDW mode)
+    feature_test "false"
+    feature_test "true"
 
     # Run bench tests (includes load, performance)
     bench_test

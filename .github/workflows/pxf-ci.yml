@@ -330,8 +330,7 @@ jobs:
           - proxy
           - unused
           - features
-          - gpdb
-          - gpdb_fdw
+          - features_fdw
           - load
     steps:
     - name: Free disk space
@@ -525,8 +524,7 @@ jobs:
           - proxy
           - unused
           - features
-          - gpdb
-          - gpdb_fdw
+          - features_fdw
           - load
     steps:
     - name: Free disk space
