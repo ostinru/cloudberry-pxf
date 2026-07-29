@@ -269,10 +269,6 @@ base_test(){
   save_test_reports "profile"
   echo "[run_tests] GROUP=profile finished"
 
-  make GROUP="jdbc" || true
-  save_test_reports "jdbc"
-  echo "[run_tests] GROUP=jdbc finished"
-
   make GROUP="proxy" || true
   save_test_reports "proxy"
   echo "[run_tests] GROUP=proxy finished"
@@ -470,7 +466,7 @@ generate_test_summary() {
 
     local group=$(basename "$group_dir")
     # Skip if it's not a test group directory
-    [[ "$group" =~ ^(smoke|hcatalog|hcfs|hdfs|hive|hbase|profile|jdbc|proxy|unused|features|features_fdw|load|performance|fdw)$ ]] || continue
+    [[ "$group" =~ ^(smoke|hcatalog|hcfs|hdfs|hive|hbase|profile|proxy|unused|features|features_fdw|load|performance|fdw)$ ]] || continue
 
     echo "Processing $group test reports from $group_dir"
 
@@ -645,14 +641,14 @@ run_single_group() {
       make GROUP="proxy"
       save_test_reports "proxy"
       ;;
-    smoke|hdfs|hcatalog|hcfs|profile|jdbc|unused)
+    smoke|hdfs|hcatalog|hcfs|profile|unused)
       export PROTOCOL=
       make GROUP="$group"
       save_test_reports "$group"
       ;;
     *)
       echo "Unknown test group: $group"
-      echo "Available groups: cli, external-table, fdw, server, smoke, hdfs, hcatalog, hcfs, hive, hbase, profile, jdbc, proxy, unused, features, features_fdw, load, performance, bench"
+      echo "Available groups: cli, external-table, fdw, server, smoke, hdfs, hcatalog, hcfs, hive, hbase, profile, proxy, unused, features, features_fdw, load, performance, bench"
       exit 1
       ;;
   esac

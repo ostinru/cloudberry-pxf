@@ -326,7 +326,6 @@ jobs:
           - hive
           - hbase
           - profile
-          - jdbc
           - proxy
           - unused
           - features
@@ -520,7 +519,6 @@ jobs:
           - hive
           - hbase
           - profile
-          - jdbc
           - proxy
           - unused
           - features
