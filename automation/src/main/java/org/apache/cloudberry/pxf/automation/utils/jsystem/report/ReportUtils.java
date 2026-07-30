@@ -121,12 +121,12 @@ public abstract class ReportUtils {
 	 */
 	public static void reportHtml(Reporter jsystemReport, Class<?> contextClass, String data) {
 		if (jsystemReport != null && !jsystemReport.isSilent()) {
-			jsystemReport.report(contextClass.getSimpleName() + " -> " + data, ReportAttribute.HTML);
+			jsystemReport.report(contextClass.getSimpleName() + " -> " + truncate(data), ReportAttribute.HTML);
 		}
 	}
 
 	public static void reportTable(Table table) {
-		System.out.println(table);
+		System.out.println(table == null ? null : truncate(table.toString()));
 	}
 
 	/**
