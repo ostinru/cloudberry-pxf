@@ -107,6 +107,9 @@ fetch_backend_control_body(const char *endpoint, int32 session_id)
 
 	handle = churl_init_download(uri.data, headers);
 
+	/* read some bytes to make sure the connection is established */
+	churl_read_check_connectivity(handle);
+
 	/* read the full JSON body */
 	initStringInfo(&response);
 	while ((n = churl_read(handle, readbuf, sizeof(readbuf))) != 0)
