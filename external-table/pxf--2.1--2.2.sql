@@ -15,10 +15,11 @@
 -- specific language governing permissions and limitations
 -- under the License.
 
-/* fdw/pxf_fdw--2.0--2.1.sql */
+/* external_table/pxf--2.1--2.2.sql */
 
--- complain if script is sourced in psql, rather than via ALTER EXTENSION
-\echo Use "ALTER EXTENSION pxf_fdw UPDATE TO '2.1'" to load this file. \quit
+------------------------------------------------------------------
+-- PXF Activity Monitoring
+------------------------------------------------------------------
 
 -- Raw per-segment accessor: each segment asks its local PXF instance for the
 -- activity that originates from its own segment id and returns the JSON body

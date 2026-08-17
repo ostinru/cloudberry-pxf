@@ -15,7 +15,7 @@
 -- specific language governing permissions and limitations
 -- under the License.
 
--- @description query01 for PXF FDW 2.1 upgrade/downgrade test - step 3: after downgrade to 2.0
+-- @description query01 for PXF 2.2 upgrade/downgrade test - step 1: create at 2.1
 -- start_matchsubs
 --
 -- m{.*/usr/local/pxf-(dev|gp\d).*}
@@ -29,6 +29,18 @@
 \c pxfautomation_extension
 -- end_ignore
 
-SELECT extversion FROM pg_extension WHERE extname = 'pxf_fdw';
+SELECT extversion FROM pg_extension WHERE extname = 'pxf';
 
-\dx+ pxf_fdw
+SELECT p.proname
+FROM pg_catalog.pg_extension AS e
+    INNER JOIN pg_catalog.pg_depend AS d ON (d.refobjid = e.oid)
+    INNER JOIN pg_catalog.pg_proc AS p ON (p.oid = d.objid)
+WHERE d.deptype = 'e' AND e.extname = 'pxf'
+ORDER BY 1;
+
+SELECT c.relname, c.relkind
+FROM pg_catalog.pg_extension AS e
+    INNER JOIN pg_catalog.pg_depend AS d ON (d.refobjid = e.oid)
+    INNER JOIN pg_catalog.pg_class AS c ON (c.oid = d.objid)
+WHERE d.deptype = 'e' AND e.extname = 'pxf'
+ORDER BY 1;
