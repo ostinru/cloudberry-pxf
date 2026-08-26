@@ -3,6 +3,7 @@ package org.apache.cloudberry.pxf.service.controller;
 import com.google.common.io.CountingOutputStream;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang.StringUtils;
+import org.apache.cloudberry.pxf.api.error.PxfRuntimeException;
 import org.apache.cloudberry.pxf.api.io.Writable;
 import org.apache.cloudberry.pxf.api.model.ConfigurationFactory;
 import org.apache.cloudberry.pxf.api.model.Fragment;
@@ -90,9 +91,9 @@ public class ReadServiceImpl extends BaseServiceImpl<OperationStats> implements 
                 // stop before starting the next fragment if the request was
                 // cancelled via pxf_cancel_backend
                 if (isCancelled()) {
-                    log.info("Read of resource {} cancelled after {} of {} fragments",
-                            context.getDataSource(), i, fragments.size());
-                    break;
+                    throw new PxfRuntimeException(String.format(
+                            "Read of resource %s cancelled by pxf_cancel_backend after %d of %d fragments",
+                            context.getDataSource(), i, fragments.size()));
                 }
                 Fragment fragment = fragments.get(i);
                 sourceName = fragment.getSourceName();

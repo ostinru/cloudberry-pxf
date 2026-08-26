@@ -2,6 +2,7 @@ package org.apache.cloudberry.pxf.service.controller;
 
 import com.google.common.io.CountingInputStream;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.cloudberry.pxf.api.error.PxfRuntimeException;
 import org.apache.cloudberry.pxf.api.model.ConfigurationFactory;
 import org.apache.cloudberry.pxf.api.model.RequestContext;
 import org.apache.cloudberry.pxf.api.utilities.Utilities;
@@ -74,7 +75,9 @@ public class WriteServiceImpl extends BaseServiceImpl<OperationStats> implements
                 operationStats.reportCompletedRecord(countingInputStream.getCount());
             }
             if (isCancelled()) {
-                log.info("Write to resource {} cancelled", context.getDataSource());
+                throw new PxfRuntimeException(String.format(
+                        "Write to resource %s cancelled by pxf_cancel_backend",
+                        context.getDataSource()));
             }
         } catch (Exception e) {
             operationResult.setException(e);
