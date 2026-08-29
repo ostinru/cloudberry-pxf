@@ -1,14 +1,21 @@
 package org.apache.cloudberry.pxf.plugins.hdfs.utilities;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.mapred.FileInputFormat;
+import org.apache.hadoop.mapred.InvalidInputException;
+import org.apache.hadoop.mapred.JobConf;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 import java.io.IOException;
+import java.nio.file.Files;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class PxfInputFormatTest {
 
@@ -39,5 +46,65 @@ public class PxfInputFormatTest {
 
         boolean result = new PxfInputFormat().isSplitable(fs, path);
         assertEquals(result, expected, description);
+    }
+
+    @Test
+    public void testListingUnderLimit(@TempDir java.nio.file.Path dir) throws IOException {
+        createFiles(dir, "a.csv", "b.csv", "c.json");
+        Files.createFile(dir.resolve("_SUCCESS"));
+
+        FileStatus[] result = listStatus(dir, new Path(dir.toUri()), 10);
+        assertEquals(3, result.length);
+    }
+
+    @Test
+    public void testThrowsWhenLimitExceeded(@TempDir java.nio.file.Path dir) throws IOException {
+        createFiles(dir, "a.csv", "b.csv", "c.csv");
+
+        IOException e = assertThrows(IOException.class,
+                () -> listStatus(dir, new Path(dir.toUri()), 1));
+        assertTrue(e.getMessage().contains("exceeds the configured limit of 1"), e.getMessage());
+        assertTrue(e.getMessage().contains(PxfInputFormat.FILES_LIMIT_OPTION), e.getMessage());
+        assertTrue(e.getMessage().contains(PxfInputFormat.FILES_LIMIT_PROPERTY), e.getMessage());
+    }
+
+    @Test
+    public void testAppliesGlobFilter(@TempDir java.nio.file.Path dir) throws IOException {
+        createFiles(dir, "a.csv", "b.csv", "c.json");
+
+        FileStatus[] result = listStatus(dir, new Path(dir.toUri() + "*.csv"), 10);
+        assertEquals(2, result.length);
+    }
+
+    @Test
+    public void testWildcardMatchingNothingThrows(@TempDir java.nio.file.Path dir) throws IOException {
+        createFiles(dir, "a.csv");
+
+        assertThrows(InvalidInputException.class,
+                () -> listStatus(dir, new Path(dir.toUri() + "*.parquet"), 10));
+    }
+
+    private FileStatus[] listStatus(java.nio.file.Path dir, Path input, int limit) throws IOException {
+        JobConf job = new JobConf(new Configuration());
+        job.setInt(PxfInputFormat.FILES_LIMIT_PROPERTY, limit);
+        FileInputFormat.setInputPaths(job, input);
+        return new LimitedPxfInputFormat().listStatus(job);
+    }
+
+    private void createFiles(java.nio.file.Path dir, String... names) throws IOException {
+        for (String name : names) {
+            Files.createFile(dir.resolve(name));
+        }
+    }
+
+    /**
+     * Forces the streaming limited path so the limit can be exercised against
+     * the local filesystem, which is otherwise gated out as a non-object-store.
+     */
+    private static class LimitedPxfInputFormat extends PxfInputFormat {
+        @Override
+        protected boolean isLimitApplicable(JobConf job) {
+            return true;
+        }
     }
 }

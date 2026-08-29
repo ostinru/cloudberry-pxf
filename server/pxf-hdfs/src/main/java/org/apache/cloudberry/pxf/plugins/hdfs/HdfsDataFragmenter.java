@@ -132,6 +132,11 @@ public class HdfsDataFragmenter extends BaseFragmenter {
     protected JobConf getJobConf() {
         if (jobConf == null) {
             jobConf = new JobConf(configuration, this.getClass());
+            // Inject Table DDL options into jobConf
+            if (context.getOption(PxfInputFormat.FILES_LIMIT_OPTION) != null) {
+                jobConf.setInt(PxfInputFormat.FILES_LIMIT_PROPERTY,
+                        context.getOption(PxfInputFormat.FILES_LIMIT_OPTION, PxfInputFormat.DEFAULT_FILES_LIMIT));
+            }
         }
         return jobConf;
     }
