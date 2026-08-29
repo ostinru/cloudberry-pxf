@@ -50,8 +50,8 @@ allprojects {
 
 idea {
     project {
-        jdkName = "1.8"
-        languageLevel = "8"
+        jdkName = "17"
+        languageLevel = "17"
         vcs = "Git"
     }
 }
@@ -64,8 +64,8 @@ configure(javaProjects) {
     group = 'org.apache.cloudberry.pxf'
     version = "${version}"
 
-    sourceCompatibility = JavaVersion.VERSION_1_8
-    targetCompatibility = JavaVersion.VERSION_1_8
+    sourceCompatibility = JavaVersion.VERSION_17
+    targetCompatibility = JavaVersion.VERSION_17
 
     ext['log4j2.version'] = '2.25.4'
 
@@ -355,9 +355,9 @@ task stage(type: Copy) {
     description "Build PXF server and stage resulting artifacts for packaging."
     dependsOn ":pxf-service:bootJar"
 
-    // Provide the pxf-hbase jar. The pxf-hbase.jar is required for the PXF
+    // Provide the pxf-hbase-lib jar. The pxf-hbase-lib.jar is required for the PXF
     // HBase connector to support filter push down
-    from("pxf-hbase/build/libs") { into 'share' }
+    from("pxf-hbase-lib/build/libs") { into 'share' }
     from("pxf-service/build/libs") {
         into 'application'
         rename 'pxf-service-(.+)', 'pxf-app-$1'

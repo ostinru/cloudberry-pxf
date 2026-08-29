@@ -116,7 +116,7 @@ start_hbase() {
   cp /home/gpadmin/automation_tmp_lib/pxf-hbase.jar "${GPHD_ROOT}/hbase/lib/" 2>/dev/null || true
   if [ ! -f "${GPHD_ROOT}/hbase/lib/pxf-hbase.jar" ]; then
     pxf_app=$(ls -1v /usr/local/pxf/application/pxf-app-*.jar 2>/dev/null | grep -v 'plain' | tail -n 1)
-    [ -n "${pxf_app}" ] && unzip -qq -j "${pxf_app}" 'BOOT-INF/lib/pxf-hbase-*.jar' -d "${GPHD_ROOT}/hbase/lib/" || true
+    [ -n "${pxf_app}" ] && unzip -qq -j "${pxf_app}" 'BOOT-INF/lib/pxf-hbase-lib*.jar' -d "${GPHD_ROOT}/hbase/lib/" || true
   fi
   if pgrep -f HMaster >/dev/null 2>&1; then
     echo "[run_tests] HBase HMaster already running, skipping start"
@@ -335,7 +335,7 @@ ensure_testplugin_jar() {
   export PXF_HOME=${PXF_HOME:-/usr/local/pxf}
   if [ ! -f "${PXF_BASE}/lib/pxf-automation-test.jar" ]; then
     pushd "${REPO_ROOT}/automation" >/dev/null
-    mvn -q -DskipTests test-compile
+    JAVA_HOME="${JAVA_BUILD}" mvn -q -DskipTests test-compile
     jar cf "${PXF_BASE}/lib/pxf-automation-test.jar" -C target/classes org/apache/cloudberry/pxf/automation/testplugin
     popd >/dev/null
     JAVA_HOME="${JAVA_BUILD}" "${PXF_HOME}/bin/pxf" restart >/dev/null || true

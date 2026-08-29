@@ -20,18 +20,18 @@
 ARG BASE_IMAGE=apache/incubator-cloudberry:cbdb-build-ubuntu22.04-latest
 FROM ${BASE_IMAGE}
 
-# Install Java 11: auto-detect OS package manager
+# Install Java 17: auto-detect OS package manager
 RUN if command -v apt-get >/dev/null 2>&1; then \
       export DEBIAN_FRONTEND=noninteractive && \
       sudo apt-get update && \
       sudo apt-get install -y --no-install-recommends \
         curl ca-certificates git unzip maven make \
         locales wget lsb-release openssh-server iproute2 sudo \
-        openjdk-11-jdk-headless; \
+        openjdk-17-jdk-headless; \
     elif command -v dnf >/dev/null 2>&1; then \
       sudo dnf install -y --allowerasing --nobest \
         curl ca-certificates wget maven unzip openssh-server iproute sudo glibc-langpack-en glibc-locale-source \
-        java-11-openjdk-devel && \
+        java-17-openjdk-devel && \
       sudo dnf clean all; \
     fi
 

@@ -20,6 +20,8 @@ dependencies {
      *******************************/
 
     implementation(project(':pxf-api'))
+    implementation(project(':pxf-hbase-lib'))
+    implementation("com.google.protobuf:protobuf-java")
     implementation("commons-collections:commons-collections")
 
     /*******************************

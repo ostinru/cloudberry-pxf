@@ -36,8 +36,8 @@ concurrency:
   cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
 
 env:
-  JAVA_VERSION: "11"
-  JAVA_HOME: "/usr/lib/jvm/java-11-openjdk"
+  JAVA_VERSION: "17"
+  JAVA_HOME: "/usr/lib/jvm/java-17-openjdk"
   GO_VERSION: "1.25"
   GPHOME: "/usr/local/cloudberry-db"
   CLOUDBERRY_VERSION: "REL_2_STABLE"
@@ -218,7 +218,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        java: [ '8', '11', '17', '21' ]
+        java: [ '17', '21' ]
       fail-fast: false
     steps:
       - uses: actions/checkout@v4
