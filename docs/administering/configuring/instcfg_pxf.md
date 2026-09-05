@@ -10,7 +10,7 @@ PXF provides connectors to Hadoop, Hive, HBase, object stores, network file syst
 
 To configure PXF, you must:
 
-1. Install Java 8 or 11 on each Apache Cloudberry host as described in [Installing Java for PXF](./install_java.md). If your `JAVA_HOME` is different from `/usr/java/default`, you must inform PXF of the `$JAVA_HOME` setting by specifying its value in the `pxf-env.sh` [configuration file](./config_files.md). 
+1. Install Java 11, 17 or 21 on each Apache Cloudberry host as described in [Installing Java for PXF](./install_java.md). If your `JAVA_HOME` is different from `/usr/java/default`, you must inform PXF of the `$JAVA_HOME` setting by specifying its value in the `pxf-env.sh` [configuration file](./config_files.md).
     - Edit the `$PXF_BASE/conf/pxf-env.sh` file on the Apache Cloudberry coordinator host.
 
         ``` shell        

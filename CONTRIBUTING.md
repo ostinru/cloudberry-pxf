@@ -25,7 +25,7 @@ you get started with the contribution.
 
 Everyone who participates in Apache Cloudberry, either as a user or a
 contributor, is obliged to follow our community [Code of
-Conduct](./CODE_OF_CONDUCT.md). Every violation against it will be reviewed
+Conduct](./CODE-OF-CONDUCT.md). Every violation against it will be reviewed
 and investigated and will result in a response that is deemed necessary and
 appropriate to the circumstances. The moderator team is obligated to maintain
 confidentiality regarding the reporter of an incident.
