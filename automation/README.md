@@ -10,7 +10,7 @@ In order to run PXF automation tests the following are needed
 
 1. Running Hadoop cluster
 2. Running GPDB
-3. JRE 1.8
+3. JDK 11+
 
 ## Build & Test
 
@@ -246,9 +246,9 @@ You can read more about TestNG here <http://testng.org/doc/index.md>
         @Test(groups = { "features" })
         public void readDelimitedTextUsingTextFormat() throws Exception {
             // set plugins and delimiter
-            exTable.setFragmenter("com.pivotal.pxf.plugins.hdfs.HdfsDataFragmenter");
-            exTable.setAccessor("com.pivotal.pxf.plugins.hdfs.LineBreakAccessor");
-            exTable.setResolver("com.pivotal.pxf.plugins.hdfs.StringPassResolver");
+            exTable.setFragmenter("org.apache.cloudberry.pxf.plugins.hdfs.HdfsDataFragmenter");
+            exTable.setAccessor("org.apache.cloudberry.pxf.plugins.hdfs.LineBreakAccessor");
+            exTable.setResolver("org.apache.cloudberry.pxf.plugins.hdfs.StringPassResolver");
             exTable.setDelimiter(",");
             // create external table
             gpdb.createTableAndVerify(exTable);
@@ -258,31 +258,12 @@ You can read more about TestNG here <http://testng.org/doc/index.md>
             runSqlTest("features/hdfs/readable/text/small_data");
         }
 
-        /**
-         * Verify deprecated "LineReaderAccessor" gives required results.
-         *
-         * @throws Exception
-         */
-        @Test(groups = "features")
-        public void deprecatedLineReaderAccessor() throws Exception {
-            // set plugins and delimiter
-            exTable.setFragmenter("com.pivotal.pxf.plugins.hdfs.HdfsDataFragmenter");
-            exTable.setAccessor("com.pivotal.pxf.plugins.hdfs.LineReaderAccessor");
-            exTable.setResolver("com.pivotal.pxf.plugins.hdfs.StringPassResolver");
-            exTable.setDelimiter(",");
-            // create external table
-            gpdb.createTableAndVerify(exTable);
-            // write data to HDFS
-            hdfs.writeTableToFile(hdfsFilePath, dataTable, ",");
-            // verify results
-            runSqlTest("features/hdfs/readable/text/small_data");
-        }
     }
     ```
 
 ## Run reports and logs
 
-Automation logs will be generated into `automation-logs`` directory and will be divided into directories according to run Java classes.
+Automation logs are generated in `automation_logs/`, grouped by test class.
 
 In every `<class>` directory, there will be files according to the following format: `<time-stamp>_<ran method name>.log`
 <img src="images/72680961.png" class="confluence-embedded-image confluence-content-image-border" width="454" height="598" />

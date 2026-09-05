@@ -50,8 +50,8 @@ allprojects {
 
 idea {
     project {
-        jdkName = "1.8"
-        languageLevel = "8"
+        jdkName = "11"
+        languageLevel = "11"
         vcs = "Git"
     }
 }
@@ -64,8 +64,13 @@ configure(javaProjects) {
     group = 'org.apache.cloudberry.pxf'
     version = "${version}"
 
-    sourceCompatibility = JavaVersion.VERSION_1_8
-    targetCompatibility = JavaVersion.VERSION_1_8
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
+
+    tasks.withType(JavaCompile).configureEach {
+        // Keep the Java 11 API/bytecode baseline when building with newer JDKs.
+        options.release = 11
+    }
 
     ext['log4j2.version'] = '2.25.4'
 
