@@ -17,13 +17,6 @@ The PXF upgrade procedure has three steps. You perform one pre-install procedure
 
 Perform this procedure before you upgrade to a new version of PXF:
 
-The current PXF code requires **Java 11** (or newer). Before starting the upgraded service,
-install Java 11 on every Apache Cloudberry host and update any Java 8
-`JAVA_HOME` retained in `$PXF_BASE/conf/pxf-env.sh`. Verify the configured
-executable with `"$JAVA_HOME/bin/java" -version`, then synchronize the updated
-configuration in Step 3. See [Installing Java for PXF](../administering/configuring/install_java.md).
-This does not change the Java requirements of external Hadoop/Hive/HBase servers.
-
 1. Log in to the Apache Cloudberry coordinator host. For example:
 
     ``` shell
@@ -48,8 +41,13 @@ This does not change the Java requirements of external Hadoop/Hive/HBase servers
     gpadmin@coordinator$ cp -avi /usr/local/cloudberry-pxf pxf_base.bak
     ```
 
-
 ## Step 2: Install the New PXF
+
+PXF requires **Java 11, 17, or 21**. Before installing the new PXF version,
+install one of these Java versions on every Apache Cloudberry host and set
+`JAVA_HOME` in `$PXF_BASE/conf/pxf-env.sh` to its installation directory.
+Verify the configured executable with `"$JAVA_HOME/bin/java" -version`. See
+[Installing Java for PXF](../administering/configuring/install_java.md).
 
 Install the new version of PXF, and identify and note the new PXF version number.
 
