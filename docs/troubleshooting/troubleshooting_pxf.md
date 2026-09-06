@@ -44,6 +44,16 @@ Most PXF error messages include a `HINT` that you can use to resolve the error, 
 
 Refer to the [Logging](../administering/advanced-config/cfg_logging.md) topic for more information about logging levels, configuration, and the `pxf-app.out` and `pxf-service.log` log files.
 
+## Java Version Errors After an Upgrade
+
+The current PXF classes target Java 11 (class-file version 55). Starting them
+with Java 8 can fail with `UnsupportedClassVersionError`, mentioning version
+`55.0` and a runtime that only recognizes versions up to `52.0`.
+
+Check `JAVA_HOME` in `$PXF_BASE/conf/pxf-env.sh` on every Apache Cloudberry host.
+Install/select Java 11, synchronize the PXF configuration, and restart the service.
+See [Installing Java for PXF](../administering/configuring/install_java.md).
+
 
 ## Addressing PXF JDBC Connector Time Zone Errors
 

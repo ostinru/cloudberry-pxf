@@ -47,9 +47,9 @@ Requires: procps-ng
 # installing on Cloudberry node, so inherit Cloudberry's dependencies
 # implicitly
 
-# Weak dependencies either OpenJDK 8 or 11
-Suggests: java-1.8.0-openjdk
+# Weak dependencies: OpenJDK 11 or 17
 Suggests: java-11-openjdk
+Suggests: java-17-openjdk
 
 %description
 Apache Cloudberry PXF (Platform Extension Framework) is an advanced data

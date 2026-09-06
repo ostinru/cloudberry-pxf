@@ -69,7 +69,7 @@ To build PXF, you must have:
     source /usr/local/cloudberry-db/cloudberry-env.sh # For Cloudberry 2.1+
     ```
 
-3. JDK 1.8 or JDK 11 to compile/run
+3. JDK 11, 17 or 21 to compile/run
 
     Export your `JAVA_HOME`:
     ```
