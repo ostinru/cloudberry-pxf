@@ -343,8 +343,6 @@
             <exclude>automation/README.Linux.md</exclude>
             <exclude>automation/sqlrepo/smoke/small_data/expected/**</exclude>
             <exclude>automation/sqlrepo/smoke/small_data/sql/**</exclude>
-            <exclude>automation/sqlrepo/smoke/hcatalog_small_data/expected/**</exclude>
-            <exclude>automation/sqlrepo/smoke/hcatalog_small_data/sql/**</exclude>
             <exclude>automation/sqlrepo/smoke/multi_block/expected/**</exclude>
             <exclude>automation/sqlrepo/smoke/multi_block/sql/**</exclude>
             <exclude>automation/sqlrepo/proxy/small_data/expected/**</exclude>
@@ -357,8 +355,6 @@
             <exclude>automation/sqlrepo/proxy/hbase_small_data/sql/**</exclude>
             <exclude>automation/sqlrepo/proxy/small_data_ipa/expected/**</exclude>
             <exclude>automation/sqlrepo/proxy/small_data_ipa/sql/**</exclude>
-            <exclude>automation/sqlrepo/features/small_data_orc/expected/query01.ans</exclude>
-            <exclude>automation/sqlrepo/features/small_data_orc/sql/query01.sql</exclude>
             <exclude>automation/sqlrepo/features/multibyte_delimiter/two_byte_with_cr/expected/query01.ans</exclude>
             <exclude>automation/sqlrepo/features/multibyte_delimiter/two_byte_with_cr/sql/query01.sql</exclude>
             <exclude>automation/sqlrepo/features/multibyte_delimiter/encoding_quote_escape/expected/query01.ans</exclude>
@@ -453,60 +449,6 @@
             <exclude>automation/sqlrepo/features/gpupgrade/extension2_1/step_1_before_running_pxf_pre_gpupgrade/sql/query01.sql</exclude>
             <exclude>automation/sqlrepo/features/gpupgrade/extension2_1/step_2_after_running_pxf_pre_gpupgrade/expected/query01.ans</exclude>
             <exclude>automation/sqlrepo/features/gpupgrade/extension2_1/step_2_after_running_pxf_pre_gpupgrade/sql/query01.sql</exclude>
-            <exclude>automation/sqlrepo/features/hcatalog/collection_types/expected/query01.ans</exclude>
-            <exclude>automation/sqlrepo/features/hcatalog/collection_types/sql/query01.sql</exclude>
-            <exclude>automation/sqlrepo/features/hcatalog/hive_partitioned_clustered_sorted_table/expected/query01.ans</exclude>
-            <exclude>automation/sqlrepo/features/hcatalog/hive_partitioned_clustered_sorted_table/sql/query01.sql</exclude>
-            <exclude>automation/sqlrepo/features/hcatalog/small_data_orc/expected/query01.ans</exclude>
-            <exclude>automation/sqlrepo/features/hcatalog/small_data_orc/sql/query01.sql</exclude>
-            <exclude>automation/sqlrepo/features/hcatalog/transaction/expected/query01.ans</exclude>
-            <exclude>automation/sqlrepo/features/hcatalog/transaction/sql/query01.sql</exclude>
-            <exclude>automation/sqlrepo/features/hcatalog/small_data/expected/query01.ans</exclude>
-            <exclude>automation/sqlrepo/features/hcatalog/small_data/sql/query01.sql</exclude>
-            <exclude>automation/sqlrepo/features/hcatalog/hive_partitioned_clustered_table/expected/query01.ans</exclude>
-            <exclude>automation/sqlrepo/features/hcatalog/hive_partitioned_clustered_table/sql/query01.sql</exclude>
-            <exclude>automation/sqlrepo/features/hcatalog/hive_partitioned_skewed_table/expected/query01.ans</exclude>
-            <exclude>automation/sqlrepo/features/hcatalog/hive_partitioned_skewed_table/sql/query01.sql</exclude>
-            <exclude>automation/sqlrepo/features/hcatalog/primitive_types/expected/query01.ans</exclude>
-            <exclude>automation/sqlrepo/features/hcatalog/primitive_types/sql/query01.sql</exclude>
-            <exclude>automation/sqlrepo/features/hcatalog/small_data_avro/expected/query01.ans</exclude>
-            <exclude>automation/sqlrepo/features/hcatalog/small_data_avro/sql/query01.sql</exclude>
-            <exclude>automation/sqlrepo/features/hcatalog/hive_text_custom_delimiter/expected/query01.ans</exclude>
-            <exclude>automation/sqlrepo/features/hcatalog/hive_text_custom_delimiter/sql/query01.sql</exclude>
-            <exclude>automation/sqlrepo/features/hcatalog/hive_orc_all_types/expected/query01.ans</exclude>
-            <exclude>automation/sqlrepo/features/hcatalog/hive_orc_all_types/sql/query01.sql</exclude>
-            <exclude>automation/sqlrepo/features/hcatalog/noDataFilePresentForHive/expected/query01.ans</exclude>
-            <exclude>automation/sqlrepo/features/hcatalog/noDataFilePresentForHive/sql/query01.sql</exclude>
-            <exclude>automation/sqlrepo/features/hcatalog/small_data_rc/expected/query01.ans</exclude>
-            <exclude>automation/sqlrepo/features/hcatalog/small_data_rc/sql/query01.sql</exclude>
-            <exclude>automation/sqlrepo/features/hcatalog/hive_partitioned_skewed_stored_as_dirs_table/expected/query01.ans</exclude>
-            <exclude>automation/sqlrepo/features/hcatalog/hive_partitioned_skewed_stored_as_dirs_table/sql/query01.sql</exclude>
-            <exclude>automation/sqlrepo/features/hcatalog/heterogeneous_table_three_text_partitions/expected/query01.ans</exclude>
-            <exclude>automation/sqlrepo/features/hcatalog/heterogeneous_table_three_text_partitions/sql/query01.sql</exclude>
-            <exclude>automation/sqlrepo/features/hcatalog/small_data_seq/expected/query01.ans</exclude>
-            <exclude>automation/sqlrepo/features/hcatalog/small_data_seq/sql/query01.sql</exclude>
-            <exclude>automation/sqlrepo/features/hcatalog/hive_orc_zlib/expected/query01.ans</exclude>
-            <exclude>automation/sqlrepo/features/hcatalog/hive_orc_zlib/sql/query01.sql</exclude>
-            <exclude>automation/sqlrepo/features/hcatalog/aggregate_queries/expected/query02.ans</exclude>
-            <exclude>automation/sqlrepo/features/hcatalog/aggregate_queries/expected/query01.ans</exclude>
-            <exclude>automation/sqlrepo/features/hcatalog/aggregate_queries/sql/query01.sql</exclude>
-            <exclude>automation/sqlrepo/features/hcatalog/aggregate_queries/sql/query02.sql</exclude>
-            <exclude>automation/sqlrepo/features/hcatalog/errors/notExistingHiveTable/expected/query01.ans</exclude>
-            <exclude>automation/sqlrepo/features/hcatalog/errors/notExistingHiveTable/sql/query01.sql</exclude>
-            <exclude>automation/sqlrepo/features/hcatalog/errors/hiveViews/expected/query01.ans</exclude>
-            <exclude>automation/sqlrepo/features/hcatalog/errors/hiveViews/sql/query01.sql</exclude>
-            <exclude>automation/sqlrepo/features/hcatalog/partitions_all_types/expected/query02.ans</exclude>
-            <exclude>automation/sqlrepo/features/hcatalog/partitions_all_types/expected/query01.ans</exclude>
-            <exclude>automation/sqlrepo/features/hcatalog/partitions_all_types/sql/query01.sql</exclude>
-            <exclude>automation/sqlrepo/features/hcatalog/partitions_all_types/sql/query02.sql</exclude>
-            <exclude>automation/sqlrepo/features/hcatalog/hive_partitioned_table/expected/query01.ans</exclude>
-            <exclude>automation/sqlrepo/features/hcatalog/hive_partitioned_table/sql/query01.sql</exclude>
-            <exclude>automation/sqlrepo/features/hcatalog/heterogeneous_table/expected/query01.ans</exclude>
-            <exclude>automation/sqlrepo/features/hcatalog/heterogeneous_table/sql/query01.sql</exclude>
-            <exclude>automation/sqlrepo/features/hcatalog/hive_orc_snappy/expected/query01.ans</exclude>
-            <exclude>automation/sqlrepo/features/hcatalog/hive_orc_snappy/sql/query01.sql</exclude>
-            <exclude>automation/sqlrepo/features/hcatalog/small_data_parquet/expected/query01.ans</exclude>
-            <exclude>automation/sqlrepo/features/hcatalog/small_data_parquet/sql/query01.sql</exclude>
             <exclude>automation/sqlrepo/features/multi_server/test_all/expected/query01.ans</exclude>
             <exclude>automation/sqlrepo/features/multi_server/test_all/sql/query01.sql</exclude>
             <exclude>automation/sqlrepo/features/multi_server/two_secure_hdfs/expected/query01.ans</exclude>
@@ -911,6 +853,16 @@
             <exclude>automation/sqlrepo/features/hive/small_data/expected/query01.ans</exclude>
             <exclude>automation/sqlrepo/features/hive/small_data/sql/query01.sql</exclude>
             <exclude>automation/sqlrepo/features/hive/small_data/sql/query02.sql</exclude>
+            <exclude>automation/sqlrepo/features/hive/transaction/expected/query01.ans</exclude>
+            <exclude>automation/sqlrepo/features/hive/transaction/sql/query01.sql</exclude>
+            <exclude>automation/sqlrepo/features/hive/hive_partitioned_clustered_table/expected/query01.ans</exclude>
+            <exclude>automation/sqlrepo/features/hive/hive_partitioned_clustered_table/sql/query01.sql</exclude>
+            <exclude>automation/sqlrepo/features/hive/hive_partitioned_clustered_sorted_table/expected/query01.ans</exclude>
+            <exclude>automation/sqlrepo/features/hive/hive_partitioned_clustered_sorted_table/sql/query01.sql</exclude>
+            <exclude>automation/sqlrepo/features/hive/hive_partitioned_skewed_table/expected/query01.ans</exclude>
+            <exclude>automation/sqlrepo/features/hive/hive_partitioned_skewed_table/sql/query01.sql</exclude>
+            <exclude>automation/sqlrepo/features/hive/hive_partitioned_skewed_stored_as_dirs_table/expected/query01.ans</exclude>
+            <exclude>automation/sqlrepo/features/hive/hive_partitioned_skewed_stored_as_dirs_table/sql/query01.sql</exclude>
             <exclude>automation/sqlrepo/features/hive/hive_partitioned_ppd_table_customfilters/expected/query01.ans</exclude>
             <exclude>automation/sqlrepo/features/hive/hive_partitioned_ppd_table_customfilters/sql/query01.sql</exclude>
             <exclude>automation/sqlrepo/features/hive/orc_primitive_types_hive1_only/expected/query01.ans</exclude>

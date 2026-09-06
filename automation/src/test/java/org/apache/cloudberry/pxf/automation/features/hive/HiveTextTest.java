@@ -408,42 +408,11 @@ public class HiveTextTest extends HiveBaseTest {
     }
 
     /**
-     * use PXF Text connectors to get data from Hive text table with custom delimiter using HCatalog
-     *
-     * @throws Exception if test fails to run
-     */
-    @Test(groups = {"hive", "hcatalog", "features", "gpdb", "security"})
-    public void hiveTextTableCustomDelimiter() throws Exception {
-
-        //hive text table with custom delimiter
-        HiveTable hiveTable = new HiveTable(HIVE_TEXT_TABLE + "_custom_delimiter", HIVE_RC_COLS);
-        hiveTable.setFormat(FORMAT_ROW);
-        hiveTable.setDelimiterFieldsBy("%");
-
-        hive.createTableAndVerify(hiveTable);
-        hive.runQuery("INSERT INTO TABLE " + hiveTable.getName() +
-                " SELECT * FROM " + hiveSmallDataTable.getName());
-
-        runSqlTest("features/hcatalog/hive_text_custom_delimiter");
-    }
-
-    /**
-     * Make sure GPDB is functional for heterogeneous table with three text partitions
-     *
-     * @throws Exception if test fails to run
-     */
-    @Test(groups = {"hive", "hcatalog", "features", "gpdb", "security"})
-    public void hiveTextTableOptimizedProfile() throws Exception {
-
-        runSqlTest("features/hcatalog/heterogeneous_table_three_text_partitions");
-    }
-
-    /**
      * Make sure that PXF works with aggregate queries (including null columns)
      *
      * @throws Exception if test fails to run
      */
-    @Test(groups = {"hive", "hcatalog", "features", "gpdb", "security"})
+    @Test(groups = {"hive", "features", "gpdb", "security"})
     public void aggregateQueries() throws Exception {
 
         //hive text table with nulls
@@ -455,7 +424,6 @@ public class HiveTextTest extends HiveBaseTest {
         createExternalTable(PXF_HIVE_SMALL_DATA_TABLE,
                 PXF_HIVE_SMALLDATA_COLS, hiveTable);
 
-        runSqlTest("features/hcatalog/aggregate_queries");
         runSqlTest("features/hive/aggregate_queries");
     }
 

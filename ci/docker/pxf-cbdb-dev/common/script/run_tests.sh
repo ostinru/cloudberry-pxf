@@ -244,10 +244,6 @@ base_test(){
   save_test_reports "hdfs"
   echo "[run_tests] GROUP=hdfs finished"
 
-  make GROUP="hcatalog" || true
-  save_test_reports "hcatalog"
-  echo "[run_tests] GROUP=hcatalog finished"
-
   make GROUP="hcfs" || true
   save_test_reports "hcfs"
   echo "[run_tests] GROUP=hcfs finished"
@@ -466,7 +462,7 @@ generate_test_summary() {
 
     local group=$(basename "$group_dir")
     # Skip if it's not a test group directory
-    [[ "$group" =~ ^(smoke|hcatalog|hcfs|hdfs|hive|hbase|profile|proxy|unused|features|features_fdw|load|performance|fdw)$ ]] || continue
+    [[ "$group" =~ ^(smoke|hcfs|hdfs|hive|hbase|profile|proxy|unused|features|features_fdw|load|performance|fdw)$ ]] || continue
 
     echo "Processing $group test reports from $group_dir"
 
@@ -641,14 +637,14 @@ run_single_group() {
       make GROUP="proxy"
       save_test_reports "proxy"
       ;;
-    smoke|hdfs|hcatalog|hcfs|profile|unused)
+    smoke|hdfs|hcfs|profile|unused)
       export PROTOCOL=
       make GROUP="$group"
       save_test_reports "$group"
       ;;
     *)
       echo "Unknown test group: $group"
-      echo "Available groups: cli, external-table, fdw, server, smoke, hdfs, hcatalog, hcfs, hive, hbase, profile, proxy, unused, features, features_fdw, load, performance, bench"
+      echo "Available groups: cli, external-table, fdw, server, smoke, hdfs, hcfs, hive, hbase, profile, proxy, unused, features, features_fdw, load, performance, bench"
       exit 1
       ;;
   esac
@@ -669,7 +665,7 @@ main() {
     # Run health check first
     health_check_with_retry
 
-    # Run base tests (includes smoke, hdfs, hcatalog, hcfs, hive, etc.)
+    # Run base tests (includes smoke, hdfs, hcfs, hive, etc.)
     base_test
 
     # Run feature tests (union of features + gpdb tags, once per USE_FDW mode)

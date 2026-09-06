@@ -282,7 +282,6 @@ public class HiveBaseTest extends BaseFeature {
     static final String HIVE_NESTED_STRUCT_TABLE = "hive_nested_struct";
     static final String PXF_HIVE_NESTED_STRUCT_TABLE = "pxf_hive_nested_struct";
 
-    static final String HIVE_SCHEMA = "userdb";
     static final String AVRO = "AVRO";
     static final String OPEN_CSV_INPUT_OUTPUT_FORMAT = "INPUTFORMAT 'org.apache.hadoop.mapred.TextInputFormat' OUTPUTFORMAT 'org.apache.hadoop.hive.ql.io.HiveIgnoreKeyTextOutputFormat'";
     static final String ORC = "ORC";
@@ -315,7 +314,6 @@ public class HiveBaseTest extends BaseFeature {
     HiveTable hiveAvroTable;
     HiveTable hiveBinaryTable;
     HiveTable hiveCollectionTable;
-    HiveTable hiveNonDefaultSchemaTable;
     HiveTable hiveOpenCsvTable;
     Table comparisonDataTable;
     HiveTable hiveNestedStructTable;
@@ -558,16 +556,6 @@ public class HiveBaseTest extends BaseFeature {
         loadDataIntoHive("hiveBinaryData", hiveBinaryTable);
     }
 
-    void prepareNonDefaultSchemaData() throws Exception {
-
-        if (hiveNonDefaultSchemaTable != null)
-            return;
-        hiveNonDefaultSchemaTable = TableFactory.getHiveByRowCommaTable(
-                HIVE_SMALL_DATA_TABLE, HIVE_SCHEMA, new String[]{"id INT", "name STRING"});
-        hive.createDataBase(HIVE_SCHEMA, true);
-        hive.createTableAndVerify(hiveNonDefaultSchemaTable);
-    }
-
     void prepareOpenCsvData() throws Exception {
 
         if (hiveOpenCsvTable != null)
@@ -631,65 +619,6 @@ public class HiveBaseTest extends BaseFeature {
         setHivePartitionFormat(tableName, "fmt = 'rc'", RCFILE);
         setHivePartitionFormat(tableName, "fmt = 'seq'", SEQUENCEFILE);
         setHivePartitionFormat(tableName, "fmt = 'orc'", ORC);
-    }
-
-    /**
-     * Creates Hive table with 4 partitions, each with a different storage
-     * (text, rc, sequence, orc).
-     * Each partitions has different data
-     *
-     * @param tableName hive table name
-     * @return hive table
-     * @throws Exception if test fails to run
-     */
-    HiveExternalTable createGenerateHivePartitionTable(String tableName) throws Exception {
-
-        String smallDataTableName = hiveSmallDataTable.getName();
-        HiveExternalTable hiveTable = TableFactory.getHiveByRowCommaExternalTable(tableName, HIVE_RC_COLS);
-        hiveTable.setPartitionedBy(HIVE_PARTITION_COLUMN);
-        hive.createTableAndVerify(hiveTable);
-
-        HiveTable hiveRcTablePartition = TableFactory.getHiveByRowCommaTable(
-                "hive_rc_table_partition", HIVE_SMALLDATA_COLS);
-        hiveRcTablePartition.setStoredAs(RCFILE);
-        hive.createTableAndVerify(hiveRcTablePartition);
-        hive.runQuery("INSERT INTO " + hiveRcTablePartition.getName() +
-                " SELECT CONCAT(t1, '_rc'), CONCAT(t2, '_1'), num1 + 100, dub1 + 1000 FROM " + smallDataTableName);
-
-        HiveTable hiveTxtTablePartition = TableFactory.getHiveByRowCommaTable(
-                "hive_txt_table_partition", HIVE_SMALLDATA_COLS);
-        hive.createTableAndVerify(hiveTxtTablePartition);
-        hive.runQuery("INSERT INTO " + hiveTxtTablePartition.getName() +
-                " SELECT CONCAT(t1, '_txt'), CONCAT(t2, '_2'), num1 + 200, dub1 + 2000 FROM " + smallDataTableName);
-
-        HiveTable hiveSeqTablePartition = TableFactory.getHiveByRowCommaTable(
-                "hive_seq_table_partition", HIVE_SMALLDATA_COLS);
-        hiveSeqTablePartition.setStoredAs(SEQUENCEFILE);
-        hive.createTableAndVerify(hiveSeqTablePartition);
-        hive.runQuery("INSERT INTO " + hiveSeqTablePartition.getName() +
-                " SELECT CONCAT(t1, '_seq'), CONCAT(t2, '_3'), num1 + 300, dub1 + 3000 FROM " + smallDataTableName);
-
-        HiveTable hiveOrcTablePartition = TableFactory.getHiveByRowCommaTable(
-                "hive_orc_table_partition", HIVE_SMALLDATA_COLS);
-        hiveOrcTablePartition.setStoredAs(ORC);
-        hive.createTableAndVerify(hiveOrcTablePartition);
-        hive.runQuery("INSERT INTO " + hiveOrcTablePartition.getName() +
-                " SELECT CONCAT(t1, '_orc'), CONCAT(t2, '_4'), num1 + 400, dub1 + 4000 FROM " + smallDataTableName);
-
-        hive.runQuery("ALTER TABLE " + tableName + " ADD PARTITION (fmt = 'txt') LOCATION 'hdfs:"
-                + hdfsBaseDir + hiveTxtTablePartition.getName() + "'");
-        hive.runQuery("ALTER TABLE " + tableName + " ADD PARTITION (fmt = 'rc') LOCATION 'hdfs:"
-                + hdfsBaseDir + hiveRcTablePartition.getName() + "'");
-        hive.runQuery("ALTER TABLE " + tableName + " ADD PARTITION (fmt = 'seq') LOCATION 'hdfs:"
-                + hdfsBaseDir + hiveSeqTablePartition.getName() + "'");
-        hive.runQuery("ALTER TABLE " + tableName + " ADD PARTITION (fmt = 'orc') LOCATION 'hdfs:"
-                + hdfsBaseDir + hiveOrcTablePartition.getName() + "'");
-
-        setHivePartitionFormat(tableName, "fmt = 'rc'", RCFILE);
-        setHivePartitionFormat(tableName, "fmt = 'seq'", SEQUENCEFILE);
-        setHivePartitionFormat(tableName, "fmt = 'orc'", ORC);
-
-        return hiveTable;
     }
 
     /**
