@@ -419,7 +419,6 @@ jobs:
           - fdw
           - smoke
           - hdfs
-          - hcatalog
           - hcfs
           - hive
           - hbase
@@ -612,7 +611,6 @@ jobs:
           - server
           - smoke
           - hdfs
-          - hcatalog
           - hcfs
           - hive
           - hbase
@@ -801,7 +799,6 @@ jobs:
           - server
           - smoke
           - hdfs
-          - hcatalog
           - hcfs
           - hive
           - hbase

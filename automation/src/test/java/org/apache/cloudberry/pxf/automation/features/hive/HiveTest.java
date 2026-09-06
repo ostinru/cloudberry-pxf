@@ -1,9 +1,9 @@
 package org.apache.cloudberry.pxf.automation.features.hive;
 
 import jsystem.framework.system.SystemManagerImpl;
-import org.apache.cloudberry.pxf.automation.components.common.ShellSystemObject;
 import org.apache.cloudberry.pxf.automation.components.hive.Hive;
 import org.apache.cloudberry.pxf.automation.enums.EnumPxfDefaultProfiles;
+import org.apache.cloudberry.pxf.automation.structures.tables.basic.Table;
 import org.apache.cloudberry.pxf.automation.structures.tables.hive.HiveExternalTable;
 import org.apache.cloudberry.pxf.automation.structures.tables.hive.HiveTable;
 import org.apache.cloudberry.pxf.automation.structures.tables.utils.TableFactory;
@@ -83,6 +83,7 @@ public class HiveTest extends HiveBaseTest {
         hivePartitionedSkewedStoredAsDirsTable.setPartitionedBy(HIVE_PARTITION_COLUMN);
         hivePartitionedSkewedStoredAsDirsTable.setSkewedBy(new String[]{"num1"});
         hivePartitionedSkewedStoredAsDirsTable.setSkewedOn(new String[]{"10"});
+        hivePartitionedSkewedStoredAsDirsTable.setStoreAsDirectories(true);
         hive.createTableAndVerify(hivePartitionedSkewedStoredAsDirsTable);
         hiveAlterPartitionedFileFormats(hivePartitionedSkewedStoredAsDirsTable);
     }
@@ -161,7 +162,33 @@ public class HiveTest extends HiveBaseTest {
         createExternalTable(PXF_HIVE_SMALL_DATA_TABLE, PXF_HIVE_SMALLDATA_COLS, hiveSmallDataTable);
 
         runSqlTest("features/hive/small_data");
-        runSqlTest("features/hcatalog/small_data");
+    }
+
+    /**
+     * Verify that the generic Hive profile discovers a TextFile table and its custom field
+     * delimiter from Hive Metastore metadata.
+     *
+     * @throws Exception if test fails to run
+     */
+    @Test(groups = {"hive", "features", "gpdb", "security"})
+    public void hiveTextTableCustomDelimiter() throws Exception {
+
+        HiveTable hiveTable = new HiveTable(HIVE_TEXT_TABLE + "_custom_delimiter", HIVE_RC_COLS);
+        hiveTable.setFormat(FORMAT_ROW);
+        hiveTable.setDelimiterFieldsBy("%");
+        hive.createTableAndVerify(hiveTable);
+        hive.runQuery("INSERT INTO TABLE " + hiveTable.getName() +
+                " SELECT * FROM " + hiveSmallDataTable.getName());
+
+        createExternalTable("pxf_hive_text_table_custom_delimiter",
+                PXF_HIVE_SMALLDATA_COLS, hiveTable);
+
+        gpdb.queryResults(exTable, "SELECT * FROM " + exTable.getName() + " ORDER BY t1");
+
+        Table expected = new Table("expected", null);
+        expected.loadDataFromFile(localDataResourcesFolder + "/hive/" + HIVE_DATA_FILE_NAME,
+                ",", 0, false);
+        ComparisonUtils.compareTables(exTable, expected, null);
     }
 
     @Test(groups = {"features", "security"})
@@ -189,7 +216,6 @@ public class HiveTest extends HiveBaseTest {
                 PXF_HIVE_TYPES_COLS, hiveTypesTable);
 
         runSqlTest("features/hive/primitive_types");
-        runSqlTest("features/hcatalog/primitive_types");
     }
 
     /**
@@ -279,7 +305,6 @@ public class HiveTest extends HiveBaseTest {
                 PXF_HIVE_SMALLDATA_COLS, hiveOrcTable);
 
         runSqlTest("features/hive/small_data");
-        runSqlTest("features/hcatalog/small_data_orc");
     }
 
     /**
@@ -295,7 +320,6 @@ public class HiveTest extends HiveBaseTest {
                 PXF_HIVE_SMALLDATA_COLS, hiveRcTable, false);
 
         runSqlTest("features/hive/small_data");
-        runSqlTest("features/hcatalog/small_data_rc");
     }
 
     /**
@@ -311,7 +335,6 @@ public class HiveTest extends HiveBaseTest {
                 PXF_HIVE_SMALLDATA_COLS, hiveSequenceTable);
 
         runSqlTest("features/hive/small_data");
-        runSqlTest("features/hcatalog/small_data_seq");
     }
 
     /**
@@ -327,7 +350,6 @@ public class HiveTest extends HiveBaseTest {
                 PXF_HIVE_SMALLDATA_COLS, hiveParquetTable);
 
         runSqlTest("features/hive/small_data");
-        runSqlTest("features/hcatalog/small_data_parquet");
     }
 
     /**
@@ -358,7 +380,6 @@ public class HiveTest extends HiveBaseTest {
                 PXF_HIVE_SMALLDATA_COLS, hiveAvroTable);
 
         runSqlTest("features/hive/small_data");
-        runSqlTest("features/hcatalog/small_data_avro");
     }
 
     /**
@@ -378,7 +399,6 @@ public class HiveTest extends HiveBaseTest {
         createExternalTable("pxf_hive_view_table", new String[]{"t1 TEXT"}, hiveTable);
 
         runSqlTest("features/hive/errors/hiveViews");
-        runSqlTest("features/hcatalog/errors/hiveViews");
     }
 
     /**
@@ -394,7 +414,6 @@ public class HiveTest extends HiveBaseTest {
                 new String[]{"t1    TEXT", "num1  INTEGER"}, hiveTable);
 
         runSqlTest("features/hive/errors/notExistingHiveTable");
-        runSqlTest("features/hcatalog/errors/notExistingHiveTable");
     }
 
     /**
@@ -411,7 +430,6 @@ public class HiveTest extends HiveBaseTest {
                 PXF_HIVE_SMALLDATA_FMT_COLS, hivePartitionedTable);
 
         runSqlTest("features/hive/hive_partitioned_table");
-        runSqlTest("features/hcatalog/hive_partitioned_table");
     }
 
     /**
@@ -559,7 +577,7 @@ public class HiveTest extends HiveBaseTest {
      *
      * @throws Exception if test fails to run
      */
-    @Test(groups = {"hive", "hcatalog", "features", "gpdb", "security"})
+    @Test(groups = {"hive", "features", "gpdb", "security"})
     public void hiveCollectionTypes() throws Exception {
 
         prepareHiveCollection();
@@ -567,7 +585,6 @@ public class HiveTest extends HiveBaseTest {
                 PXF_HIVE_COLLECTION_COLS, hiveCollectionTable);
 
         runSqlTest("features/hive/collection_types");
-        runSqlTest("features/hcatalog/collection_types");
     }
 
     /**
@@ -631,7 +648,7 @@ public class HiveTest extends HiveBaseTest {
      *
      * @throws Exception if test fails to run
      */
-    @Test(groups = {"hive", "hcatalog", "features", "gpdb", "security"})
+    @Test(groups = {"hive", "features", "gpdb", "security"})
     public void noDataFilePresentForHive() throws Exception {
         /*
          * In this test case , we want a hive table which is not pointed to any data file or not having
@@ -645,7 +662,6 @@ public class HiveTest extends HiveBaseTest {
                 PXF_HIVE_SMALLDATA_COLS, hiveTable);
 
         runSqlTest("features/hive/noDataFilePresentForHive");
-        runSqlTest("features/hcatalog/noDataFilePresentForHive");
     }
 
     /**
@@ -759,7 +775,7 @@ public class HiveTest extends HiveBaseTest {
      *
      * @throws Exception if test fails to run
      */
-    @Test(groups = {"hive", "hcatalog", "features", "gpdb", "security"})
+    @Test(groups = {"hive", "features", "gpdb", "security"})
     public void partitionsAllTypes() throws Exception {
 
         prepareManyPartitionedData();
@@ -767,7 +783,6 @@ public class HiveTest extends HiveBaseTest {
                 PXF_HIVE_TYPES_COLS, hiveManyPartitionsTable);
 
         runSqlTest("features/hive/partitions_all_types");
-        runSqlTest("features/hcatalog/partitions_all_types");
     }
 
     /**
@@ -869,187 +884,93 @@ public class HiveTest extends HiveBaseTest {
     }
 
     /**
-     * Test hcatalog queries within the same transaction
+     * Test Hive queries within the same transaction
      *
      * @throws Exception if test fails to run
      */
-    @Test(groups = {"features", "hcatalog"})
-    public void hcatalogInTransaction() throws Exception {
+    @Test(groups = {"hive", "features"})
+    public void hiveInTransaction() throws Exception {
 
         // start transaction, query tables, stop transaction. then query different tables in the same session.
         preparePartitionedData();
-        runSqlTest("features/hcatalog/transaction");
+        createExternalTable(PXF_HIVE_SMALL_DATA_TABLE, PXF_HIVE_SMALLDATA_COLS, hiveSmallDataTable);
+        createExternalTable(PXF_HIVE_PARTITIONED_TABLE, PXF_HIVE_SMALLDATA_FMT_COLS, hivePartitionedTable);
+        createExternalTable(GPDB_HIVE_TYPES_TABLE, PXF_HIVE_TYPES_COLS, hiveTypesTable);
+        runSqlTest("features/hive/transaction");
     }
 
     /**
      * Test that a Hive Partitioned Clustered Table with all supported storage formats
-     * (text, rc, sequence, avro) can be queried through HCatalog
+     * (text, rc, sequence, avro) can be queried through PXF
      *
      * @throws Exception if test fails to run
      */
-    @Test(groups = {"hive", "hcatalog", "features", "gpdb", "security"})
+    @Test(groups = {"hive", "features", "gpdb", "security"})
     public void hivePartitionedClusteredTable() throws Exception {
 
         preparePartitionedClusteredData();
         createExternalTable(PXF_HIVE_PARTITIONED_CLUSTERED_TABLE,
                 PXF_HIVE_SMALLDATA_FMT_COLS, hivePartitionedClusteredTable);
 
-        runSqlTest("features/hcatalog/hive_partitioned_clustered_table");
+        runSqlTest("features/hive/hive_partitioned_clustered_table");
     }
 
     /**
      * Test that a Hive Partitioned Clustered and Sorted Table with all supported storage formats
-     * (text, rc, sequence, avro) can be queried through Hcatalog
+     * (text, rc, sequence, avro) can be queried through PXF
      *
      * @throws Exception if test fails to run
      */
-    @Test(groups = {"hive", "hcatalog", "features", "gpdb", "security"})
+    @Test(groups = {"hive", "features", "gpdb", "security"})
     public void hivePartitionedClusteredSortedTable() throws Exception {
 
         preparePartitionedClusteredSortedData();
         createExternalTable(PXF_HIVE_PARTITIONED_CLUSTERED_SORTED_TABLE,
                 PXF_HIVE_SMALLDATA_FMT_COLS, hivePartitionedClusteredSortedTable);
 
-        runSqlTest("features/hcatalog/hive_partitioned_clustered_sorted_table");
+        runSqlTest("features/hive/hive_partitioned_clustered_sorted_table");
     }
 
     /**
      * Test that a Hive Skewed Table with Stored As Directories options
      * with all supported storage formats
-     * (text, rc, sequence, avro) can be queried through Hcatalog
+     * (text, rc, sequence, avro) can be queried through PXF
      *
      * @throws Exception if test fails to run
      */
-    @Test(groups = {"hive", "hcatalog", "features", "gpdb", "security"})
+    @Test(groups = {"hive", "features", "gpdb", "security"})
     public void hivePartitionedSkewedTable() throws Exception {
 
         prepareSkewedData();
         createExternalTable(PXF_HIVE_PARTITIONED_SKEWED_TABLE,
                 PXF_HIVE_SMALLDATA_FMT_COLS, hivePartitionedSkewedTable);
 
-        runSqlTest("features/hcatalog/hive_partitioned_skewed_table");
+        runSqlTest("features/hive/hive_partitioned_skewed_table");
     }
 
     /**
      * Test that a Hive Skewed Table with Stored As Directories options with all supported storage formats
-     * (text, rc, sequence, avro) can be queried through Hcatalog
+     * (text, rc, sequence, avro) can be queried through PXF
      *
      * @throws Exception if test fails to run
      */
-    @Test(groups = {"hive", "hcatalog", "features", "gpdb", "security"})
+    @Test(groups = {"hive", "features", "gpdb", "security"})
     public void hivePartitionedSkewedStoredAsDirsTable() throws Exception {
 
         prepareSkewedStoredAsDirsData();
         createExternalTable(PXF_HIVE_PARTITIONED_SKEWED_STORED_TABLE,
                 PXF_HIVE_SMALLDATA_FMT_COLS, hivePartitionedSkewedStoredAsDirsTable);
 
-        runSqlTest("features/hcatalog/hive_partitioned_skewed_stored_as_dirs_table");
+        runSqlTest("features/hive/hive_partitioned_skewed_stored_as_dirs_table");
     }
 
-    /**
-     * Test behavior of \d command on Hive tables
-     *
-     * @throws Exception if test fails to run
-     */
-    @Test(groups = {"features", "hcatalog"})
-    public void describeHiveTable() throws Exception {
-
-        prepareNonDefaultSchemaData();
-        ShellSystemObject sso = gpdb.openPsql();
-
-        // two tables with same name in different Hive schemas
-        String psqlOutput = gpdb.runSqlCmd(sso, "\\d hcatalog.*.hive_s*m*_data", true);
-        if (psqlOutput.contains("cross-database references are not implemented")) {
-            // Cloudberry does not support 3-part names in \\d patterns; skip comparison
-            return;
-        }
-        List<HiveTable> hiveTables = new ArrayList<>();
-        hiveTables.add(hiveSmallDataTable);
-        hiveTables.add(hiveNonDefaultSchemaTable);
-
-        Assert.assertTrue(ComparisonUtils.comparePsqlDescribeHive(psqlOutput, hiveTables));
-
-        // pattern which describes table and view
-        // \d should not include view in response because it's not supported
-        String hiveViewName = HIVE_SCHEMA + ".some_" + hiveNonDefaultSchemaTable.getName() + "_view";
-        hive.runQuery("DROP VIEW " + hiveViewName);
-        hive.runQuery("CREATE VIEW " + hiveViewName
-                + " AS SELECT name FROM " + HIVE_SCHEMA + "." + hiveNonDefaultSchemaTable.getName());
-        psqlOutput = gpdb.runSqlCmd(sso, "\\d hcatalog." + HIVE_SCHEMA + "." + "*" +
-                hiveNonDefaultSchemaTable.getName() + "*", true);
-        hiveTables.remove(0);
-
-        Assert.assertTrue(ComparisonUtils.comparePsqlDescribeHive(psqlOutput, hiveTables));
-
-        // pattern is a name of a view ( \d should fail )
-        psqlOutput = gpdb.runSqlCmd(sso, "\\d hcatalog." + hiveViewName, false);
-        Assert.assertTrue(psqlOutput.contains("Hive views are not supported by GPDB"));
-
-        // pattern which describes table with complex types ( \d shouldn't fail )
-        HiveTable hiveTable = TableFactory.getHiveByRowCommaTable(HIVE_COLLECTIONS_TABLE, HIVE_COLLECTION_COLS);
-        psqlOutput = gpdb.runSqlCmd(sso, "\\d hcatalog." + HIVE_COLLECTIONS_TABLE, false);
-        hiveTables.clear();
-        hiveTables.add(hiveTable);
-        Assert.assertTrue(ComparisonUtils.comparePsqlDescribeHive(psqlOutput, hiveTables));
-
-        // pattern which describes non existent table ( \d shouldn't fail )
-        gpdb.runSqlCmd(sso, "\\d hcatalog." + "abc*xyz", true);
-
-        // pattern which describes one non existent table ( \d should fail )
-        psqlOutput = gpdb.runSqlCmd(sso, "\\d hcatalog." + "abcxyz", false);
-        Assert.assertTrue(psqlOutput.contains("table not found"));
-
-        // describe all Hive tables ( shouldn't fail )
-        gpdb.runSqlCmd(sso, "\\d hcatalog.*", true);
-
-        // describe all Hive tables in verbose mode ( shouldn't fail )
-        gpdb.runSqlCmd(sso, "\\d+ hcatalog.*", true);
-
-        String HIVE_ORDERING_TABLE1 = "hive_abc";
-        String HIVE_ORDERING_TABLE2 = "hive_abc222";
-        String HIVE_ORDERING_TABLE3 = "hive_abc";
-
-        hiveTable = new HiveTable(HIVE_ORDERING_TABLE1, HIVE_RC_COLS);
-        hive.createTableAndVerify(hiveTable);
-
-        hiveTable = new HiveTable(HIVE_ORDERING_TABLE2, HIVE_RC_COLS);
-        hive.createTableAndVerify(hiveTable);
-
-        hiveTable = new HiveTable(HIVE_ORDERING_TABLE3, HIVE_SCHEMA, HIVE_RC_COLS);
-        hive.createTableAndVerify(hiveTable);
-
-        // describe three tables with same prefix
-        // two tables in default schema, one table is in other schema
-        // shouldn't combine them into one
-        psqlOutput = gpdb.runSqlCmd(sso, "\\d hcatalog.*." + HIVE_ORDERING_TABLE1 + "*", true);
-        Assert.assertTrue(psqlOutput.contains("PXF Hive Table \"default." + HIVE_ORDERING_TABLE1 + "\""));
-        Assert.assertTrue(psqlOutput.contains("PXF Hive Table \"default." + HIVE_ORDERING_TABLE2 + "\""));
-        Assert.assertTrue(psqlOutput.contains("PXF Hive Table \"" + HIVE_SCHEMA + "." + HIVE_ORDERING_TABLE3 + "\""));
-
-        sso.close();
-    }
-
-    /**
-     * Make sure GPDB is functional optimized profile for heterogeneous tables.
-     * Each partition has different data.
-     *
-     * @throws Exception if test fails to run
-     */
-    @Test(groups = {"hive", "hcatalog", "features", "gpdb", "security"})
-    public void hiveHeterogenTableOptimizedProfile() throws Exception {
-
-        // Create Hive table with partitions, when each partition has different data
-        createGenerateHivePartitionTable("reg_heterogen_diff_data_partitions");
-
-        runSqlTest("features/hcatalog/heterogeneous_table");
-    }
 
     /**
      * Make sure that PXF works with aggregate queries (including null columns)
      *
      * @throws Exception if test fails to run
      */
-    @Test(groups = {"hive", "hcatalog", "features", "gpdb", "security"})
+    @Test(groups = {"hive", "features", "gpdb", "security"})
     public void aggregateQueries() throws Exception {
 
         // hive table with nulls
@@ -1060,7 +981,6 @@ public class HiveTest extends HiveBaseTest {
 
         createExternalTable(PXF_HIVE_SMALL_DATA_TABLE, PXF_HIVE_SMALLDATA_COLS, hiveTable);
 
-        runSqlTest("features/hcatalog/aggregate_queries");
         runSqlTest("features/hive/aggregate_queries");
     }
 

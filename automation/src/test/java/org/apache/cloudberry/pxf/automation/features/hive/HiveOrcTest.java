@@ -67,7 +67,6 @@ public class HiveOrcTest extends HiveBaseTest {
             hive.insertData(hiveTypesTable, hiveOrcTypesTable);
         }
 
-        prepareNonDefaultSchemaData();
         preparePxfHiveOrcTypes();
         preparePxfHiveSmallData();
     }
@@ -182,14 +181,13 @@ public class HiveOrcTest extends HiveBaseTest {
      *
      * @throws Exception if test fails to run
      */
-    @Test(groups = { "hive", "hcatalog", "features", "gpdb", "security" })
+    @Test(groups = { "hive", "features", "gpdb", "security" })
     public void sanity() throws Exception {
 
         createExternalTable(PXF_HIVE_SMALL_DATA_TABLE + "_orc",
                 PXF_HIVE_SMALLDATA_COLS, hiveOrcSmallDataTable);
 
         runSqlTest("features/hive/small_data_orc");
-        runSqlTest("features/hcatalog/small_data");
     }
 
     /**
@@ -244,14 +242,13 @@ public class HiveOrcTest extends HiveBaseTest {
      *
      * @throws Exception if test fails to run
      */
-    @Test(groups = { "hive", "hcatalog", "features", "gpdb", "security" })
+    @Test(groups = { "hive", "features", "gpdb", "security" })
     public void storeAsOrc() throws Exception {
 
         createExternalTable(PXF_HIVE_SMALL_DATA_TABLE,
                 PXF_HIVE_SMALLDATA_COLS, hiveOrcTable);
 
         runSqlTest("features/hive/small_data");
-        runSqlTest("features/hcatalog/small_data_orc");
     }
 
     /**
@@ -260,12 +257,10 @@ public class HiveOrcTest extends HiveBaseTest {
      *
      * @throws Exception if test fails to run
      */
-    @Test(groups = { "hive", "hcatalog", "features", "gpdb", "security" })
+    @Test(groups = { "hive", "features", "gpdb", "security" })
     public void storeAsOrcAllTypesHive1AndHive2() throws Exception {
 
         runSqlTest("features/hive/orc_primitive_types");
-        // TODO: hcatalog based access still uses the older Hive profile
-        runSqlTest("features/hcatalog/hive_orc_all_types");
     }
 
     /**
@@ -274,7 +269,7 @@ public class HiveOrcTest extends HiveBaseTest {
      *
      * @throws Exception if test fails to run
      */
-    @Test(groups = {"hive", "hcatalog", "features", "gpdb", "security" })
+    @Test(groups = {"hive", "features", "gpdb", "security" })
     public void storeAsOrcAllTypesHive1Only() throws Exception {
 
         runSqlTest("features/hive/orc_primitive_types_hive1_only");
@@ -296,7 +291,7 @@ public class HiveOrcTest extends HiveBaseTest {
      *
      * @throws Exception if test fails to run
      */
-    @Test(groups = { "hive", "hcatalog", "features", "gpdb", "security" })
+    @Test(groups = { "hive", "features", "gpdb", "security" })
     public void storeAsOrcSnappy() throws Exception {
 
         prepareOrcSnappyData();
@@ -304,7 +299,6 @@ public class HiveOrcTest extends HiveBaseTest {
                 PXF_HIVE_SMALLDATA_COLS, hiveOrcSnappyTable);
 
         runSqlTest("features/hive/orc_snappy");
-        runSqlTest("features/hcatalog/hive_orc_snappy");
     }
 
     /**
@@ -312,7 +306,7 @@ public class HiveOrcTest extends HiveBaseTest {
      *
      * @throws Exception if test fails to run
      */
-    @Test(groups = { "hive", "hcatalog", "features", "gpdb", "security" })
+    @Test(groups = { "hive", "features", "gpdb", "security" })
     public void storeAsOrcZlib() throws Exception {
 
         prepareOrcZlibData();
@@ -320,7 +314,6 @@ public class HiveOrcTest extends HiveBaseTest {
                 PXF_HIVE_SMALLDATA_COLS, hiveOrcZlibTable);
 
         runSqlTest("features/hive/orc_zlib");
-        runSqlTest("features/hcatalog/hive_orc_zlib");
     }
 
     /**
@@ -328,7 +321,7 @@ public class HiveOrcTest extends HiveBaseTest {
      *
      * @throws Exception if test fails to run
      */
-    @Test(groups = { "hive", "hcatalog", "features", "gpdb", "security" })
+    @Test(groups = { "hive", "features", "gpdb", "security" })
     public void storeAsOrcMultiFile() throws Exception {
 
         prepareOrcMultiFileData();
@@ -342,7 +335,7 @@ public class HiveOrcTest extends HiveBaseTest {
      *
      * @throws Exception if test fails to run
      */
-    @Test(groups = { "hive", "hcatalog", "features", "gpdb", "security" })
+    @Test(groups = { "hive", "features", "gpdb", "security" })
     public void storeAsOrcMultiFileGetVectorized() throws Exception {
 
         prepareOrcMultiFileData();
@@ -411,7 +404,7 @@ public class HiveOrcTest extends HiveBaseTest {
      *
      * @throws Exception if test fails to run
      */
-    @Test(groups = { "features", "hcatalog" })
+    @Test(groups = { "features" })
     public void aggregateQueries() throws Exception {
 
         if (hiveOrcAllTypes == null) {
@@ -432,7 +425,6 @@ public class HiveOrcTest extends HiveBaseTest {
         exTable.setUserParameters(new String[] { "TEST-FRAGMENTS-NUM=10" });
         createTable(exTable);
 
-        runSqlTest("features/hcatalog/aggregate_queries");
         runSqlTest("features/hive/aggregate_queries");
         runSqlTest("features/hive/aggregate_queries_multiple_fragments_per_file");
     }

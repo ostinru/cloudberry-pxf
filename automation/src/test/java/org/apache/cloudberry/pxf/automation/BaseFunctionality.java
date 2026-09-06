@@ -52,9 +52,7 @@ public abstract class BaseFunctionality extends BaseTestParent {
     @Override
     protected void runSqlTest(String sqlTestPath) throws Exception {
         try {
-            if (!sqlTestPath.contains("hcatalog")) {
-                super.runSqlTest(sqlTestPath);
-            }  // else These features/test cases are not supported. Do Nothing.
+            super.runSqlTest(sqlTestPath);
         } catch (Exception e) {
             throw new Exception("Regress Failure (" + e.getMessage() + ")");
         }
