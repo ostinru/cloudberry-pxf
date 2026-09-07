@@ -45,8 +45,10 @@ public enum HcfsType {
     },
     GS,
     HDFS,
+    @Deprecated
     S3,
     S3A,
+    @Deprecated
     S3N,
     // We prefer WASBS over WASB for Azure Blob Storage,
     // as it uses SSL for communication to Azure servers
@@ -72,6 +74,24 @@ public enum HcfsType {
                 .filter(v -> v.name().equals(s))
                 .findFirst()
                 .orElse(HcfsType.CUSTOM);
+    }
+
+    /**
+     * @return true if this type refers to an object store (S3, GCS, Azure),
+     * where a directory/prefix may contain an unbounded number of objects.
+     */
+    public boolean isObjectStore() {
+        switch (this) {
+            case S3:
+            case S3A:
+            case S3N:
+            case GS:
+            case ABFSS:
+            case WASBS:
+                return true;
+            default:
+                return false;
+        }
     }
 
     /**
