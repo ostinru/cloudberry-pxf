@@ -43,8 +43,8 @@ export PXF_TEST_KEEP_DATA=${PXF_TEST_KEEP_DATA:-true}
 export AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:-admin}
 export AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:-password}
 
-# Hadoop/Hive/HBase env
-export JAVA_HOME="${JAVA_HADOOP}"
+# Automation is built and run with Java 11; Hadoop daemons use JAVA_HADOOP.
+export JAVA_HOME="${JAVA_BUILD}"
 export PATH="$JAVA_HOME/bin:$PATH"
 source "${GPHD_ROOT}/bin/gphd-env.sh"
 
