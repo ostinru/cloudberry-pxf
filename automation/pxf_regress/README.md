@@ -101,8 +101,11 @@ $ tree features/profiles/small_data
     messages related to running `pxf_regress` will be prefixed with `Regress
     ->`.
 
-1. If the failure occurs while running `pxf_regress`, you can view all of
-   differences between the actual results and the expected results in
+1. When query output differs from the expected results, `pxf_regress` prints
+   the non-empty diff to stdout, so it appears directly in the automation test
+   log above. Passing queries do not print a diff.
+
+   You can also view all differences between the actual results and the expected results in
    `<test-directory>/regression.diffs`; individual diffs can be viewed in
    `<test-directory>/output/<test-name>_<timestamp>.diff`.
 
