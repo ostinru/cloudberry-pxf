@@ -149,8 +149,9 @@ make TEST=MultiBlockWriteTest USE_FDW=true
 ```
 
 `HiveSmallDataTest` runs in `hive` and `features`. `MultiBlockWriteTest` writes
-32 million rows and runs in `load`; its `fdw_load` tag also includes it in the
-existing `features_fdw` CI job. The `load` job covers external-table mode.
+32 million rows and runs in `load` and `features`. The existing `features` and
+`features_fdw` CI jobs cover external-table and FDW modes respectively; the
+`load` job also covers external-table mode.
 
 ## Guidelines for creating a new test for PXF automation
 

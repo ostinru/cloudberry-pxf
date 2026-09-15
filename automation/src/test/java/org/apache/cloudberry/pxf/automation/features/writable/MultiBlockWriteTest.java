@@ -22,7 +22,7 @@ import java.util.List;
 public class MultiBlockWriteTest extends BaseWritableFeature {
     private String writePath;
 
-    @Test(groups = {"load", "fdw_load"})
+    @Test(groups = {"load", "features"})
     public void writeAndReadMultiBlockData() throws Exception {
         writePath = hdfsWritePath + "/multi_block_write";
         // A retry must not append another 32 million rows to the previous output.

@@ -350,19 +350,15 @@ feature_test(){
   export PROTOCOL=HDFS
   local extra_args="USE_FDW=false"
   local report_name="features"
-  local test_groups="features,gpdb"
   if [[ "$use_fdw" == "true" ]]; then
     extra_args="USE_FDW=true"
     report_name="features_fdw"
-    # Run the large-write regression in FDW mode in this existing job.
-    # Its external-table counterpart runs in the load job.
-    test_groups+=",fdw_load"
   fi
   # "features" and "gpdb" tags largely overlap; union them so each test
   # runs once per USE_FDW mode instead of once per tag
-  make GROUP="$test_groups" $extra_args || true
+  make GROUP="features,gpdb" $extra_args || true
   save_test_reports "$report_name"
-  echo "[run_tests] GROUP=$test_groups $extra_args finished"
+  echo "[run_tests] GROUP=features,gpdb $extra_args finished"
 }
 
 bench_prepare_env() {
