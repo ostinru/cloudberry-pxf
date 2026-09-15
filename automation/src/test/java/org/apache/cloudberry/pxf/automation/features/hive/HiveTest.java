@@ -1,5 +1,6 @@
 package org.apache.cloudberry.pxf.automation.features.hive;
 
+import annotations.WorksWithFDW;
 import jsystem.framework.system.SystemManagerImpl;
 import org.apache.cloudberry.pxf.automation.components.hive.Hive;
 import org.apache.cloudberry.pxf.automation.enums.EnumPxfDefaultProfiles;
@@ -20,6 +21,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+@WorksWithFDW
 public class HiveTest extends HiveBaseTest {
 
     private static final String HIVE_PARTITIONED_SKEWED_TABLE = "hive_partitioned_skewed_table";
