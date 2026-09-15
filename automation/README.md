@@ -137,22 +137,6 @@ Note: If you get an error saying that the jar does not exist, ensure that you ha
 TestNG is a powerful Java testing framework very similar to junit which supports several features like grouping, parallel run and test events listeners.
 You can read more about TestNG here <http://testng.org/doc/index.md>
 
-## Ported regression scenarios
-
-The former regression Hive read and multi-block write scenarios are covered by
-`HiveSmallDataTest` and `MultiBlockWriteTest`. Both support external tables and
-FDW via `USE_FDW`:
-
-```bash
-make TEST=HiveSmallDataTest USE_FDW=true
-make TEST=MultiBlockWriteTest USE_FDW=true
-```
-
-`HiveSmallDataTest` runs in `hive` and `features`. `MultiBlockWriteTest` writes
-32 million rows and runs in `load` and `features`. The existing `features` and
-`features_fdw` CI jobs cover external-table and FDW modes respectively; the
-`load` job also covers external-table mode.
-
 ## Guidelines for creating a new test for PXF automation
 
 1. Decide which category of run cycle (feature/load)

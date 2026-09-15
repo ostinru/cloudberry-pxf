@@ -38,7 +38,7 @@ SELECT t1, a1 FROM pxf_multi_block_read ORDER BY t1 LIMIT 10;
 SELECT cnt < 32000000 AS check FROM (
 	SELECT COUNT(*) AS cnt
 		FROM pxf_multi_block_read
-		WHERE gp_segment_id = 0
+		WHERE gp_execution_segment() = 0
 	) AS a;
  check
 -------
