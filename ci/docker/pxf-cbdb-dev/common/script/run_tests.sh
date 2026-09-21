@@ -235,36 +235,36 @@ base_test(){
   export PATH="${GPHOME}/bin:${PATH}"
   ensure_testuser_pg_hba
 
-  make GROUP="hdfs" || true
+  make GROUP="hdfs"
   save_test_reports "hdfs"
   echo "[run_tests] GROUP=hdfs finished"
 
-  make GROUP="hcfs" || true
+  make GROUP="hcfs"
   save_test_reports "hcfs"
   echo "[run_tests] GROUP=hcfs finished"
 
   cleanup_hive_state
   ensure_hive_tez_settings
   ensure_yarn_vmem_settings
-  make GROUP="hive" || true
+  make GROUP="hive"
   save_test_reports "hive"
   echo "[run_tests] GROUP=hive finished"
 
   start_hbase
   cleanup_hbase_state
-  make GROUP="hbase" || true
+  make GROUP="hbase"
   save_test_reports "hbase"
   echo "[run_tests] GROUP=hbase finished"
 
-  make GROUP="profile" || true
+  make GROUP="profile"
   save_test_reports "profile"
   echo "[run_tests] GROUP=profile finished"
 
-  make GROUP="proxy" || true
+  make GROUP="proxy"
   save_test_reports "proxy"
   echo "[run_tests] GROUP=proxy finished"
 
-  make GROUP="unused" || true
+  make GROUP="unused"
   save_test_reports "unused"
   echo "[run_tests] GROUP=unused finished"
 }
@@ -356,7 +356,7 @@ feature_test(){
   fi
   # "features" and "gpdb" tags largely overlap; union them so each test
   # runs once per USE_FDW mode instead of once per tag
-  make GROUP="features,gpdb" $extra_args || true
+  make GROUP="features,gpdb" $extra_args
   save_test_reports "$report_name"
   echo "[run_tests] GROUP=features,gpdb $extra_args finished"
 }
@@ -382,14 +382,14 @@ bench_prepare_env() {
 
 load_test(){
   bench_prepare_env
-  make GROUP="load" || true
+  make GROUP="load"
   save_test_reports "load"
   echo "[run_tests] GROUP=load finished"
 }
 
 performance_test(){
   bench_prepare_env
-  make GROUP="performance" || true
+  make GROUP="performance"
   save_test_reports "performance"
   echo "[run_tests] GROUP=performance finished"
 }
