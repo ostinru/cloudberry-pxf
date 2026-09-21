@@ -19,10 +19,12 @@ package org.apache.cloudberry.pxf.automation.features.extension;
  * under the License.
  */
 
+import annotations.WorksWithFDW;
 import org.apache.cloudberry.pxf.automation.AbstractTestcontainersTest;
 import org.apache.cloudberry.pxf.automation.applications.CloudberryApplication;
 import org.testng.annotations.Test;
 
+@WorksWithFDW
 public class PxfFdwExtensionTest extends AbstractTestcontainersTest {
 
     private CloudberryApplication extensionDb;
