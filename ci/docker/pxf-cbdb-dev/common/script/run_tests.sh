@@ -363,8 +363,7 @@ feature_test(){
 
 bench_prepare_env() {
   export HADOOP_HEAPSIZE=${HADOOP_HEAPSIZE:-2048}
-  export JAVA_HOME="${JAVA_HADOOP}"
-  export PATH="${JAVA_HOME}/bin:${HADOOP_HOME}/bin:${PATH}"
+  export PATH="${HADOOP_HOME}/bin:${PATH}"
 
   hdfs dfs -rm -r -f /tmp/pxf_automation_data /gpdb-ud-scratch/tmp/pxf_automation_data >/dev/null 2>&1 || true
   for scratch in /tmp/pxf_automation_data /gpdb-ud-scratch/tmp/pxf_automation_data; do
