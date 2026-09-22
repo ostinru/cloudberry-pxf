@@ -83,6 +83,8 @@
             <exclude>ci/singlecluster/templates/hive/conf/hive-site.xml</exclude>
             <exclude>ci/singlecluster/conf/gphd-conf.sh</exclude>
             <exclude>ci/singlecluster/README.HDP3.md</exclude>
+            <!-- Mirrored from ci/singlecluster; keep the copied files byte-for-byte compatible. -->
+            <exclude>automation/src/main/resources/testcontainers/singlecluster/**</exclude>
 
             <exclude>server/pxf-diagnostic/**</exclude>
             <exclude>server/pxf-hbase/build.gradle</exclude>
