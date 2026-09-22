@@ -2,17 +2,15 @@ package org.apache.cloudberry.pxf.automation.features.parquet;
 
 import annotations.WorksWithFDW;
 import com.google.common.collect.Lists;
-import jsystem.framework.system.SystemManagerImpl;
 import org.apache.commons.lang.StringUtils;
-import org.apache.cloudberry.pxf.automation.components.hive.Hive;
-import org.apache.cloudberry.pxf.automation.features.BaseWritableFeature;
+import org.apache.cloudberry.pxf.automation.applications.HiveApplication;
+import org.apache.cloudberry.pxf.automation.features.AbstractHdfsWritableTestcontainersTest;
 import org.apache.cloudberry.pxf.automation.structures.tables.basic.Table;
 import org.apache.cloudberry.pxf.automation.structures.tables.hive.HiveExternalTable;
 import org.apache.cloudberry.pxf.automation.structures.tables.hive.HiveTable;
 import org.apache.cloudberry.pxf.automation.structures.tables.pxf.ExternalTable;
 import org.apache.cloudberry.pxf.automation.structures.tables.utils.TableFactory;
 import org.apache.cloudberry.pxf.automation.utils.system.ProtocolEnum;
-import org.apache.cloudberry.pxf.automation.utils.system.ProtocolUtils;
 import org.apache.cloudberry.pxf.plugins.hdfs.utilities.PgUtilities;
 import org.testng.annotations.Test;
 
@@ -25,7 +23,7 @@ import static java.lang.Thread.sleep;
 import static org.junit.Assert.assertEquals;
 
 @WorksWithFDW
-public class ParquetWriteTest extends BaseWritableFeature {
+public class ParquetWriteTest extends AbstractHdfsWritableTestcontainersTest {
     private static final String NUMERIC_TABLE = "numeric_precision";
     private static final String NUMERIC_UNDEFINED_PRECISION_TABLE = "numeric_undefined_precision";
     private static final String PXF_PARQUET_PRIMITIVE_TABLE = "pxf_parquet_primitive_types";
@@ -37,7 +35,6 @@ public class ParquetWriteTest extends BaseWritableFeature {
     private static final String PARQUET_UNDEFINED_PRECISION_NUMERIC_FILE = "undefined_precision_numeric.parquet";
     private static final String PARQUET_NUMERIC_FILE = "numeric.parquet";
     private static final String HIVE_JDBC_DRIVER_CLASS = "org.apache.hive.jdbc.HiveDriver";
-    private static final String HIVE_JDBC_URL_PREFIX = "jdbc:hive2://";
     private static final String[] PARQUET_PRIMITIVE_TABLE_COLUMNS = new String[]{
             "s1    TEXT"            ,
             "s2    TEXT"            ,
@@ -136,7 +133,6 @@ public class ParquetWriteTest extends BaseWritableFeature {
             "bigint_arr", "real_arr", "double_arr", "text_arr", "bytea_arr", "char_arr", "varchar_arr", "numeric_arr", "date_arr"};
     private String hdfsPath;
     private ProtocolEnum protocol;
-    private Hive hive;
     private HiveTable hiveTable;
     private String resourcePath;
 
@@ -144,7 +140,7 @@ public class ParquetWriteTest extends BaseWritableFeature {
     public void beforeClass() throws Exception {
         // path for storing data on HDFS (for processing by PXF)
         hdfsPath = hdfs.getWorkingDirectory() + "/parquet/";
-        protocol = ProtocolUtils.getProtocol();
+        protocol = ProtocolEnum.HDFS;
         resourcePath = localDataResourcesFolder + "/parquet/";
 
         hdfs.copyFromLocal(resourcePath + PARQUET_PRIMITIVE_TYPES, hdfsPath + PARQUET_PRIMITIVE_TYPES);
@@ -154,7 +150,7 @@ public class ParquetWriteTest extends BaseWritableFeature {
         prepareReadableExternalTable(PXF_PARQUET_LIST_TYPES, PARQUET_LIST_TABLE_COLUMNS, hdfsPath + PARQUET_LIST_TYPES);
     }
 
-    @Test(groups = {"features", "gpdb", "security", "hcfs"})
+    @Test(groups = {"testcontainers", "testcontainers-hdfs"})
     public void parquetWritePaddedChar() throws Exception {
         /* 1. run the regular test */
         runWritePrimitivesScenario("pxf_parquet_write_padded_char", "pxf_parquet_read_padded_char", "parquet_write_padded_char", null);
@@ -175,48 +171,48 @@ public class ParquetWriteTest extends BaseWritableFeature {
         runSqlTest("features/parquet/padded_char_pushdown");
     }
 
-    @Test(groups = {"features", "gpdb", "security", "hcfs"})
+    @Test(groups = {"testcontainers", "testcontainers-hdfs"})
     public void parquetWritePrimitives() throws Exception {
         runWritePrimitivesScenario("pxf_parquet_write_primitives", "pxf_parquet_read_primitives", "parquet_write_primitives", null);
     }
 
-    @Test(groups = {"features", "gpdb", "security", "hcfs"})
+    @Test(groups = {"testcontainers", "testcontainers-hdfs"})
     public void parquetWritePrimitivesV2() throws Exception {
         runWritePrimitivesScenario("pxf_parquet_write_primitives_v2", "pxf_parquet_read_primitives_v2", "parquet_write_primitives_v2", new String[]{"PARQUET_VERSION=v2"});
     }
 
-    @Test(groups = {"features", "gpdb", "security", "hcfs"})
+    @Test(groups = {"testcontainers", "testcontainers-hdfs"})
     public void parquetWritePrimitivesGZip() throws Exception {
         runWritePrimitivesScenario("pxf_parquet_write_primitives_gzip", "pxf_parquet_read_primitives_gzip", "parquet_write_primitives_gzip", new String[]{"COMPRESSION_CODEC=gzip"});
     }
 
-    @Test(groups = {"features", "gpdb", "security", "hcfs"})
+    @Test(groups = {"testcontainers", "testcontainers-hdfs"})
     public void parquetWritePrimitivesGZipClassName() throws Exception {
         runWritePrimitivesScenario("pxf_parquet_write_primitives_gzip_classname", "pxf_parquet_read_primitives_gzip_classname", "parquet_write_primitives_gzip_classname", new String[]{"COMPRESSION_CODEC=org.apache.hadoop.io.compress.GzipCodec"});
     }
 
-    @Test(groups = {"features", "gpdb", "security", "hcfs"})
+    @Test(groups = {"testcontainers", "testcontainers-hdfs"})
     public void parquetWritePrimitivesSnappy() throws Exception {
         runWritePrimitivesScenario("pxf_parquet_write_primitives_snappy", "pxf_parquet_read_primitives_snappy", "parquet_write_primitives_snappy", new String[]{"COMPRESSION_CODEC=snappy"});
     }
 
-    @Test(groups = {"features", "gpdb", "security", "hcfs"})
+    @Test(groups = {"testcontainers", "testcontainers-hdfs"})
     public void parquetWritePrimitivesUncompressed() throws Exception {
         runWritePrimitivesScenario("pxf_parquet_write_primitives_uncompressed", "pxf_parquet_read_primitives_uncompressed", "parquet_write_primitives_uncompressed", new String[]{"COMPRESSION_CODEC=uncompressed"});
     }
 
-    @Test(groups = {"features", "gpdb", "security", "hcfs"})
+    @Test(groups = {"testcontainers", "testcontainers-hdfs"})
     public void parquetWritePrimitivesZStd() throws Exception {
         runWritePrimitivesScenario("pxf_parquet_write_primitives_zstd", "pxf_parquet_read_primitives_zstd", "parquet_write_primitives_zstd", new String[]{"COMPRESSION_CODEC=zstd"});
     }
 
-    @Test(groups = {"features", "gpdb", "security", "hcfs"})
+    @Test(groups = {"testcontainers", "testcontainers-hdfs"})
     public void parquetWritePrimitivesLZ4_RAW() throws Exception {
         runWritePrimitivesScenario("pxf_parquet_write_primitives_lz4_raw", "pxf_parquet_read_primitives_lz4_raw", "parquet_write_primitives_lz4_raw", new String[]{"COMPRESSION_CODEC=lz4_raw"});
     }
 
     // Numeric precision not defined, test writing data precision in [1, 38]. All the data should be written correctly.
-    @Test(groups = {"features", "gpdb", "security", "hcfs"})
+    @Test(groups = {"testcontainers", "testcontainers-hdfs"})
     public void parquetWriteUndefinedPrecisionNumeric() throws Exception {
         String filePathName = "/numeric/undefined_precision_numeric.csv";
         String fileName = "parquet_write_undefined_precision_numeric";
@@ -231,7 +227,7 @@ public class ParquetWriteTest extends BaseWritableFeature {
     }
 
     // Numeric precision not defined, test round flag when data precision overflow. An error should be thrown
-    @Test(groups = {"features", "gpdb", "security", "hcfs"})
+    @Test(groups = {"testcontainers", "testcontainers-hdfs"})
     public void parquetWriteUndefinedPrecisionNumericWithDataPrecisionOverflow() throws Exception {
         String filePathName = "/numeric/undefined_precision_numeric_with_large_data_precision.csv";
         String fileName = "parquet_write_undefined_precision_numeric_large_data_length";
@@ -241,7 +237,7 @@ public class ParquetWriteTest extends BaseWritableFeature {
         runSqlTest("features/parquet/decimal/numeric_undefined_precision_large_data_length");
     }
 
-    @Test(groups = {"features", "gpdb", "security", "hcfs"})
+    @Test(groups = {"testcontainers", "testcontainers-hdfs"})
     public void parquetWriteNumericWithPrecisionAndScale() throws Exception {
         String filePathName = "/numeric/numeric_with_precision.csv";
         String fileName = "parquet_write_numeric";
@@ -256,7 +252,7 @@ public class ParquetWriteTest extends BaseWritableFeature {
     }
 
     // Numeric precision defined, when provided precision overflow. An error should be thrown with either error flag, round flag or ignore flag
-    @Test(groups = {"features", "gpdb", "security", "hcfs"})
+    @Test(groups = {"testcontainers", "testcontainers-hdfs"})
     public void parquetWriteNumericWithPrecisionOverflowAndScale() throws Exception {
         String filePathName = "/numeric/numeric_with_large_precision.csv";
         String fileName = "parquet_write_defined_large_precision_numeric";
@@ -267,7 +263,7 @@ public class ParquetWriteTest extends BaseWritableFeature {
     }
 
     // Numeric precision not defined, test round flag when data integer digits overflow. An error should be thrown
-    @Test(groups = {"features", "gpdb", "security", "hcfs"})
+    @Test(groups = {"testcontainers", "testcontainers-hdfs"})
     public void parquetWriteUndefinedPrecisionNumericWithIntegerDigitsOverflow() throws Exception {
         String filePathName = "/numeric/undefined_precision_numeric_with_large_integer_digit.csv";
         String fileName = "parquet_write_undefined_precision_numeric_large_integer_digit";
@@ -278,7 +274,7 @@ public class ParquetWriteTest extends BaseWritableFeature {
     }
 
     // Numeric precision not defined, test rounding off when data integer digits overflow.
-    @Test(groups = {"features", "gpdb", "security", "hcfs"})
+    @Test(groups = {"testcontainers", "testcontainers-hdfs"})
     public void parquetWriteUndefinedPrecisionNumericWithScaleOverflow() throws Exception {
         String filePathName = "/numeric/undefined_precision_numeric_with_large_scale.csv";
         String fileName = "parquet_write_undefined_precision_numeric_large_scale";
@@ -292,7 +288,7 @@ public class ParquetWriteTest extends BaseWritableFeature {
         runSqlTest("features/parquet/decimal/numeric_undefined_precision_large_scale");
     }
 
-    @Test(groups = {"features", "gpdb", "security", "hcfs"})
+    @Test(groups = {"testcontainers", "testcontainers-hdfs"})
     public void parquetWriteLists() throws Exception {
         String writeTableName = "pxf_parquet_write_list";
         String readTableName = "pxf_parquet_read_list";
@@ -307,7 +303,7 @@ public class ParquetWriteTest extends BaseWritableFeature {
         runSqlTest("features/parquet/write_list/list");
     }
 
-    @Test(groups = {"features", "gpdb", "security", "hcfs"})
+    @Test(groups = {"testcontainers", "testcontainers-hdfs"})
     public void parquetWriteTimestampLists() throws Exception {
         hdfs.copyFromLocal(resourcePath + PARQUET_TIMESTAMP_LIST_TYPES, hdfsPath + PARQUET_TIMESTAMP_LIST_TYPES);
         prepareReadableExternalTable(PXF_PARQUET_TIMESTAMP_LIST_TYPES, PARQUET_TIMESTAMP_LIST_TABLE_COLUMNS, hdfsPath + PARQUET_TIMESTAMP_LIST_TYPES);
@@ -331,11 +327,8 @@ public class ParquetWriteTest extends BaseWritableFeature {
      * Also do not run with "security" group that would require kerberos principal to be included in Hive JDBC URL
      */
     // TODO: pxf_regress shows diff for this test. Should be fixed.
-    @Test(enabled = false, groups = {"features", "gpdb"})
+    @Test(enabled = false, groups = {"testcontainers", "testcontainers-hdfs"})
     public void parquetWriteListsReadWithHive() throws Exception {
-        // init only here, not in beforeClass() method as other tests run in environments without Hive
-        hive = (Hive) SystemManagerImpl.getInstance().getSystemObject("hive");
-
         String writeTableName = "pxf_parquet_write_list_read_with_hive_writable";
         String readTableName = "pxf_parquet_write_list_read_with_hive_readable";
         String fullTestPath = hdfsPath + "parquet_write_list_read_with_hive";
@@ -390,7 +383,7 @@ public class ParquetWriteTest extends BaseWritableFeature {
         }
 
         // use the Hive JDBC profile to avoid using the PXF Parquet reader implementation
-        String jdbcUrl = HIVE_JDBC_URL_PREFIX + hive.getHost() + ":10000/default";
+        String jdbcUrl = hive.getInternalJdbcUrl();
 
         ExternalTable exHiveJdbcTable = TableFactory.getPxfJdbcReadableTable(
                 readTableName, PARQUET_PRIMITIVE_ARRAYS_TABLE_COLUMNS_READ_FROM_HIVE,
@@ -402,7 +395,7 @@ public class ParquetWriteTest extends BaseWritableFeature {
         runSqlTest("features/parquet/write_list/write_list_read_with_hive");
     }
 
-    @Test(groups = {"features", "gpdb", "security", "hcfs"})
+    @Test(groups = {"testcontainers", "testcontainers-hdfs"})
     public void parquetWriteListsUserProvidedSchemaFile_ValidSchema() throws Exception {
 
         String writeTableName = "parquet_list_user_provided_schema_on_hcfs_write";
@@ -412,7 +405,7 @@ public class ParquetWriteTest extends BaseWritableFeature {
         prepareWritableExternalTable(writeTableName, PARQUET_LIST_TABLE_COLUMNS, fullTestPath, null);
 
         String schemaPath;
-        ProtocolEnum protocol = ProtocolUtils.getProtocol();
+        ProtocolEnum protocol = ProtocolEnum.HDFS;
         String absoluteSchemaPath = hdfs.getWorkingDirectory() + "/parquet_schema/parquet_list.schema";
         if (protocol == ProtocolEnum.FILE) {
             // we expect user to provide relative path for the schema file
@@ -433,7 +426,7 @@ public class ParquetWriteTest extends BaseWritableFeature {
         runSqlTest("features/parquet/write_list/write_with_valid_schema_hcfs");
     }
 
-    @Test(groups = {"features", "gpdb", "security", "hcfs"})
+    @Test(groups = {"testcontainers", "testcontainers-hdfs"})
     public void parquetWriteListsUserProvidedSchemaFile_InvalidSchema() throws Exception {
         String writeTableName = "parquet_list_user_provided_invalid_schema_write";
 
@@ -441,7 +434,7 @@ public class ParquetWriteTest extends BaseWritableFeature {
         prepareWritableExternalTable(writeTableName, PARQUET_LIST_TABLE_COLUMNS, fullTestPath, null);
 
         String schemaPath;
-        ProtocolEnum protocol = ProtocolUtils.getProtocol();
+        ProtocolEnum protocol = ProtocolEnum.HDFS;
         String absoluteSchemaPath = hdfs.getWorkingDirectory() + "/parquet_schema/invalid_parquet_list.schema";
         if (protocol == ProtocolEnum.FILE) {
             // we expect user to provide relative path for the schema file
@@ -475,12 +468,12 @@ public class ParquetWriteTest extends BaseWritableFeature {
     }
 
     private void prepareReadableExternalTable(String name, String[] fields, String path) throws Exception {
-        readableExTable = TableFactory.getPxfHcfsReadableTable(name, fields, path, hdfs.getBasePath(), "parquet");
+        readableExTable = getHdfsReadableTable(name, fields, path, "parquet");
         createTable(readableExTable);
     }
 
     private void prepareWritableExternalTable(String name, String[] fields, String path, String[] userParameters) throws Exception {
-        writableExTable = TableFactory.getPxfHcfsWritableTable(name, fields, path, hdfs.getBasePath(), "parquet");
+        writableExTable = getHdfsWritableTable(name, fields, path, "parquet");
         if (userParameters != null) {
             writableExTable.setUserParameters(userParameters);
         }
@@ -563,7 +556,7 @@ public class ParquetWriteTest extends BaseWritableFeature {
      * @return boolean returns true if the Hive version is greater than 1.2, false otherwise
      * @throws Exception
      */
-    private boolean checkHiveVersionForDateSupport(Hive hive) throws Exception {
+    private boolean checkHiveVersionForDateSupport(HiveApplication hive) throws Exception {
         Table versionResult = new Table("versionResult", null);
 
         try {
@@ -615,7 +608,7 @@ public class ParquetWriteTest extends BaseWritableFeature {
         writableExTable.setHost(pxfHost);
         writableExTable.setPort(pxfPort);
         writableExTable.setFormatter("pxfwritable_export");
-        writableExTable.setProfile(ProtocolUtils.getProtocol().value() + ":parquet");
+        writableExTable.setProfile(ProtocolEnum.HDFS.value() + ":parquet");
 
         gpdb.createTableAndVerify(writableExTable);
     }

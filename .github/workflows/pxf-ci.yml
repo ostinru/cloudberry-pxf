@@ -1063,6 +1063,8 @@ jobs:
           - 'pxf-s3'
           - 'pxf-extension'
           - 'pxf-fdw-extension'
+          - 'testcontainers-hdfs'
+          - 'testcontainers-hive'
         use_fdw:
           - 'false'
           - 'true'
