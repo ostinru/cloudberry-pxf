@@ -1,5 +1,6 @@
 package org.apache.cloudberry.pxf.automation.features.orc;
 
+import annotations.SkipForFDW;
 import annotations.WorksWithFDW;
 import org.apache.cloudberry.pxf.automation.features.AbstractHdfsWritableTestcontainersTest;
 import org.apache.cloudberry.pxf.automation.structures.tables.basic.Table;
@@ -242,6 +243,7 @@ public class OrcWriteTest extends AbstractHdfsWritableTestcontainersTest {
         runSqlTest("features/orc/write/timestamp_with_timezone_types");
     }
 
+    @SkipForFDW // FDW loses the element typmod for char[], so PXF rejects the column without a maximum size.
     @Test(groups = {"testcontainers", "testcontainers-hdfs"})
     public void orcWritePrimitiveArraysWithNulls() throws Exception {
         gpdbTableNamePrefix = "orc_primitive_arrays";
@@ -257,6 +259,7 @@ public class OrcWriteTest extends AbstractHdfsWritableTestcontainersTest {
         runSqlTest("features/orc/write/primitive_types_array_with_nulls");
     }
 
+    @SkipForFDW // FDW loses the element typmod for char[], so PXF rejects the column without a maximum size.
     @Test(groups = {"testcontainers", "testcontainers-hdfs"})
     public void orcWritePrimitiveArraysWithNullElements() throws Exception {
         gpdbTableNamePrefix = "orc_primitive_arrays_null_elements";

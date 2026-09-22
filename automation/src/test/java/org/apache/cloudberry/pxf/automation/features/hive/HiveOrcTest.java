@@ -1,5 +1,6 @@
 package org.apache.cloudberry.pxf.automation.features.hive;
 
+import annotations.SkipForFDW;
 import annotations.WorksWithFDW;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
@@ -229,6 +230,7 @@ public class HiveOrcTest extends HiveBaseTest {
      *
      * @throws Exception if test fails to run
      */
+    @SkipForFDW // FDW returns Hive binary values instead of the external-table UTF-8 error expected by this test.
     @Test(groups = {"testcontainers", "testcontainers-hive"})
     public void hiveLongBinaryType() throws Exception {
 
@@ -337,6 +339,7 @@ public class HiveOrcTest extends HiveBaseTest {
      *
      * @throws Exception if test fails to run
      */
+    @SkipForFDW // The deprecated hive:vectorizedorc profile is not defined for FDW.
     @Test(groups = {"testcontainers", "testcontainers-hive"})
     public void storeAsOrcMultiFileGetVectorized() throws Exception {
 
@@ -406,6 +409,7 @@ public class HiveOrcTest extends HiveBaseTest {
      *
      * @throws Exception if test fails to run
      */
+    @SkipForFDW // Uses explicit fragmenter/accessor/resolver classes without a profile, unsupported by FDW.
     @Test(groups = {"testcontainers", "testcontainers-hive"})
     public void aggregateQueries() throws Exception {
 

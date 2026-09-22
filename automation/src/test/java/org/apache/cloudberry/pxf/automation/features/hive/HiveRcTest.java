@@ -1,5 +1,6 @@
 package org.apache.cloudberry.pxf.automation.features.hive;
 
+import annotations.SkipForFDW;
 import annotations.WorksWithFDW;
 import org.apache.cloudberry.pxf.automation.structures.tables.basic.Table;
 import org.apache.cloudberry.pxf.automation.structures.tables.hive.HiveExternalTable;
@@ -114,6 +115,7 @@ public class HiveRcTest extends HiveBaseTest {
      *
      * @throws Exception if test fails to run
      */
+    @SkipForFDW // FDW treats the Hive binary NULL marker differently from an external table.
     @Test(groups = {"testcontainers", "testcontainers-hive"})
     public void supportedTypesRc() throws Exception {
 
@@ -130,6 +132,7 @@ public class HiveRcTest extends HiveBaseTest {
      *
      * @throws Exception if test fails to run
      */
+    @SkipForFDW // FDW returns Hive binary values in a different representation than an external table.
     @Test(groups = {"testcontainers", "testcontainers-hive"})
     public void binaryData() throws Exception {
 
@@ -154,6 +157,7 @@ public class HiveRcTest extends HiveBaseTest {
      *
      * @throws Exception if test fails to run
      */
+    @SkipForFDW // Deliberately omits a profile while testing type mismatch handling, unsupported by FDW.
     @Test(groups = {"testcontainers", "testcontainers-hive"})
     public void mismatchedTypes() throws Exception {
 
@@ -170,6 +174,7 @@ public class HiveRcTest extends HiveBaseTest {
      *
      * @throws Exception if test fails to run
      */
+    @SkipForFDW // FDW parses Hive RC NULL markers as numeric input instead of NULL.
     @Test(groups = {"testcontainers", "testcontainers-hive"})
     public void hiveRcTable() throws Exception {
 
@@ -185,6 +190,7 @@ public class HiveRcTest extends HiveBaseTest {
      *
      * @throws Exception if test fails to run
      */
+    @SkipForFDW // FDW reports a different error context than the external-table expected output.
     @Test(groups = {"testcontainers", "testcontainers-hive"})
     public void columnNameMismatch() throws Exception {
 
@@ -246,6 +252,7 @@ public class HiveRcTest extends HiveBaseTest {
      *
      * @throws Exception if test fails to run
      */
+    @SkipForFDW // FDW parses Hive RC NULL markers as numeric input instead of NULL.
     @Test(groups = {"testcontainers", "testcontainers-hive"})
     public void readHiveTableAfterColumnsAddedToTable() throws Exception {
 
@@ -271,6 +278,7 @@ public class HiveRcTest extends HiveBaseTest {
      *
      * @throws Exception if test fails to run
      */
+    @SkipForFDW // Uses an RC table without an explicit profile, unsupported by FDW automation.
     @Test(groups = {"testcontainers", "testcontainers-hive"})
     public void hiveRcTableDefaultSerde() throws Exception {
 
@@ -310,6 +318,7 @@ public class HiveRcTest extends HiveBaseTest {
      *
      * @throws Exception if test fails to run
      */
+    @SkipForFDW // Uses RC partitions without an explicit profile, unsupported by FDW automation.
     @Test(groups = {"testcontainers", "testcontainers-hive"})
     public void severalPartitionsDefaultSerde() throws Exception {
 
@@ -347,6 +356,7 @@ public class HiveRcTest extends HiveBaseTest {
      *
      * @throws Exception if test fails to run
      */
+    @SkipForFDW // Deliberately omits a profile to exercise accessor-side filtering, unsupported by FDW.
     @Test(groups = {"testcontainers", "testcontainers-hive"})
     public void filterBetweenPartitionsInAccessor() throws Exception {
 
@@ -405,6 +415,7 @@ public class HiveRcTest extends HiveBaseTest {
      *
      * @throws Exception if test fails to run
      */
+    @SkipForFDW // Injects a custom fragmenter directly instead of using an FDW profile.
     @Test(groups = {"testcontainers", "testcontainers-hive"})
     public void partitionFilterPushDown() throws Exception {
 
@@ -514,6 +525,7 @@ public class HiveRcTest extends HiveBaseTest {
      *
      * @throws Exception if test fails to run
      */
+    @SkipForFDW // Injects a custom fragmenter directly instead of using an FDW profile.
     @Test(groups = {"testcontainers", "testcontainers-hive"})
     public void partitionFilterPushDownWithDefaultSerde() throws Exception {
 
@@ -556,6 +568,7 @@ public class HiveRcTest extends HiveBaseTest {
      *
      * @throws Exception if test fails to run
      */
+    @SkipForFDW // FDW parses Hive RC NULL markers as numeric input instead of NULL.
     @Test(groups = {"testcontainers", "testcontainers-hive"})
     public void aggregateQueries() throws Exception {
 

@@ -1,5 +1,6 @@
 package org.apache.cloudberry.pxf.automation.features.hive;
 
+import annotations.SkipForFDW;
 import annotations.WorksWithFDW;
 import org.apache.cloudberry.pxf.automation.structures.tables.basic.Table;
 import org.apache.cloudberry.pxf.automation.structures.tables.hive.HiveExternalTable;
@@ -98,6 +99,7 @@ public class HiveTextTest extends HiveBaseTest {
      *
      * @throws Exception if test fails to run
      */
+    @SkipForFDW // FDW parses an empty Hive integer field as an integer value instead of NULL.
     @Test(groups = {"testcontainers", "testcontainers-hive"})
     public void supportedTypesText() throws Exception {
 
@@ -116,6 +118,7 @@ public class HiveTextTest extends HiveBaseTest {
      *
      * @throws Exception if test fails to run
      */
+    @SkipForFDW // Deliberately omits a profile while testing type mismatch handling, unsupported by FDW.
     @Test(groups = {"testcontainers", "testcontainers-hive"})
     public void mismatchedTypes() throws Exception {
 
@@ -252,6 +255,7 @@ public class HiveTextTest extends HiveBaseTest {
      *
      * @throws Exception if test fails to run
      */
+    @SkipForFDW // Injects a custom fragmenter directly instead of using an FDW profile.
     @Test(groups = {"testcontainers", "testcontainers-hive"})
     public void partitionFilterPushDown() throws Exception {
 
@@ -391,6 +395,7 @@ public class HiveTextTest extends HiveBaseTest {
      *
      * @throws Exception if test fails to run
      */
+    @SkipForFDW // Deliberately creates the table without a profile, unsupported by FDW automation.
     @Test(groups = {"testcontainers", "testcontainers-hive"})
     public void filterBetweenPartitions() throws Exception {
 

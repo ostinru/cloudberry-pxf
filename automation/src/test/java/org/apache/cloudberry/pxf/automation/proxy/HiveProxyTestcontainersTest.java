@@ -1,5 +1,6 @@
 package org.apache.cloudberry.pxf.automation.proxy;
 
+import annotations.SkipForFDW;
 import annotations.WorksWithFDW;
 import org.apache.cloudberry.pxf.automation.applications.HdfsApplication;
 import org.apache.cloudberry.pxf.automation.applications.HiveApplication;
@@ -14,6 +15,7 @@ import org.testng.annotations.Test;
  * Basic PXF on small Hive table using non-gpadmin user
  */
 @WorksWithFDW
+@SkipForFDW // FDW setup does not create the non-impersonating Hive server required by this proxy test.
 public class HiveProxyTestcontainersTest extends AbstractHdfsTestcontainersTest {
     private static final String TEST_USER = "testuser";
     private static final String[] FIELDS = {

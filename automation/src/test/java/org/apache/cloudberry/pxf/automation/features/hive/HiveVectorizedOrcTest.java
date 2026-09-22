@@ -1,5 +1,6 @@
 package org.apache.cloudberry.pxf.automation.features.hive;
 
+import annotations.SkipForFDW;
 import annotations.WorksWithFDW;
 import org.apache.cloudberry.pxf.automation.structures.tables.basic.Table;
 import org.apache.cloudberry.pxf.automation.structures.tables.hive.HiveTable;
@@ -10,6 +11,7 @@ import java.util.Arrays;
 import java.util.ArrayList;
 
 @WorksWithFDW
+@SkipForFDW // The deprecated hive:vectorizedorc profile used by this class is not defined for FDW.
 public class HiveVectorizedOrcTest extends HiveBaseTest {
 
     static final String[] HIVE_TYPES_NO_TIMESTAMP_COLS = {
