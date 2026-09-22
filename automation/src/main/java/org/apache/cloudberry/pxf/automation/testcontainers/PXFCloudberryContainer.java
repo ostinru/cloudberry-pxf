@@ -84,6 +84,9 @@ public class PXFCloudberryContainer extends GenericContainer<PXFCloudberryContai
 
         withNetwork(network)
             .withNetworkAliases("mdw")
+            // Keep PXF's JVM timezone aligned with the historical automation
+            // PGOPTIONS setting and independent of the selected base distro.
+            .withEnv("TZ", "Etc/GMT-1")
             .withExposedPorts(CLOUDBERRY_PORT, PXF_PORT)
             .withCommand("tail", "-f", "/dev/null")
             .withCreateContainerCmdModifier(cmd -> cmd.withHostName("mdw"))
