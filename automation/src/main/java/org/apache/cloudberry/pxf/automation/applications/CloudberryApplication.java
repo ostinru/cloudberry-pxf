@@ -23,6 +23,7 @@ import com.google.common.collect.Lists;
 import org.apache.cloudberry.pxf.automation.structures.tables.basic.Table;
 import org.apache.cloudberry.pxf.automation.structures.tables.pxf.ExternalTable;
 import org.apache.cloudberry.pxf.automation.testcontainers.PXFCloudberryContainer;
+import org.apache.commons.lang.StringUtils;
 import org.postgresql.copy.CopyManager;
 import org.postgresql.core.BaseConnection;
 
@@ -33,10 +34,14 @@ import java.sql.Connection;
 import java.sql.DatabaseMetaData;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
+import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
+import java.sql.SQLWarning;
 import java.sql.Statement;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
+import java.util.regex.Pattern;
 
 /**
  * TestObject that provides methods to work with Cloudberry DB
@@ -151,6 +156,10 @@ public class CloudberryApplication implements AutoCloseable {
         }
     }
 
+    public void copyFromFile(Table table, File path, String delimiter, boolean csv) throws Exception {
+        copyFromFile(table, path, delimiter, null, csv);
+    }
+
     /**
      * Inserts rows from a source Table (in-memory data) into the target table.
      */
@@ -176,8 +185,55 @@ public class CloudberryApplication implements AutoCloseable {
             }
         }
 
-        String query = "INSERT INTO " + target.getName() + " VALUES " + sb.toString();
-        runQuery(query);
+        insertData(sb.toString(), target);
+    }
+
+    public void insertData(String[][] data, Table target) throws Exception {
+        StringBuilder rows = new StringBuilder();
+        for (int i = 0; i < data.length; i++) {
+            rows.append("(");
+            for (int j = 0; j < data[i].length; j++) {
+                rows.append("E'").append(data[i][j]).append("'");
+                if (j < data[i].length - 1) {
+                    rows.append(",");
+                }
+            }
+            rows.append(")");
+            if (i < data.length - 1) {
+                rows.append(",");
+            }
+        }
+        insertData(rows.toString(), target);
+    }
+
+    public void insertData(String data, Table target) throws Exception {
+        if (!data.startsWith("(")) {
+            data = "(" + data;
+        }
+        if (!data.endsWith(")")) {
+            data = data + ")";
+        }
+        runQuery("INSERT INTO " + target.getName() + " VALUES " + data);
+    }
+
+    public void copyData(String sourceName, Table target) throws Exception {
+        copyData(sourceName, target, null);
+    }
+
+    public void copyData(Table source, Table target) throws Exception {
+        copyData(source.getName(), target);
+    }
+
+    public void copyData(String sourceName, Table target, String[] columns) throws Exception {
+        String columnList = columns == null || columns.length == 0 ? "*" : String.join(",", columns);
+        runQuery(String.format("INSERT INTO %s SELECT %s FROM %s", target.getName(), columnList, sourceName));
+    }
+
+    public void copyData(String sourceName, Table target, String[] columns, String context) throws Exception {
+        String columnList = columns == null || columns.length == 0 ? "*" : String.join(",", columns);
+        String prefix = StringUtils.isBlank(context) ? "" : context + "; ";
+        runQuery(prefix + String.format("INSERT INTO %s SELECT %s FROM %s",
+                target.getName(), columnList, sourceName));
     }
 
     public void runQuery(String sql) throws Exception {
@@ -190,6 +246,94 @@ public class CloudberryApplication implements AutoCloseable {
         } catch (SQLException e) {
             if (!ignoreFail) {
                 throw e;
+            }
+        }
+    }
+
+    public void runQuery(String sql, boolean ignoreFail, boolean fetch) throws Exception {
+        try {
+            if (fetch) {
+                try (ResultSet resultSet = statement.executeQuery(sql)) {
+                    while (resultSet.next()) {
+                        // Consume the result to preserve the legacy method's execution semantics.
+                    }
+                }
+            } else {
+                statement.execute(sql);
+            }
+        } catch (SQLException e) {
+            if (!ignoreFail) {
+                throw e;
+            }
+        }
+    }
+
+    /**
+     * Executes a query and verifies a warning when the JDBC driver reports one.
+     * This preserves the legacy automation behavior, where absence of a warning
+     * is diagnostic rather than a test failure.
+     */
+    public void runQueryWithExpectedWarning(String query, String expectedWarning,
+                                            boolean isRegex, boolean ignoreNoWarning) throws Exception {
+        statement.clearWarnings();
+        runQuery(query, true, false);
+        SQLWarning warning = statement.getWarnings();
+        if (warning == null) {
+            if (!ignoreNoWarning) {
+                System.out.println("[CloudberryApplication] Expected warning was not reported: " + expectedWarning);
+            }
+            return;
+        }
+
+        for (SQLWarning current = warning; current != null; current = current.getNextWarning()) {
+            String message = current.getMessage();
+            boolean matches = isRegex
+                    ? Pattern.compile(expectedWarning, Pattern.DOTALL).matcher(message).find()
+                    : message.contains(expectedWarning);
+            if (matches) {
+                return;
+            }
+        }
+        throw new AssertionError("Expected warning was not found: " + expectedWarning + "; actual: " + warning.getMessage());
+    }
+
+    public void runQueryWithExpectedWarning(String query, String expectedWarning, boolean isRegex) throws Exception {
+        runQueryWithExpectedWarning(query, expectedWarning, isRegex, false);
+    }
+
+    /** Executes a psql meta-command inside the Cloudberry container. */
+    public String runPsqlCommand(String command, boolean checkErrors) throws Exception {
+        org.testcontainers.containers.Container.ExecResult result = container.execInContainer(
+                "bash", "-lc",
+                "source /usr/local/cloudberry-db/cloudberry-env.sh; psql pxfautomation -c \"$1\"",
+                "psql-command", command);
+        String output = result.getStdout() + result.getStderr();
+        if (checkErrors && (result.getExitCode() != 0 || output.contains("ERROR"))) {
+            throw new AssertionError("psql command failed: " + command + "\n" + output);
+        }
+        // Legacy interactive ShellSystemObject output included the entered command
+        // and the following psql prompt. Keep that shape for existing \d parsers.
+        return command + "\n" + output + "pxfautomation=#";
+    }
+
+    /** Stores query result metadata and rows in the supplied automation table. */
+    public void queryResults(Table table, String query) throws Exception {
+        try (ResultSet result = statement.executeQuery(query)) {
+            if (table == null) {
+                return;
+            }
+            table.initDataStructures();
+            ResultSetMetaData metadata = result.getMetaData();
+            for (int column = 1; column <= metadata.getColumnCount(); column++) {
+                table.addColDataType(metadata.getColumnType(column));
+                table.addColumnHeader(metadata.getColumnName(column));
+            }
+            while (result.next()) {
+                List<String> row = new ArrayList<>();
+                for (int column = 1; column <= metadata.getColumnCount(); column++) {
+                    row.add(result.getString(column));
+                }
+                table.addRow(row);
             }
         }
     }

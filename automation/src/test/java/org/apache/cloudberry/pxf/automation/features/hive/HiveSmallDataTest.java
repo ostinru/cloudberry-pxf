@@ -1,8 +1,7 @@
 package org.apache.cloudberry.pxf.automation.features.hive;
 
 import annotations.WorksWithFDW;
-import org.apache.cloudberry.pxf.automation.components.hive.Hive;
-import org.apache.cloudberry.pxf.automation.features.BaseFeature;
+import org.apache.cloudberry.pxf.automation.features.AbstractHdfsTestcontainersTest;
 import org.apache.cloudberry.pxf.automation.structures.tables.basic.Table;
 import org.apache.cloudberry.pxf.automation.structures.tables.hive.HiveTable;
 import org.apache.cloudberry.pxf.automation.structures.tables.utils.TableFactory;
@@ -12,13 +11,11 @@ import java.math.BigDecimal;
 
 /** Basic Hive reads, ported from regression/sql/FDW_HiveSmokeTest.sql. */
 @WorksWithFDW
-public class HiveSmallDataTest extends BaseFeature {
-    private Hive hive;
+public class HiveSmallDataTest extends AbstractHdfsTestcontainersTest {
     private HiveTable hiveTable;
 
-    @Test(groups = {"hive", "features"})
+    @Test(groups = {"testcontainers", "testcontainers-hive"})
     public void readHiveTable() throws Exception {
-        hive = (Hive) systemManager.getSystemObject("hive");
         hiveTable = TableFactory.getHiveByRowCommaTable("pxf_hive_small_data_types", new String[]{
                 "name string", "num int", "dub double", "longNum bigint", "bool boolean"
         });
@@ -42,17 +39,11 @@ public class HiveSmallDataTest extends BaseFeature {
 
     @Override
     protected void afterClass() throws Exception {
-        try {
-            if (exTable != null) {
-                gpdb.dropTable(exTable, true);
-            }
-            if (hiveTable != null) {
-                hive.dropTable(hiveTable, false);
-            }
-        } finally {
-            if (hive != null) {
-                hive.close();
-            }
+        if (exTable != null) {
+            gpdb.dropTable(exTable, true);
+        }
+        if (hiveTable != null) {
+            hive.dropTable(hiveTable, false);
         }
     }
 }

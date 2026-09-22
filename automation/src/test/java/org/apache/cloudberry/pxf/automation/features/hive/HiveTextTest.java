@@ -1,5 +1,6 @@
 package org.apache.cloudberry.pxf.automation.features.hive;
 
+import annotations.WorksWithFDW;
 import org.apache.cloudberry.pxf.automation.structures.tables.basic.Table;
 import org.apache.cloudberry.pxf.automation.structures.tables.hive.HiveExternalTable;
 import org.apache.cloudberry.pxf.automation.structures.tables.hive.HiveTable;
@@ -14,6 +15,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+@WorksWithFDW
 public class HiveTextTest extends HiveBaseTest {
 
     private HiveExternalTable hiveHeteroTable;
@@ -96,7 +98,7 @@ public class HiveTextTest extends HiveBaseTest {
      *
      * @throws Exception if test fails to run
      */
-    @Test(groups = "features")
+    @Test(groups = {"testcontainers", "testcontainers-hive"})
     public void supportedTypesText() throws Exception {
 
         createExternalTable(GPDB_HIVE_TYPES_TABLE,
@@ -114,7 +116,7 @@ public class HiveTextTest extends HiveBaseTest {
      *
      * @throws Exception if test fails to run
      */
-    @Test(groups = {"hive", "features", "gpdb", "security"})
+    @Test(groups = {"testcontainers", "testcontainers-hive"})
     public void mismatchedTypes() throws Exception {
 
         // Hive column is SMALLINT, expected GPDB type is SMALLINT(int2), but actual is INTEGER(int4)
@@ -170,7 +172,7 @@ public class HiveTextTest extends HiveBaseTest {
      *
      * @throws Exception if test fails to run
      */
-    @Test(groups = {"hive", "features", "gpdb", "security"})
+    @Test(groups = {"testcontainers", "testcontainers-hive"})
     public void hiveTextTable() throws Exception {
 
         exTable = TableFactory.getPxfHiveTextReadableTable(HIVE_TEXT_TABLE,
@@ -199,7 +201,7 @@ public class HiveTextTest extends HiveBaseTest {
      *
      * @throws Exception if test fails to run
      */
-    @Test(groups = {"hive", "features", "gpdb", "security"})
+    @Test(groups = {"testcontainers", "testcontainers-hive"})
     public void severalTextPartitions() throws Exception {
 
         createExternalTable(PXF_HIVE_HETEROGEN_TABLE,
@@ -219,7 +221,7 @@ public class HiveTextTest extends HiveBaseTest {
      *
      * @throws Exception if test fails to run
      */
-    @Test(groups = {"hive", "features", "gpdb", "security"})
+    @Test(groups = {"testcontainers", "testcontainers-hive"})
     public void severalTextPartitionsNoPartitonColumInGpdb() throws Exception {
 
         hiveTable = new HiveExternalTable(HIVE_REG_HETEROGEN_TABLE, HIVE_RC_COLS);
@@ -250,7 +252,7 @@ public class HiveTextTest extends HiveBaseTest {
      *
      * @throws Exception if test fails to run
      */
-    @Test(groups = {"hive", "features", "gpdb", "security"})
+    @Test(groups = {"testcontainers", "testcontainers-hive"})
     public void partitionFilterPushDown() throws Exception {
 
         hiveTable = new HiveExternalTable(HIVE_REG_HETEROGEN_TABLE, HIVE_RC_COLS);
@@ -365,7 +367,7 @@ public class HiveTextTest extends HiveBaseTest {
      *
      * @throws Exception if test fails to run
      */
-    @Test(groups = {"hive", "features", "gpdb", "security"})
+    @Test(groups = {"testcontainers", "testcontainers-hive"})
     public void filterNonePartitions() throws Exception {
 
         // Create PXF Table using Hive profile
@@ -389,7 +391,7 @@ public class HiveTextTest extends HiveBaseTest {
      *
      * @throws Exception if test fails to run
      */
-    @Test(groups = {"hive", "features", "gpdb", "security"})
+    @Test(groups = {"testcontainers", "testcontainers-hive"})
     public void filterBetweenPartitions() throws Exception {
 
         // Create PXF Table using Hive profile
@@ -412,7 +414,7 @@ public class HiveTextTest extends HiveBaseTest {
      *
      * @throws Exception if test fails to run
      */
-    @Test(groups = {"hive", "features", "gpdb", "security"})
+    @Test(groups = {"testcontainers", "testcontainers-hive"})
     public void aggregateQueries() throws Exception {
 
         //hive text table with nulls
@@ -433,7 +435,7 @@ public class HiveTextTest extends HiveBaseTest {
      *
      * @throws Exception if test fails to run
      */
-    @Test(groups = {"hive", "features", "gpdb", "security"})
+    @Test(groups = {"testcontainers", "testcontainers-hive"})
     public void hiveTableWithSkipHeader() throws Exception {
         List<List<String>> tableProperties = new ArrayList<>();
         tableProperties.add(Arrays.asList("skip.header.line.count", "3"));

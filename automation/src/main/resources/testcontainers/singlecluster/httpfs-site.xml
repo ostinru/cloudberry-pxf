@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<!-- Licensed to the Apache Software Foundation (ASF) under the Apache
+     License, Version 2.0. See http://www.apache.org/licenses/LICENSE-2.0 -->
+<configuration>
+    <property><name>httpfs.http.hostname</name><value>0.0.0.0</value></property>
+    <property><name>httpfs.http.port</name><value>14000</value></property>
+    <property><name>httpfs.authentication.type</name><value>simple</value></property>
+    <property><name>httpfs.hadoop.config.dir</name><value>/home/gpadmin/workspace/singlecluster/hadoop/etc/hadoop</value></property>
+</configuration>

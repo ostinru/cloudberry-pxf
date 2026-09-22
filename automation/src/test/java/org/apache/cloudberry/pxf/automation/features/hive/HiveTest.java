@@ -2,8 +2,6 @@ package org.apache.cloudberry.pxf.automation.features.hive;
 
 import annotations.WorksWithFDW;
 import annotations.SkipForFDW;
-import jsystem.framework.system.SystemManagerImpl;
-import org.apache.cloudberry.pxf.automation.components.hive.Hive;
 import org.apache.cloudberry.pxf.automation.enums.EnumPxfDefaultProfiles;
 import org.apache.cloudberry.pxf.automation.structures.tables.basic.Table;
 import org.apache.cloudberry.pxf.automation.structures.tables.hive.HiveExternalTable;
@@ -11,7 +9,7 @@ import org.apache.cloudberry.pxf.automation.structures.tables.hive.HiveTable;
 import org.apache.cloudberry.pxf.automation.structures.tables.utils.TableFactory;
 import org.apache.cloudberry.pxf.automation.utils.exception.ExceptionUtils;
 import org.apache.cloudberry.pxf.automation.utils.tables.ComparisonUtils;
-import jsystem.utils.FileUtils;
+import org.apache.commons.io.FileUtils;
 import org.junit.Assert;
 import org.postgresql.util.PSQLException;
 import org.testng.annotations.Test;
@@ -159,7 +157,7 @@ public class HiveTest extends HiveBaseTest {
      *
      * @throws Exception if test fails to run
      */
-    @Test(groups = {"hive", "features", "gpdb", "security"})
+    @Test(groups = {"testcontainers", "testcontainers-hive"})
     public void sanity() throws Exception {
 
         createExternalTable(PXF_HIVE_SMALL_DATA_TABLE, PXF_HIVE_SMALLDATA_COLS, hiveSmallDataTable);
@@ -173,7 +171,7 @@ public class HiveTest extends HiveBaseTest {
      *
      * @throws Exception if test fails to run
      */
-    @Test(groups = {"hive", "features", "gpdb", "security"})
+    @Test(groups = {"testcontainers", "testcontainers-hive"})
     @SkipForFDW // FDW does not parse the custom Hive delimiter (missing data for column t2).
     public void hiveTextTableCustomDelimiter() throws Exception {
 
@@ -195,17 +193,10 @@ public class HiveTest extends HiveBaseTest {
         ComparisonUtils.compareTables(exTable, expected, null);
     }
 
-    @Test(groups = {"features", "security"})
+    @Test(groups = {"testcontainers", "testcontainers-hive"}, enabled = false,
+            description = "Requires a separate non-secure Hive cluster")
     public void testSecureServerAndNonSecuredServer() throws Exception {
-        if (hdfsNonSecure == null) return;
-
-        Hive hiveNonSecure = (Hive) SystemManagerImpl.getInstance().getSystemObject("hiveNonSecure");
-
-        HiveTable hiveSmallDataTable3 =
-                prepareTableData(hdfsNonSecure, hiveNonSecure, null, HIVE_SMALL_DATA_TABLE, HIVE_SMALLDATA_COLS, HIVE_DATA_FILE_NAME_3);
-        createExternalTable(PXF_HIVE_SMALL_DATA_TABLE_NON_SECURE, PXF_HIVE_SMALLDATA_COLS, hiveSmallDataTable3, true, "SERVER=hdfs-non-secure");
-
-        runSqlTest("features/hive/secured_and_non_secured_hive");
+        throw new UnsupportedOperationException("A second Hive cluster is not provided by testcontainers-hdfs");
     }
 
     /**
@@ -213,7 +204,7 @@ public class HiveTest extends HiveBaseTest {
      *
      * @throws Exception if test fails to run
      */
-    @Test(groups = {"hive", "features", "gpdb", "security"})
+    @Test(groups = {"testcontainers", "testcontainers-hive"})
     public void hivePrimitiveTypes() throws Exception {
 
         createExternalTable(GPDB_HIVE_TYPES_TABLE,
@@ -228,7 +219,7 @@ public class HiveTest extends HiveBaseTest {
      *
      * @throws Exception if test fails to run
      */
-    @Test(groups = {"hive", "features", "gpdb", "security"})
+    @Test(groups = {"testcontainers", "testcontainers-hive"})
     @SkipForFDW // FDW returns extra fields when reading a subset of the Hive schema.
     public void columnSubsetOfHiveSchema() throws Exception {
 
@@ -244,7 +235,7 @@ public class HiveTest extends HiveBaseTest {
      *
      * @throws Exception if test fails to run
      */
-    @Test(groups = {"hive", "features", "gpdb", "security"})
+    @Test(groups = {"testcontainers", "testcontainers-hive"})
     @SkipForFDW // FDW returns extra fields when reading a subset of the partitioned Hive schema.
     public void columnSubsetOfPartitionedHiveSchema() throws Exception {
 
@@ -263,7 +254,7 @@ public class HiveTest extends HiveBaseTest {
      *
      * @throws Exception if test fails to run
      */
-    @Test(groups = {"hive", "features", "gpdb", "security"})
+    @Test(groups = {"testcontainers", "testcontainers-hive"})
     public void readHiveTableAfterColumnsAddedToTable() throws Exception {
 
         prepareParquetForAlterData();
@@ -288,7 +279,7 @@ public class HiveTest extends HiveBaseTest {
      *
      * @throws Exception if test fails to run
      */
-    @Test(groups = {"hive", "features", "gpdb", "security"})
+    @Test(groups = {"testcontainers", "testcontainers-hive"})
     @SkipForFDW // FDW binary reads fail with an invalid UTF-8 byte sequence.
     public void hiveBinaryData() throws Exception {
 
@@ -304,7 +295,7 @@ public class HiveTest extends HiveBaseTest {
      *
      * @throws Exception if test fails to run
      */
-    @Test(groups = {"hive", "features", "gpdb", "security"})
+    @Test(groups = {"testcontainers", "testcontainers-hive"})
     public void storeAsOrc() throws Exception {
 
         prepareOrcData();
@@ -319,7 +310,7 @@ public class HiveTest extends HiveBaseTest {
      *
      * @throws Exception if test fails to run
      */
-    @Test(groups = {"hive", "features", "gpdb", "security"})
+    @Test(groups = {"testcontainers", "testcontainers-hive"})
     @SkipForFDW // FDW automation requires a profile; this test sets fragmenter/accessor/resolver directly.
     public void storeAsRc() throws Exception {
 
@@ -335,7 +326,7 @@ public class HiveTest extends HiveBaseTest {
      *
      * @throws Exception if test fails to run
      */
-    @Test(groups = {"hive", "features", "gpdb", "security"})
+    @Test(groups = {"testcontainers", "testcontainers-hive"})
     public void storeAsSequenceFile() throws Exception {
 
         prepareSequenceData();
@@ -350,7 +341,7 @@ public class HiveTest extends HiveBaseTest {
      *
      * @throws Exception if test fails to run
      */
-    @Test(groups = {"hive", "features", "gpdb", "security"})
+    @Test(groups = {"testcontainers", "testcontainers-hive"})
     public void storeAsParquet() throws Exception {
 
         prepareParquetData();
@@ -365,7 +356,7 @@ public class HiveTest extends HiveBaseTest {
      *
      * @throws Exception if test fails to run
      */
-    @Test(groups = {"hive", "features", "gpdb", "security"})
+    @Test(groups = {"testcontainers", "testcontainers-hive"})
     public void storeAsHiveOpenCsv() throws Exception {
 
         prepareOpenCsvData();
@@ -380,7 +371,7 @@ public class HiveTest extends HiveBaseTest {
      *
      * @throws Exception if test fails to run
      */
-    @Test(groups = {"hive", "features", "gpdb", "security"})
+    @Test(groups = {"testcontainers", "testcontainers-hive"})
     public void storeAsAvro() throws Exception {
 
         prepareAvroData();
@@ -396,7 +387,7 @@ public class HiveTest extends HiveBaseTest {
      * @throws Exception if test fails to run
      */
     // TODO: pxf_regress shows diff for this test. Should be fixed.
-    @Test(enabled = false, groups = {"features"})
+    @Test(enabled = false, groups = {"testcontainers", "testcontainers-hive"})
     public void viewNegative() throws Exception {
 
         HiveTable hiveTable = new HiveTable(hiveSmallDataTable.getName() + "_view", null);
@@ -414,7 +405,7 @@ public class HiveTest extends HiveBaseTest {
      *
      * @throws Exception if test fails to run
      */
-    @Test(groups = {"hive", "features", "gpdb"})
+    @Test(groups = {"testcontainers", "testcontainers-hive"})
     @SkipForFDW // FDW error context differs from the external-table expected output.
     public void notExistingHiveTable() throws Exception {
 
@@ -430,7 +421,7 @@ public class HiveTest extends HiveBaseTest {
      *
      * @throws Exception if test fails to run
      */
-    @Test(groups = {"hive", "features", "gpdb", "security"})
+    @Test(groups = {"testcontainers", "testcontainers-hive"})
     public void hivePartitionedTable() throws Exception {
 
         preparePartitionedData();
@@ -446,7 +437,7 @@ public class HiveTest extends HiveBaseTest {
      *
      * @throws Exception if test fails to run
      */
-    @Test(groups = {"hive", "features", "gpdb", "security"})
+    @Test(groups = {"testcontainers", "testcontainers-hive"})
     public void hiveStoredAsParquetWithTimestamps() throws Exception {
 
         HiveTable parquetTimestampTable = new HiveTable(HIVE_PARQUET_TIMESTAMP_TABLE, PARQUET_TIMESTAMP_COLS);
@@ -465,7 +456,7 @@ public class HiveTest extends HiveBaseTest {
      *
      * @throws Exception if test fails to run
      */
-    @Test(groups = {"hive", "features", "gpdb", "security"})
+    @Test(groups = {"testcontainers", "testcontainers-hive"})
     public void hivePartitionedPPDTable() throws Exception {
 
         HiveExternalTable hivePartitionedPPDTable = TableFactory.getHiveByRowCommaExternalTable(HIVE_PARTITIONED_PPD_TABLE, HIVE_SMALLDATA_PPD_COLS);
@@ -489,7 +480,7 @@ public class HiveTest extends HiveBaseTest {
      *
      * @throws Exception if test fails to run
      */
-    @Test(groups = {"hive", "features", "gpdb", "security"})
+    @Test(groups = {"testcontainers", "testcontainers-hive"})
     @SkipForFDW // FDW automation requires a profile; this test sets fragmenter/accessor/resolver directly.
     public void hivePartitionedPPDTableCustomFilters() throws Exception {
 
@@ -550,7 +541,7 @@ public class HiveTest extends HiveBaseTest {
      *
      * @throws Exception if test fails to run
      */
-    @Test(groups = {"hive", "features", "gpdb", "security"})
+    @Test(groups = {"testcontainers", "testcontainers-hive"})
     @SkipForFDW // FDW parses the Hive NULL marker as an integer value.
     public void hivePartitionedTableUnionAll() throws Exception {
 
@@ -569,7 +560,7 @@ public class HiveTest extends HiveBaseTest {
      * @throws Exception if test fails to run
      */
     // TODO: pxf_regress shows diff for this test. Should be fixed.
-    @Test(enabled = false, groups = {"features"})
+    @Test(enabled = false, groups = {"testcontainers", "testcontainers-hive"})
     public void defaultAnalyze() throws Exception {
 
         createExternalTable(PXF_HIVE_SMALL_DATA_TABLE,
@@ -588,7 +579,7 @@ public class HiveTest extends HiveBaseTest {
      *
      * @throws Exception if test fails to run
      */
-    @Test(groups = {"hive", "features", "gpdb", "security"})
+    @Test(groups = {"testcontainers", "testcontainers-hive"})
     public void hiveCollectionTypes() throws Exception {
 
         prepareHiveCollection();
@@ -603,7 +594,7 @@ public class HiveTest extends HiveBaseTest {
      *
      * @throws Exception if test fails to run
      */
-    @Test(groups = {"hive", "features", "gpdb", "security"})
+    @Test(groups = {"testcontainers", "testcontainers-hive"})
     @SkipForFDW // FDW reports a different type-mismatch error than the external-table expected output.
     public void columnDataTypeMisMatch() throws Exception {
 
@@ -623,7 +614,7 @@ public class HiveTest extends HiveBaseTest {
      * @throws Exception if test fails to run
      */
     // TODO: pxf_regress shows diff for this test. Should be fixed.
-    @Test(enabled = false, groups = {"features"})
+    @Test(enabled = false, groups = {"testcontainers", "testcontainers-hive"})
     public void incorrectProfile() throws Exception {
 
         exTable = TableFactory.getPxfHiveReadableTable(PXF_HIVE_SMALL_DATA_TABLE,
@@ -640,7 +631,7 @@ public class HiveTest extends HiveBaseTest {
      *
      * @throws Exception if test fails to run
      */
-    @Test(groups = {"hive", "features", "gpdb", "security"})
+    @Test(groups = {"testcontainers", "testcontainers-hive"})
     @SkipForFDW // FDW error context differs from the external-table expected output.
     public void columnNameMismatch() throws Exception {
 
@@ -661,7 +652,7 @@ public class HiveTest extends HiveBaseTest {
      *
      * @throws Exception if test fails to run
      */
-    @Test(groups = {"hive", "features", "gpdb", "security"})
+    @Test(groups = {"testcontainers", "testcontainers-hive"})
     public void noDataFilePresentForHive() throws Exception {
         /*
          * In this test case , we want a hive table which is not pointed to any data file or not having
@@ -683,7 +674,7 @@ public class HiveTest extends HiveBaseTest {
      *
      * @throws Exception if test fails to run
      */
-    @Test(groups = {"hive", "features", "gpdb", "security"})
+    @Test(groups = {"testcontainers", "testcontainers-hive"})
     @SkipForFDW // FDW automation requires a profile; this test sets fragmenter/accessor/resolver directly.
     public void partitionFilterPushDown() throws Exception {
 
@@ -756,7 +747,7 @@ public class HiveTest extends HiveBaseTest {
      *
      * @throws Exception if test fails to run
      */
-    @Test(groups = {"hive", "features", "gpdb", "security"})
+    @Test(groups = {"testcontainers", "testcontainers-hive"})
     @SkipForFDW // FDW automation requires a profile; this test sets fragmenter/accessor/resolver directly.
     public void invalidFilterPushDown() throws Exception {
 
@@ -790,7 +781,7 @@ public class HiveTest extends HiveBaseTest {
      *
      * @throws Exception if test fails to run
      */
-    @Test(groups = {"hive", "features", "gpdb", "security"})
+    @Test(groups = {"testcontainers", "testcontainers-hive"})
     public void partitionsAllTypes() throws Exception {
 
         prepareManyPartitionedData();
@@ -805,7 +796,7 @@ public class HiveTest extends HiveBaseTest {
      *
      * @throws Exception if test fails to run
      */
-    @Test(groups = {"hive", "features", "gpdb", "security"})
+    @Test(groups = {"testcontainers", "testcontainers-hive"})
     @SkipForFDW // FDW type-conversion error does not match the external-table message assertion.
     public void negativeCollectionTypes() throws Exception {
 
@@ -851,7 +842,7 @@ public class HiveTest extends HiveBaseTest {
      *
      * @throws Exception if test fails to run
      */
-    @Test(groups = "load")
+    @Test(groups = {"testcontainers", "testcontainers-hive"})
     public void thirtyKPartitions() throws Exception {
 
         HiveTable hiveTable = new HiveTable(HIVE_MANY_PARTITIONS, new String[]{"i INT"});
@@ -904,7 +895,7 @@ public class HiveTest extends HiveBaseTest {
      *
      * @throws Exception if test fails to run
      */
-    @Test(groups = {"hive", "features"})
+    @Test(groups = {"testcontainers", "testcontainers-hive"})
     public void hiveInTransaction() throws Exception {
 
         // start transaction, query tables, stop transaction. then query different tables in the same session.
@@ -921,7 +912,7 @@ public class HiveTest extends HiveBaseTest {
      *
      * @throws Exception if test fails to run
      */
-    @Test(groups = {"hive", "features", "gpdb", "security"})
+    @Test(groups = {"testcontainers", "testcontainers-hive"})
     public void hivePartitionedClusteredTable() throws Exception {
 
         preparePartitionedClusteredData();
@@ -937,7 +928,7 @@ public class HiveTest extends HiveBaseTest {
      *
      * @throws Exception if test fails to run
      */
-    @Test(groups = {"hive", "features", "gpdb", "security"})
+    @Test(groups = {"testcontainers", "testcontainers-hive"})
     public void hivePartitionedClusteredSortedTable() throws Exception {
 
         preparePartitionedClusteredSortedData();
@@ -954,7 +945,7 @@ public class HiveTest extends HiveBaseTest {
      *
      * @throws Exception if test fails to run
      */
-    @Test(groups = {"hive", "features", "gpdb", "security"})
+    @Test(groups = {"testcontainers", "testcontainers-hive"})
     public void hivePartitionedSkewedTable() throws Exception {
 
         prepareSkewedData();
@@ -970,7 +961,7 @@ public class HiveTest extends HiveBaseTest {
      *
      * @throws Exception if test fails to run
      */
-    @Test(groups = {"hive", "features", "gpdb", "security"})
+    @Test(groups = {"testcontainers", "testcontainers-hive"})
     public void hivePartitionedSkewedStoredAsDirsTable() throws Exception {
 
         prepareSkewedStoredAsDirsData();
@@ -980,13 +971,12 @@ public class HiveTest extends HiveBaseTest {
         runSqlTest("features/hive/hive_partitioned_skewed_stored_as_dirs_table");
     }
 
-
     /**
      * Make sure that PXF works with aggregate queries (including null columns)
      *
      * @throws Exception if test fails to run
      */
-    @Test(groups = {"hive", "features", "gpdb", "security"})
+    @Test(groups = {"testcontainers", "testcontainers-hive"})
     @SkipForFDW // FDW fails to parse the Hive text rows (missing data for column t2).
     public void aggregateQueries() throws Exception {
 
@@ -1007,7 +997,7 @@ public class HiveTest extends HiveBaseTest {
      *
      * @throws Exception if test fails to run
      */
-    @Test(groups = {"hive", "features", "gpdb", "security"})
+    @Test(groups = {"testcontainers", "testcontainers-hive"})
     @SkipForFDW // FDW fails to parse the Hive text rows (missing data for column t2).
     public void hiveTableWithSkipHeader() throws Exception {
         List<List<String>> tableProperties = new ArrayList<>();
@@ -1029,7 +1019,7 @@ public class HiveTest extends HiveBaseTest {
      *
      * @throws Exception if test fails to run
      */
-    @Test(groups = {"hive", "features", "gpdb", "security"})
+    @Test(groups = {"testcontainers", "testcontainers-hive"})
     public void hiveTablePartitionedWithParquetColumnMismatch() throws Exception {
         // create the source table with the superset of all columns and data for all partitions
         prepareParquetMismatchSourceTable();
@@ -1049,7 +1039,7 @@ public class HiveTest extends HiveBaseTest {
      *
      * @throws Exception if test fails to run
      */
-    @Test(groups = {"hive", "features", "gpdb", "security"})
+    @Test(groups = {"testcontainers", "testcontainers-hive"})
     @SkipForFDW // FDW nested-struct reads fail with extra data after the last expected column.
     public void hiveNestedStruct() throws Exception {
         // create Hive readable table with data stored as PARQUET

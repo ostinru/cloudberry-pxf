@@ -1,5 +1,6 @@
 package org.apache.cloudberry.pxf.automation.features.hive;
 
+import annotations.WorksWithFDW;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hive.ql.exec.vector.BytesColumnVector;
@@ -19,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+@WorksWithFDW
 public class HiveOrcTest extends HiveBaseTest {
     private static final String ORC_LARGE_DATA_TYPE = "struct<col1:int,col2:string>";
     private static final String[] HIVE_ORC_LARGE_DATA_COLS = {
@@ -181,7 +183,7 @@ public class HiveOrcTest extends HiveBaseTest {
      *
      * @throws Exception if test fails to run
      */
-    @Test(groups = { "hive", "features", "gpdb", "security" })
+    @Test(groups = {"testcontainers", "testcontainers-hive"})
     public void sanity() throws Exception {
 
         createExternalTable(PXF_HIVE_SMALL_DATA_TABLE + "_orc",
@@ -196,7 +198,7 @@ public class HiveOrcTest extends HiveBaseTest {
      *
      * @throws Exception if test fails to run
      */
-    @Test(groups = {"hive", "features", "gpdb", "security"})
+    @Test(groups = {"testcontainers", "testcontainers-hive"})
     public void columnSubsetOfHiveSchema() throws Exception {
 
         createExternalTable(PXF_HIVE_SMALL_DATA_TABLE,
@@ -211,7 +213,7 @@ public class HiveOrcTest extends HiveBaseTest {
      *
      * @throws Exception if test fails to run
      */
-    @Test(groups = { "hive", "features", "gpdb", "security" })
+    @Test(groups = {"testcontainers", "testcontainers-hive"})
     public void columnSubsetOfPartitionedHiveSchema() throws Exception {
 
         preparePartitionedData();
@@ -227,7 +229,7 @@ public class HiveOrcTest extends HiveBaseTest {
      *
      * @throws Exception if test fails to run
      */
-    @Test(groups = { "hive", "features", "gpdb", "security" })
+    @Test(groups = {"testcontainers", "testcontainers-hive"})
     public void hiveLongBinaryType() throws Exception {
 
         prepareBinaryData();
@@ -242,7 +244,7 @@ public class HiveOrcTest extends HiveBaseTest {
      *
      * @throws Exception if test fails to run
      */
-    @Test(groups = { "hive", "features", "gpdb", "security" })
+    @Test(groups = {"testcontainers", "testcontainers-hive"})
     public void storeAsOrc() throws Exception {
 
         createExternalTable(PXF_HIVE_SMALL_DATA_TABLE,
@@ -257,7 +259,7 @@ public class HiveOrcTest extends HiveBaseTest {
      *
      * @throws Exception if test fails to run
      */
-    @Test(groups = { "hive", "features", "gpdb", "security" })
+    @Test(groups = {"testcontainers", "testcontainers-hive"})
     public void storeAsOrcAllTypesHive1AndHive2() throws Exception {
 
         runSqlTest("features/hive/orc_primitive_types");
@@ -269,7 +271,7 @@ public class HiveOrcTest extends HiveBaseTest {
      *
      * @throws Exception if test fails to run
      */
-    @Test(groups = {"hive", "features", "gpdb", "security" })
+    @Test(groups = {"testcontainers", "testcontainers-hive"})
     public void storeAsOrcAllTypesHive1Only() throws Exception {
 
         runSqlTest("features/hive/orc_primitive_types_hive1_only");
@@ -280,7 +282,7 @@ public class HiveOrcTest extends HiveBaseTest {
      *
      * @throws Exception if test fails to run
      */
-    @Test(groups = { "hive", "features", "gpdb", "security" })
+    @Test(groups = {"testcontainers", "testcontainers-hive"})
     public void queryWithNotPushedDownOperators() throws Exception {
 
         runSqlTest("features/hive/orc_operators_no_ppd");
@@ -291,7 +293,7 @@ public class HiveOrcTest extends HiveBaseTest {
      *
      * @throws Exception if test fails to run
      */
-    @Test(groups = { "hive", "features", "gpdb", "security" })
+    @Test(groups = {"testcontainers", "testcontainers-hive"})
     public void storeAsOrcSnappy() throws Exception {
 
         prepareOrcSnappyData();
@@ -306,7 +308,7 @@ public class HiveOrcTest extends HiveBaseTest {
      *
      * @throws Exception if test fails to run
      */
-    @Test(groups = { "hive", "features", "gpdb", "security" })
+    @Test(groups = {"testcontainers", "testcontainers-hive"})
     public void storeAsOrcZlib() throws Exception {
 
         prepareOrcZlibData();
@@ -321,7 +323,7 @@ public class HiveOrcTest extends HiveBaseTest {
      *
      * @throws Exception if test fails to run
      */
-    @Test(groups = { "hive", "features", "gpdb", "security" })
+    @Test(groups = {"testcontainers", "testcontainers-hive"})
     public void storeAsOrcMultiFile() throws Exception {
 
         prepareOrcMultiFileData();
@@ -335,7 +337,7 @@ public class HiveOrcTest extends HiveBaseTest {
      *
      * @throws Exception if test fails to run
      */
-    @Test(groups = { "hive", "features", "gpdb", "security" })
+    @Test(groups = {"testcontainers", "testcontainers-hive"})
     public void storeAsOrcMultiFileGetVectorized() throws Exception {
 
         prepareOrcMultiFileData();
@@ -351,7 +353,7 @@ public class HiveOrcTest extends HiveBaseTest {
      * @throws Exception if test fails to run
      */
     // TODO: pxf_regress shows diff for this test. Should be fixed.
-    @Test(enabled = false, groups = { "features" })
+    @Test(enabled = false, groups = {"testcontainers", "testcontainers-hive"})
     public void defaultAnalyze() throws Exception {
 
         createExternalTable(PXF_HIVE_SMALL_DATA_TABLE,
@@ -369,7 +371,7 @@ public class HiveOrcTest extends HiveBaseTest {
      *
      * @throws Exception if test fails to run
      */
-    @Test(groups = { "hive", "features", "gpdb", "security" })
+    @Test(groups = {"testcontainers", "testcontainers-hive"})
     public void hivePartitionedTable() throws Exception {
 
         preparePartitionedData();
@@ -388,7 +390,7 @@ public class HiveOrcTest extends HiveBaseTest {
      *
      * @throws Exception if test fails to run
      */
-    @Test(groups = { "hive", "features", "gpdb", "security" })
+    @Test(groups = {"testcontainers", "testcontainers-hive"})
     public void hiveCollectionTypes() throws Exception {
 
         prepareHiveCollection();
@@ -404,7 +406,7 @@ public class HiveOrcTest extends HiveBaseTest {
      *
      * @throws Exception if test fails to run
      */
-    @Test(groups = { "features" })
+    @Test(groups = {"testcontainers", "testcontainers-hive"})
     public void aggregateQueries() throws Exception {
 
         if (hiveOrcAllTypes == null) {
@@ -434,7 +436,7 @@ public class HiveOrcTest extends HiveBaseTest {
      *
      * @throws Exception if test fails to run
      */
-    @Test(groups = { "hive", "features", "gpdb", "security" })
+    @Test(groups = {"testcontainers", "testcontainers-hive"})
     public void hiveTableWithSkipHeader() throws Exception {
 
         HiveTable hiveOrcSkipHeaderTable = new HiveTable("hive_table_with_skipheader_orc", HIVE_RC_COLS);
@@ -451,7 +453,7 @@ public class HiveOrcTest extends HiveBaseTest {
         runSqlTest("features/hive/orc_skip_header_rows");
     }
 
-    @Test(groups = {"hive", "features", "gpdb"})
+    @Test(groups = {"testcontainers", "testcontainers-hive"})
     public void hiveOrcLargeData() throws Exception {
         prepareOrcLargeData(8192);
         createExternalTable("pxf_hive_orc_large_data", PXF_ORC_LARGE_DATA_COLS, hiveOrcLargeDataTable);

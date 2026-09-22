@@ -1,5 +1,6 @@
 package org.apache.cloudberry.pxf.automation.features.hive;
 
+import annotations.WorksWithFDW;
 import org.apache.cloudberry.pxf.automation.structures.tables.basic.Table;
 import org.apache.cloudberry.pxf.automation.structures.tables.hive.HiveTable;
 import org.apache.cloudberry.pxf.automation.structures.tables.utils.TableFactory;
@@ -8,6 +9,7 @@ import org.testng.annotations.Test;
 import java.util.Arrays;
 import java.util.ArrayList;
 
+@WorksWithFDW
 public class HiveVectorizedOrcTest extends HiveBaseTest {
 
     static final String[] HIVE_TYPES_NO_TIMESTAMP_COLS = {
@@ -120,7 +122,7 @@ public class HiveVectorizedOrcTest extends HiveBaseTest {
      *
      * @throws Exception if test fails to run
      */
-    @Test(groups = { "hive", "features", "gpdb", "security" })
+    @Test(groups = {"testcontainers", "testcontainers-hive"})
     public void storeAsOrcAllTypes() throws Exception {
 
         exTable = TableFactory.getPxfHiveOrcReadableTable(PXF_HIVE_SMALL_DATA_TABLE,
@@ -135,7 +137,7 @@ public class HiveVectorizedOrcTest extends HiveBaseTest {
         runSqlTest("features/hive/orc_primitive_types_no_timestamp");
     }
 
-    @Test(groups = { "hive", "features", "gpdb", "security" })
+    @Test(groups = {"testcontainers", "testcontainers-hive"})
     public void columsnWithRepeating() throws Exception {
         prepareOrcDataWithRepeatingData();
 

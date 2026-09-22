@@ -1,14 +1,12 @@
 package org.apache.cloudberry.pxf.automation.features.hive;
 
-import org.apache.cloudberry.pxf.automation.components.hdfs.Hdfs;
-import org.apache.cloudberry.pxf.automation.components.hive.Hive;
+import org.apache.cloudberry.pxf.automation.applications.HdfsApplication;
+import org.apache.cloudberry.pxf.automation.applications.HiveApplication;
+import org.apache.cloudberry.pxf.automation.features.AbstractHdfsTestcontainersTest;
 import org.apache.cloudberry.pxf.automation.structures.tables.basic.Table;
 import org.apache.cloudberry.pxf.automation.structures.tables.hive.HiveExternalTable;
 import org.apache.cloudberry.pxf.automation.structures.tables.hive.HiveTable;
 import org.apache.cloudberry.pxf.automation.structures.tables.utils.TableFactory;
-import org.apache.cloudberry.pxf.automation.features.BaseFeature;
-import jsystem.framework.system.SystemManagerImpl;
-import org.apache.cloudberry.pxf.automation.components.cluster.PhdCluster;
 
 import java.io.File;
 import java.io.IOException;
@@ -16,7 +14,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class HiveBaseTest extends BaseFeature {
+public class HiveBaseTest extends AbstractHdfsTestcontainersTest {
 
     static final String[] PXF_HIVE_TYPES_COLS = {
             "t1    TEXT",
@@ -295,7 +293,6 @@ public class HiveBaseTest extends BaseFeature {
     static final String ORC_COMPRESSION = "orc.compression";
     static final String COLUMNAR_SERDE = "org.apache.hadoop.hive.serde2.columnar.ColumnarSerDe";
 
-    Hive hive;
     HiveExternalTable hiveTable;
     HiveTable hiveSmallDataTable;
     HiveTable hiveTypesTable;
@@ -332,21 +329,19 @@ public class HiveBaseTest extends BaseFeature {
             // copy additional plugins classes to cluster nodes, used for filter pushdown cases
             String oldPath = "target/classes" + TEST_PACKAGE_LOCATION;
             String newPath = "/tmp/publicstage/pxf";
-            cluster.copyFileToNodes(new File(oldPath + "HiveDataFragmenterWithFilter.class")
-                    .getAbsolutePath(), newPath + TEST_PACKAGE_LOCATION, true, false);
-            cluster.copyFileToNodes(new File(oldPath + "MultipleHiveFragmentsPerFileFragmenter.class")
-                    .getAbsolutePath(), newPath + TEST_PACKAGE_LOCATION, true, false);
-            cluster.copyFileToNodes(new File(oldPath + "HiveInputFormatFragmenterWithFilter.class")
-                    .getAbsolutePath(), newPath + TEST_PACKAGE_LOCATION, true, false);
+            pxf.copyFile(new File(oldPath + "HiveDataFragmenterWithFilter.class")
+                    .getAbsolutePath(), newPath + TEST_PACKAGE_LOCATION);
+            pxf.copyFile(new File(oldPath + "MultipleHiveFragmentsPerFileFragmenter.class")
+                    .getAbsolutePath(), newPath + TEST_PACKAGE_LOCATION);
+            pxf.copyFile(new File(oldPath + "HiveInputFormatFragmenterWithFilter.class")
+                    .getAbsolutePath(), newPath + TEST_PACKAGE_LOCATION);
 
             // add new path to classpath file and restart PXF service
-            cluster.addPathToPxfClassPath(newPath);
-            cluster.restart(PhdCluster.EnumClusterServices.pxf);
+            pxf.addPathToPxfClassPath(newPath);
+            pxf.restartPxf();
         }
 
-        hdfsBaseDir = cluster.getHiveBaseHdfsDirectory();
-
-        hive = (Hive) SystemManagerImpl.getInstance().getSystemObject("hive");
+        hdfsBaseDir = "/hive/warehouse/";
 
         // get configured Name Node
         configuredNameNodeAddress = hdfs.getConfiguredNameNodeAddress();
@@ -354,20 +349,11 @@ public class HiveBaseTest extends BaseFeature {
         prepareData();
     }
 
-    @Override
-    protected void afterClass() throws Exception {
-        super.afterClass();
-
-        // close hive connection
-        if (hive != null)
-            hive.close();
-    }
-
     void loadDataIntoHive(String fileName, HiveTable tableName) throws Exception {
         loadDataIntoHive(hdfs, hive, fileName, tableName);
     }
 
-    void loadDataIntoHive(Hdfs hdfs, Hive hive, String fileName, HiveTable tableName) throws Exception {
+    void loadDataIntoHive(HdfsApplication hdfs, HiveApplication hive, String fileName, HiveTable tableName) throws Exception {
 
         String localPath = localDataResourcesFolder + "/hive/" + fileName;
         String hdfsPath = hdfs.getWorkingDirectory() + "/" + fileName;
@@ -412,7 +398,7 @@ public class HiveBaseTest extends BaseFeature {
         hiveSmallDataTable = prepareTableData(hdfs, hive, hiveSmallDataTable, HIVE_SMALL_DATA_TABLE, HIVE_SMALLDATA_COLS, HIVE_DATA_FILE_NAME);
     }
 
-    HiveTable prepareTableData(Hdfs hdfs, Hive hive, HiveTable hiveTable, String tableName, String[] tableColumns, String dataFileName) throws Exception {
+    HiveTable prepareTableData(HdfsApplication hdfs, HiveApplication hive, HiveTable hiveTable, String tableName, String[] tableColumns, String dataFileName) throws Exception {
 
         if (hiveTable != null)
             return hiveTable;
@@ -589,8 +575,7 @@ public class HiveBaseTest extends BaseFeature {
 
         hive.runQuery("ALTER TABLE " + hiveTable.getName()
                 + " ADD PARTITION (" + partition + ") " + "LOCATION '"
-                + configuredNameNodeAddress + cluster.getHiveBaseHdfsDirectory()
-                + partitionTable.getName() + "'");
+                + configuredNameNodeAddress + hdfsBaseDir + partitionTable.getName() + "'");
     }
 
     /**

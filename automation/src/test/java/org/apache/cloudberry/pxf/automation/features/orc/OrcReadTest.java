@@ -2,14 +2,12 @@ package org.apache.cloudberry.pxf.automation.features.orc;
 
 import annotations.FailsWithFDW;
 import annotations.WorksWithFDW;
-import org.apache.cloudberry.pxf.automation.features.BaseFeature;
-import org.apache.cloudberry.pxf.automation.structures.tables.utils.TableFactory;
+import org.apache.cloudberry.pxf.automation.features.AbstractHdfsTestcontainersTest;
 import org.apache.cloudberry.pxf.automation.utils.system.ProtocolEnum;
-import org.apache.cloudberry.pxf.automation.utils.system.ProtocolUtils;
 import org.testng.annotations.Test;
 
 @WorksWithFDW
-public class OrcReadTest extends BaseFeature {
+public class OrcReadTest extends AbstractHdfsTestcontainersTest {
 
     private static final String ORC_PRIMITIVE_TYPES = "orc_types.orc";
     private static final String PXF_ORC_TABLE = "pxf_orc_primitive_types";
@@ -90,7 +88,7 @@ public class OrcReadTest extends BaseFeature {
     public void beforeClass() throws Exception {
         // path for storing data on HDFS (for processing by PXF)
         hdfsPath = hdfs.getWorkingDirectory() + "/orc/";
-        protocol = ProtocolUtils.getProtocol();
+        protocol = ProtocolEnum.HDFS;
 
         String resourcePath = localDataResourcesFolder + "/orc/";
         hdfs.copyFromLocal(resourcePath + ORC_PRIMITIVE_TYPES, hdfsPath + ORC_PRIMITIVE_TYPES);
@@ -102,63 +100,63 @@ public class OrcReadTest extends BaseFeature {
         prepareReadableExternalTable(PXF_ORC_TABLE, ORC_TABLE_COLUMNS, hdfsPath + ORC_PRIMITIVE_TYPES);
     }
 
-    @Test(groups = {"features", "gpdb", "security", "hcfs"})
+    @Test(groups = {"testcontainers", "testcontainers-hdfs"})
     public void orcReadPrimitives() throws Exception {
         runSqlTest("features/orc/read/primitive_types");
     }
 
-    @Test(groups = {"features", "gpdb", "security", "hcfs"})
+    @Test(groups = {"testcontainers", "testcontainers-hdfs"})
     public void orcReadPrimitivesMapByPosition() throws Exception {
         prepareReadableExternalTable(PXF_ORC_TABLE, ORC_TABLE_COLUMNS,
                 hdfsPath + ORC_PRIMITIVE_TYPES, true);
         runSqlTest("features/orc/read/primitive_types");
     }
 
-    @Test(groups = {"features", "gpdb", "security", "hcfs"})
+    @Test(groups = {"testcontainers", "testcontainers-hdfs"})
     public void orcReadPrimitivesWithUnorderedSubsetFile() throws Exception {
         prepareReadableExternalTable("pxf_orc_primitive_types_with_subset",
                 ORC_TABLE_COLUMNS, hdfsPath + "orc_types*.orc");
         runSqlTest("features/orc/read/primitive_types_with_subset");
     }
 
-    @Test(groups = {"features", "gpdb", "security", "hcfs"})
+    @Test(groups = {"testcontainers", "testcontainers-hdfs"})
     public void orcReadSubset() throws Exception {
         prepareReadableExternalTable("pxf_orc_primitive_types_subset",
                 ORC_TABLE_COLUMNS_SUBSET, hdfsPath + ORC_PRIMITIVE_TYPES);
         runSqlTest("features/orc/read/read_subset");
     }
 
-    @Test(groups = {"features", "gpdb", "security", "hcfs"})
+    @Test(groups = {"testcontainers", "testcontainers-hdfs"})
     public void orcPredicatePushDown() throws Exception {
         runSqlTest("features/orc/read/pushdown");
     }
 
-    @Test(groups = {"features", "gpdb", "security", "hcfs"})
+    @Test(groups = {"testcontainers", "testcontainers-hdfs"})
     public void orcPredicatePushDownMapByPosition() throws Exception {
         prepareReadableExternalTable(PXF_ORC_TABLE, ORC_TABLE_COLUMNS, hdfsPath + ORC_PRIMITIVE_TYPES, true);
         runSqlTest("features/orc/read/pushdown");
     }
 
-    @Test(groups = {"features", "gpdb", "security", "hcfs"})
+    @Test(groups = {"testcontainers", "testcontainers-hdfs"})
     public void orcReadLists() throws Exception {
         prepareReadableExternalTable("pxf_orc_list_types", ORC_LIST_TYPES_TABLE_COLUMNS, hdfsPath + ORC_LIST_TYPES);
         runSqlTest("features/orc/read/list_types");
     }
 
-    @Test(groups = {"features", "gpdb", "security", "hcfs"})
+    @Test(groups = {"testcontainers", "testcontainers-hdfs"})
     public void orcReadBpCharAndVarCharListsAsTextArr() throws Exception {
         prepareReadableExternalTable("pxf_orc_bpchar_varchar_list_types_as_textarr", ORC_LIST_TYPES_TABLE_COLUMNS_TEXT, hdfsPath + ORC_LIST_TYPES);
         runSqlTest("features/orc/read/bpchar_varchar_list_types_as_textarr");
     }
 
-    @Test(groups = {"features", "gpdb", "security", "hcfs"})
+    @Test(groups = {"testcontainers", "testcontainers-hdfs"})
     public void orcReadMultiDimensionalLists() throws Exception {
         prepareReadableExternalTable("pxf_orc_multidim_list_types", ORC_LIST_TYPES_TABLE_COLUMNS, hdfsPath + ORC_MULTIDIM_LIST_TYPES);
         runSqlTest("features/orc/read/multidim_list_types");
     }
 
     // TODO: pxf_regress shows diff for this test. Should be fixed.
-    @Test(enabled = false, groups = {"features", "gpdb", "security", "hcfs"})
+    @Test(enabled = false, groups = {"testcontainers", "testcontainers-hdfs"})
     public void orcReadStringsContainingNullByte() throws Exception {
         prepareReadableExternalTable("pxf_orc_null_in_string", ORC_NULL_IN_STRING_COLUMNS, hdfsPath + ORC_NULL_IN_STRING);
         runSqlTest("features/orc/read/null_in_string");
@@ -169,7 +167,7 @@ public class OrcReadTest extends BaseFeature {
     }
 
     private void prepareReadableExternalTable(String name, String[] fields, String path, boolean mapByPosition) throws Exception {
-        exTable = TableFactory.getPxfHcfsReadableTable(name, fields, path, hdfs.getBasePath(), "orc");
+        exTable = getHdfsReadableTable(name, fields, path, "orc");
         if (mapByPosition) {
             exTable.setUserParameters(new String[]{"MAP_BY_POSITION=true"});
         }

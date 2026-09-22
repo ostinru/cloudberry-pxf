@@ -1,16 +1,14 @@
 package org.apache.cloudberry.pxf.automation.features.parquet;
 
 import annotations.WorksWithFDW;
-import org.apache.cloudberry.pxf.automation.features.BaseFeature;
+import org.apache.cloudberry.pxf.automation.features.AbstractHdfsTestcontainersTest;
 import org.apache.cloudberry.pxf.automation.structures.tables.basic.Table;
-import org.apache.cloudberry.pxf.automation.structures.tables.utils.TableFactory;
 import org.apache.cloudberry.pxf.automation.utils.system.ProtocolEnum;
-import org.apache.cloudberry.pxf.automation.utils.system.ProtocolUtils;
 import org.testng.annotations.Test;
 import java.io.File;
 
 @WorksWithFDW
-public class ParquetReadTest extends BaseFeature {
+public class ParquetReadTest extends AbstractHdfsTestcontainersTest {
     private static final String NUMERIC_TABLE = "numeric_precision";
     private static final String NUMERIC_UNDEFINED_PRECISION_TABLE = "numeric_undefined_precision";
     private static final String PXF_PARQUET_TABLE = "pxf_parquet_primitive_types";
@@ -114,7 +112,7 @@ public class ParquetReadTest extends BaseFeature {
     public void beforeClass() throws Exception {
         // path for storing data on HDFS (for processing by PXF)
         hdfsPath = hdfs.getWorkingDirectory() + "/parquet/";
-        protocol = ProtocolUtils.getProtocol();
+        protocol = ProtocolEnum.HDFS;
 
         String resourcePath = localDataResourcesFolder + "/parquet/";
         hdfs.copyFromLocal(resourcePath + PARQUET_PRIMITIVE_TYPES, hdfsPath + PARQUET_PRIMITIVE_TYPES);
@@ -139,7 +137,7 @@ public class ParquetReadTest extends BaseFeature {
         prepareReadableExternalTable(PXF_PARQUET_TABLE, PARQUET_TABLE_COLUMNS, hdfsPath + PARQUET_PRIMITIVE_TYPES);
     }
 
-    @Test(groups = {"features", "gpdb", "security", "hcfs"})
+    @Test(groups = {"testcontainers", "testcontainers-hdfs"})
     public void parquetReadPrimitives() throws Exception {
         gpdb.runQuery("CREATE OR REPLACE VIEW parquet_view AS SELECT s1, s2, n1, d1, dc1, " +
                 "CAST(tm AS TIMESTAMP WITH TIME ZONE) AT TIME ZONE 'PDT' as tm, " +
@@ -147,47 +145,47 @@ public class ParquetReadTest extends BaseFeature {
         runSqlTest("features/parquet/primitive_types");
     }
 
-    @Test(groups = {"features", "gpdb", "security", "hcfs"})
+    @Test(groups = {"testcontainers", "testcontainers-hdfs"})
     public void parquetReadSubset() throws Exception {
         prepareReadableExternalTable("pxf_parquet_subset",
                 PARQUET_TABLE_COLUMNS_SUBSET, hdfsPath + PARQUET_PRIMITIVE_TYPES);
         runSqlTest("features/parquet/read_subset");
     }
 
-    @Test(groups = {"features", "gpdb", "security", "hcfs"})
+    @Test(groups = {"testcontainers", "testcontainers-hdfs"})
     public void parquetReadUndefinedPrecisionNumericFromParquetFileGeneratedByHive() throws Exception {
         prepareReadableExternalTable("pxf_parquet_read_undefined_precision_numeric",
                 UNDEFINED_PRECISION_NUMERIC, hdfsPath + PARQUET_UNDEFINED_PRECISION_NUMERIC_FILE);
         runSqlTest("features/parquet/decimal/numeric_undefined_precision");
     }
 
-    @Test(groups = {"features", "gpdb", "security", "hcfs"})
+    @Test(groups = {"testcontainers", "testcontainers-hdfs"})
     public void parquetReadNumericWithPrecisionAndScaleFromParquetFileGeneratedByHive() throws Exception {
         prepareReadableExternalTable("pxf_parquet_read_numeric",
                 PARQUET_TABLE_DECIMAL_COLUMNS, hdfsPath + PARQUET_NUMERIC_FILE);
         runSqlTest("features/parquet/decimal/numeric");
     }
 
-    @Test(groups = {"features", "gpdb", "security", "hcfs"})
+    @Test(groups = {"testcontainers", "testcontainers-hdfs"})
     public void parquetPredicatePushDown() throws Exception {
         prepareReadableExternalTable("parquet_types_hcfs_r", PARQUET_TYPES_COLUMNS, hdfsPath + PARQUET_TYPES);
         runSqlTest("features/parquet/pushdown");
     }
 
-    @Test(groups = {"features", "gpdb", "security", "hcfs"})
+    @Test(groups = {"testcontainers", "testcontainers-hdfs"})
     public void parquetReadListGeneratedByHive() throws Exception {
         prepareReadableExternalTable("pxf_parquet_list_types", PARQUET_LIST_TABLE_COLUMNS, hdfsPath + PARQUET_LIST_FILE);
         runSqlTest("features/parquet/list");
     }
 
-    @Test(groups = {"features", "gpdb", "security", "hcfs"})
+    @Test(groups = {"testcontainers", "testcontainers-hdfs"})
     public void parquetReadTimestampList() throws Exception {
         prepareReadableExternalTable("pxf_parquet_timestamp_list_type", PARQUET_TIMESTAMP_LIST_TABLE_COLUMNS, hdfsPath + PARQUET_TIMESTAMP_LIST_TYPE_FILE);
         runSqlTest("features/parquet/timestamp_list");
     }
 
     private void prepareReadableExternalTable(String name, String[] fields, String path) throws Exception {
-        exTable = TableFactory.getPxfHcfsReadableTable(name, fields, path, hdfs.getBasePath(), "parquet");
+        exTable = getHdfsReadableTable(name, fields, path, "parquet");
         createTable(exTable);
     }
 

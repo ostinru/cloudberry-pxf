@@ -1,5 +1,6 @@
 package org.apache.cloudberry.pxf.automation.features.hive;
 
+import annotations.WorksWithFDW;
 import org.apache.cloudberry.pxf.automation.structures.tables.hive.HiveTable;
 import org.apache.cloudberry.pxf.automation.structures.tables.utils.TableFactory;
 import org.testng.annotations.Test;
@@ -7,6 +8,7 @@ import org.testng.annotations.Test;
 import java.util.Arrays;
 import java.util.List;
 
+@WorksWithFDW
 public class HiveOrcAcidTest extends HiveBaseTest {
 
     private HiveTable hiveOrcSmallDataTable;
@@ -75,7 +77,7 @@ public class HiveOrcAcidTest extends HiveBaseTest {
      *
      * @throws Exception if test fails to run
      */
-    @Test(groups = { "hive", "features", "gpdb", "security" })
+    @Test(groups = {"testcontainers", "testcontainers-hive"})
     public void sanity() throws Exception {
 
         createExternalTable(PXF_HIVE_SMALL_DATA_TABLE + "_orc" + ACID_POSTPEND,
@@ -90,7 +92,7 @@ public class HiveOrcAcidTest extends HiveBaseTest {
      *
      * @throws Exception if test fails to run
      */
-    @Test(groups = { "hive", "features", "gpdb", "security" })
+    @Test(groups = {"testcontainers", "testcontainers-hive"})
     public void hivePartitionedTable() throws Exception {
 
         preparePartitionedData();

@@ -3,10 +3,8 @@ package org.apache.cloudberry.pxf.automation.features.avro;
 import annotations.WorksWithFDW;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.cloudberry.pxf.automation.features.BaseWritableFeature;
+import org.apache.cloudberry.pxf.automation.features.AbstractHdfsWritableTestcontainersTest;
 import org.apache.cloudberry.pxf.automation.structures.tables.basic.Table;
-import org.apache.cloudberry.pxf.automation.structures.tables.utils.TableFactory;
-import org.apache.cloudberry.pxf.automation.utils.jsystem.report.ReportUtils;
 import org.apache.cloudberry.pxf.automation.utils.system.ProtocolEnum;
 import org.apache.cloudberry.pxf.automation.utils.system.ProtocolUtils;
 import org.testng.annotations.Test;
@@ -24,7 +22,7 @@ import static java.lang.Thread.sleep;
 import static org.junit.Assert.assertEquals;
 
 @WorksWithFDW
-public class HdfsWritableAvroTest extends BaseWritableFeature {
+public class HdfsWritableAvroTest extends AbstractHdfsWritableTestcontainersTest {
 
     private ArrayList<File> filesToDelete;
     private static final String[] AVRO_PRIMITIVE_WRITABLE_TABLE_COLS = new String[]{
@@ -118,7 +116,7 @@ public class HdfsWritableAvroTest extends BaseWritableFeature {
         String absolutePath = Objects.requireNonNull(getClass().getClassLoader().getResource("data")).getPath();
         resourcePath = absolutePath + "/avro/";
 
-        protocol = ProtocolUtils.getProtocol();
+        protocol = ProtocolEnum.HDFS;
     }
 
     @Override
@@ -127,7 +125,7 @@ public class HdfsWritableAvroTest extends BaseWritableFeature {
         publicStage = "/tmp/publicstage/pxf/";
     }
 
-    @Test(groups = {"features", "gpdb", "hcfs", "security"})
+    @Test(groups = {"testcontainers", "testcontainers-hdfs"})
     public void generateSchemaPrimitive() throws Exception {
         tableNamePrefix = "writable_avro_primitive_generate_schema";
         fullTestPath = hdfsWritePath + "generate_schema_primitive_types";
@@ -149,7 +147,7 @@ public class HdfsWritableAvroTest extends BaseWritableFeature {
         runSqlTest("features/hdfs/writable/avro/primitives_generate_schema");
     }
 
-    @Test(groups = {"features", "gpdb", "hcfs", "security"})
+    @Test(groups = {"testcontainers", "testcontainers-hdfs"})
     public void generateSchemaPrimitive_withNoCompression() throws Exception {
         tableNamePrefix = "writable_avro_primitive_no_compression";
         fullTestPath = hdfsWritePath + "generate_schema_primitive_types_with_no_compression";
@@ -171,7 +169,7 @@ public class HdfsWritableAvroTest extends BaseWritableFeature {
         runSqlTest("features/hdfs/writable/avro/primitives_generate_schema_with_no_compression");
     }
 
-    @Test(groups = {"features", "gpdb", "hcfs", "security"})
+    @Test(groups = {"testcontainers", "testcontainers-hdfs"})
     public void generateSchemaComplex() throws Exception {
         tableNamePrefix = "writable_avro_complex_generate_schema";
         createComplexTypes();
@@ -194,7 +192,7 @@ public class HdfsWritableAvroTest extends BaseWritableFeature {
         runSqlTest("features/hdfs/writable/avro/complex_generate_schema");
     }
 
-    @Test(groups = {"features", "gpdb", "hcfs", "security"})
+    @Test(groups = {"testcontainers", "testcontainers-hdfs"})
     public void userProvidedSchemaFileOnHcfsPrimitive() throws Exception {
         tableNamePrefix = "writable_avro_primitive_user_provided_schema_on_hcfs";
         fullTestPath = hdfsWritePath + "primitive_user_provided_schema_on_hcfs";
@@ -224,7 +222,7 @@ public class HdfsWritableAvroTest extends BaseWritableFeature {
         runSqlTest("features/hdfs/writable/avro/primitives_user_provided_schema_on_hcfs");
     }
 
-    @Test(groups = {"features", "gpdb", "hcfs", "security"})
+    @Test(groups = {"testcontainers", "testcontainers-hdfs"})
     public void userProvidedSchemaFileOnClasspathComplexTypesAsText() throws Exception {
         createComplexTypes();
         tableNamePrefix = "writable_avro_complex_user_schema_on_classpath";
@@ -241,9 +239,8 @@ public class HdfsWritableAvroTest extends BaseWritableFeature {
         // edit my_schema.avsc...
         // we don't need any rows of data so /dev/null is fine, e.g.:
         // java -jar avro-tools-1.9.1.jar fromjson --schema-file my_schema.avsc /dev/null > automation/src/test/resources/data/avro/complex_no_union.avro
-        cluster.copyFileToNodes(new File(resourcePath + "complex_no_union.avro").getAbsolutePath(),
-                cluster.getPxfConfLocation(),
-                false, false);
+        pxf.copyFile(new File(resourcePath + "complex_no_union.avro").getAbsolutePath(),
+                pxf.getPxfConfLocation());
         writableExTable.setExternalDataSchema("complex_no_union.avro");
         gpdb.createTableAndVerify(writableExTable);
 
@@ -263,7 +260,7 @@ public class HdfsWritableAvroTest extends BaseWritableFeature {
         runSqlTest("features/hdfs/writable/avro/complex_user_provided_schema_on_classpath");
     }
 
-    @Test(groups = {"features", "gpdb", "hcfs", "security"})
+    @Test(groups = {"testcontainers", "testcontainers-hdfs"})
     public void userProvidedSchemaFileGPDBArraysAsAvroArraysWithNulls() throws Exception {
         tableNamePrefix = "writable_avro_array_user_schema_w_nulls";
         fullTestPath = hdfsWritePath + "array_user_schema_w_nulls";
@@ -271,9 +268,8 @@ public class HdfsWritableAvroTest extends BaseWritableFeature {
                 AVRO_ARRAY_TABLE_COLS_WRITABLE,
                 fullTestPath);
 
-        cluster.copyFileToNodes(new File(resourcePath + "array_with_nulls.avsc").getAbsolutePath(),
-                cluster.getPxfConfLocation(),
-                false, false);
+        pxf.copyFile(new File(resourcePath + "array_with_nulls.avsc").getAbsolutePath(),
+                pxf.getPxfConfLocation());
         writableExTable.setExternalDataSchema("array_with_nulls.avsc");
         gpdb.createTableAndVerify(writableExTable);
 
@@ -293,7 +289,7 @@ public class HdfsWritableAvroTest extends BaseWritableFeature {
         runSqlTest("features/hdfs/writable/avro/array_user_schema_w_nulls");
     }
 
-    @Test(groups = {"features", "gpdb", "hcfs", "security"})
+    @Test(groups = {"testcontainers", "testcontainers-hdfs"})
     public void generateSchemaWithNullValuesComplex() throws Exception {
         tableNamePrefix = "writable_avro_null_values";
         createComplexTypes();
@@ -320,7 +316,7 @@ public class HdfsWritableAvroTest extends BaseWritableFeature {
      *
      * @throws Exception
      */
-    @Test(groups = {"features", "gpdb", "hcfs", "security"})
+    @Test(groups = {"testcontainers", "testcontainers-hdfs"})
     public void avroCodecs() throws Exception {
         String[] codecs = {"snappy", "deflate", "bzip2", "zstandard", "xz"};
         for (String codec : codecs) {
@@ -349,7 +345,7 @@ public class HdfsWritableAvroTest extends BaseWritableFeature {
         if (filesToDelete != null) {
             for (File file : filesToDelete) {
                 if (!file.delete()) {
-                    ReportUtils.startLevel(null, getClass(), String.format("Problem deleting file '%s'", file));
+                    System.err.printf("Problem deleting file '%s'%n", file);
                 }
             }
         }
@@ -496,12 +492,10 @@ public class HdfsWritableAvroTest extends BaseWritableFeature {
     }
 
     private void prepareWritableExternalTable(String name, String[] fields, String path) {
-        writableExTable = TableFactory.getPxfHcfsWritableTable(name + "_writable",
-                fields, path, hdfs.getBasePath(), "avro");
+        writableExTable = getHdfsWritableTable(name + "_writable", fields, path, "avro");
     }
 
     private void prepareReadableExternalTable(String name, String[] fields, String path) {
-        readableExTable = TableFactory.getPxfHcfsReadableTable(name + "_readable",
-                fields, path, hdfs.getBasePath(),"avro");
+        readableExTable = getHdfsReadableTable(name + "_readable", fields, path, "avro");
     }
 }

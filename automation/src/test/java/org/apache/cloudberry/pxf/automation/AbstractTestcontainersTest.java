@@ -34,8 +34,6 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Listeners;
 import reporters.CustomAutomationReport;
 
-import java.lang.reflect.Method;
-
 @Listeners({CustomAutomationLogger.class, CustomAutomationReport.class, FDWSkipTestAnalyzer.class})
 public class AbstractTestcontainersTest {
 
@@ -78,6 +76,8 @@ public class AbstractTestcontainersTest {
 
             regress = new RegressApplication(container);
 
+            initializeEnvironment();
+
             // run user's before class
             beforeClass();
         } finally {
@@ -95,9 +95,16 @@ public class AbstractTestcontainersTest {
         CustomAutomationLogger.redirectStdoutStreamToFile(getClass().getSimpleName(), "clean");
         try {
             // run user's after class
-            afterClass();
-            if (cloudberry != null) {
-                cloudberry.close();
+            try {
+                afterClass();
+            } finally {
+                try {
+                    closeEnvironment();
+                } finally {
+                    if (cloudberry != null) {
+                        cloudberry.close();
+                    }
+                }
             }
         } finally {
             CustomAutomationLogger.revertStdoutStream();
@@ -112,20 +119,15 @@ public class AbstractTestcontainersTest {
      */
     @BeforeMethod(alwaysRun = true)
     public void runBeforeMethod() throws Exception {
-        // check if "beforeMethod exists and if so open log file and run it
-        if (checkMethodImplExists("beforeMethod")) {
-            // redirect "runBeforeMethod" logs to log file
-            CustomAutomationLogger.redirectStdoutStreamToFile(getClass().getSimpleName(), "beforeMethod");
-            try {
-                beforeMethod();
-            } catch (Throwable t) {
-                // in case of failure write stack trace to file stream and throw the exception
-                t.printStackTrace(System.out);
-                throw t;
-            } finally {
-                // anyways revert System.out to original stream
-                CustomAutomationLogger.revertStdoutStream();
-            }
+        CustomAutomationLogger.redirectStdoutStreamToFile(getClass().getSimpleName(), "beforeMethod");
+        try {
+            initializeMethodEnvironment();
+            beforeMethod();
+        } catch (Throwable t) {
+            t.printStackTrace(System.out);
+            throw t;
+        } finally {
+            CustomAutomationLogger.revertStdoutStream();
         }
     }
 
@@ -136,20 +138,18 @@ public class AbstractTestcontainersTest {
      */
     @AfterMethod(alwaysRun = true)
     public void runAfterMethod() throws Exception {
-        // check if "afterMethod exists and if so open log file and run it
-        if (checkMethodImplExists("afterMethod")) {
-            // redirect "runAfterMethod" logs to log file
-            CustomAutomationLogger.redirectStdoutStreamToFile(getClass().getSimpleName(), "afterMethod");
+        CustomAutomationLogger.redirectStdoutStreamToFile(getClass().getSimpleName(), "afterMethod");
+        try {
             try {
                 afterMethod();
-            } catch (Throwable t) {
-                // in case of failure write stack trace to file stream and throw the exception
-                t.printStackTrace(System.out);
-                throw t;
             } finally {
-                // anyways revert System.out to original stream
-                CustomAutomationLogger.revertStdoutStream();
+                cleanupMethodEnvironment();
             }
+        } catch (Throwable t) {
+            t.printStackTrace(System.out);
+            throw t;
+        } finally {
+            CustomAutomationLogger.revertStdoutStream();
         }
     }
 
@@ -186,6 +186,17 @@ public class AbstractTestcontainersTest {
     protected void beforeMethod() throws Exception {
     }
 
+    protected void initializeEnvironment() throws Exception {
+    }
+
+    protected void closeEnvironment() throws Exception {
+    }
+
+    protected void initializeMethodEnvironment() throws Exception {
+    }
+
+    protected void cleanupMethodEnvironment() throws Exception {
+    }
 
     private void createTestDatabases(CloudberryApplication bootstrap) throws Exception {
         bootstrap.createDatabase("pxfautomation");
@@ -194,24 +205,4 @@ public class AbstractTestcontainersTest {
         System.out.println("[" + getClass().getSimpleName() + "] Test databases created");
     }
 
-    /**
-     * Check if the test writer used given method and return true if so.
-     *
-     * @param methodName to check
-     * @return true if method exists in declared methods
-     * @throws NoSuchMethodException
-     * @throws SecurityException
-     */
-    private boolean checkMethodImplExists(String methodName) throws NoSuchMethodException, SecurityException {
-        // get all declared methods
-        Method[] methods = getClass().getDeclaredMethods();
-        // run over methods and look for methodName
-        for (Method method : methods) {
-
-            if (method.getName().equals(methodName)) {
-                return true;
-            }
-        }
-        return false;
-    }
 }

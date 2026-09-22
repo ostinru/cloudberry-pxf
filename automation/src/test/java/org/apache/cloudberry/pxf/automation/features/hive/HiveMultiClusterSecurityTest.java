@@ -2,9 +2,11 @@ package org.apache.cloudberry.pxf.automation.features.hive;
 
 import jsystem.framework.sut.SutFactory;
 import jsystem.framework.system.SystemManagerImpl;
+import org.apache.cloudberry.pxf.automation.BaseFunctionality;
 import org.apache.cloudberry.pxf.automation.components.hdfs.Hdfs;
 import org.apache.cloudberry.pxf.automation.components.hive.Hive;
 import org.apache.cloudberry.pxf.automation.structures.tables.hive.HiveTable;
+import org.apache.cloudberry.pxf.automation.structures.tables.utils.TableFactory;
 
 import org.testng.annotations.Test;
 
@@ -18,6 +20,7 @@ import org.testng.annotations.Test;
     private static final String HIVE_DATA_FILE_NAME_2 = "hive_small_data_second.txt";
     private static final String PXF_HIVE_SMALL_DATA_TABLE_SECURE = "pxf_hive_small_data_hive_secure";
 
+    private final LegacyHadoopSupport legacyHadoop = new LegacyHadoopSupport();
     private Hive hive2;
 
     @Override
@@ -38,13 +41,13 @@ import org.testng.annotations.Test;
 
         createExternalTable(PXF_HIVE_SMALL_DATA_TABLE, PXF_HIVE_SMALLDATA_COLS, hiveSmallDataTable);
 
-        Hdfs hdfs2 = (Hdfs) systemManager.
+        Hdfs hdfs2 = (Hdfs) legacyHadoop.getSystemManager().
                 getSystemObject("/sut", "hdfs2", -1, null, false, null, SutFactory.getInstance().getSutInstance());
 
         if (hdfs2 == null) return;
 
-        trySecureLogin(hdfs2, hdfs2.getTestKerberosPrincipal());
-        initializeWorkingDirectory(hdfs2, gpdb.getUserName());
+        legacyHadoop.trySecureLogin(hdfs2, hdfs2.getTestKerberosPrincipal());
+        legacyHadoop.initializeWorkingDirectory(hdfs2, gpdb.getUserName());
         hive2 = (Hive) SystemManagerImpl.getInstance().getSystemObject("hive2");
 
         HiveTable hiveSmallDataTable2 =
@@ -52,6 +55,38 @@ import org.testng.annotations.Test;
         createExternalTable(PXF_HIVE_SMALL_DATA_TABLE_SECURE, PXF_HIVE_SMALLDATA_COLS, hiveSmallDataTable2, true, "SERVER=hdfs-secure");
 
         runSqlTest("features/hive/two_secured_hive");
+    }
+
+    private HiveTable prepareTableData(Hdfs hdfs, Hive hive, HiveTable hiveTable,
+                                       String tableName, String[] tableColumns,
+                                       String dataFileName) throws Exception {
+        if (hiveTable != null) {
+            return hiveTable;
+        }
+        hiveTable = TableFactory.getHiveByRowCommaTable(tableName, tableColumns);
+        hive.createTableAndVerify(hiveTable);
+        String localPath = localDataResourcesFolder + "/hive/" + dataFileName;
+        String hdfsPath = hdfs.getWorkingDirectory() + "/" + dataFileName;
+        hdfs.copyFromLocal(localPath, hdfsPath);
+        hdfs.waitForFile(hdfsPath, 3);
+        hive.loadData(hiveTable, hdfsPath, false);
+        return hiveTable;
+    }
+
+    private static class LegacyHadoopSupport extends BaseFunctionality {
+        private SystemManagerImpl getSystemManager() {
+            return systemManager;
+        }
+
+        @Override
+        protected void trySecureLogin(Hdfs hdfs, String kerberosPrincipal) throws Exception {
+            super.trySecureLogin(hdfs, kerberosPrincipal);
+        }
+
+        @Override
+        protected void initializeWorkingDirectory(Hdfs hdfs, String userName) throws Exception {
+            super.initializeWorkingDirectory(hdfs, userName);
+        }
     }
 
 }

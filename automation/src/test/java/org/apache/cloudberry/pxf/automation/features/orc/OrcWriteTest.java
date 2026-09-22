@@ -1,21 +1,20 @@
 package org.apache.cloudberry.pxf.automation.features.orc;
 
-import jsystem.framework.system.SystemManagerImpl;
-import org.apache.cloudberry.pxf.automation.components.hive.Hive;
-import org.apache.cloudberry.pxf.automation.features.BaseFeature;
+import annotations.WorksWithFDW;
+import org.apache.cloudberry.pxf.automation.features.AbstractHdfsWritableTestcontainersTest;
 import org.apache.cloudberry.pxf.automation.structures.tables.basic.Table;
 import org.apache.cloudberry.pxf.automation.structures.tables.hive.HiveExternalTable;
 import org.apache.cloudberry.pxf.automation.structures.tables.hive.HiveTable;
 import org.apache.cloudberry.pxf.automation.structures.tables.pxf.ExternalTable;
 import org.apache.cloudberry.pxf.automation.structures.tables.utils.TableFactory;
 import org.apache.cloudberry.pxf.automation.utils.system.ProtocolEnum;
-import org.apache.cloudberry.pxf.automation.utils.system.ProtocolUtils;
 import org.testng.annotations.Test;
 
 import java.util.Arrays;
 import java.util.StringJoiner;
 
-public class OrcWriteTest extends BaseFeature {
+@WorksWithFDW
+public class OrcWriteTest extends AbstractHdfsWritableTestcontainersTest {
 
     private static final String[] ORC_PRIMITIVE_TABLE_COLUMNS = {
             "id                 integer"    ,
@@ -117,7 +116,6 @@ public class OrcWriteTest extends BaseFeature {
         Arrays.fill(ALL_NULLS, true);
     }
     private static final String HIVE_JDBC_DRIVER_CLASS = "org.apache.hive.jdbc.HiveDriver";
-    private static final String HIVE_JDBC_URL_PREFIX = "jdbc:hive2://";
 
     private static final Integer NUM_RETRIES = 5;
 
@@ -125,7 +123,6 @@ public class OrcWriteTest extends BaseFeature {
     private String hdfsPath;
     private String fullTestPath;
     private ProtocolEnum protocol;
-    private Hive hive;
     private HiveTable hiveTable;
 
 
@@ -133,19 +130,10 @@ public class OrcWriteTest extends BaseFeature {
     public void beforeClass() throws Exception {
         // path for storing data on HDFS (for processing by PXF)
         hdfsPath = hdfs.getWorkingDirectory() + "/writableOrc/";
-        protocol = ProtocolUtils.getProtocol();
+        protocol = ProtocolEnum.HDFS;
     }
 
-    @Override
-    protected void afterClass() throws Exception {
-        super.afterClass();
-
-        // close hive connection
-        if (hive != null)
-            hive.close();
-    }
-
-    @Test(groups = {"features", "gpdb", "security", "hcfs"})
+    @Test(groups = {"testcontainers", "testcontainers-hdfs"})
     public void orcWritePrimitives() throws Exception {
         gpdbTableNamePrefix = "pxf_orc_primitive_types";
         fullTestPath = hdfsPath + "orc_primitive_types";
@@ -164,11 +152,8 @@ public class OrcWriteTest extends BaseFeature {
      * Also do not run with "security" group that would require kerberos principal to be included in Hive JDBC URL
      */
     // TODO: pxf_regress shows diff for this test. Should be fixed.
-    @Test(enabled = false, groups = {"features", "gpdb"})
+    @Test(enabled = false, groups = {"testcontainers", "testcontainers-hdfs"})
     public void orcWritePrimitivesReadWithHive() throws Exception {
-        // init only here, not in beforeClass() method as other tests run in environments without Hive
-        hive = (Hive) SystemManagerImpl.getInstance().getSystemObject("hive");
-
         gpdbTableNamePrefix = "pxf_orc_primitive_types_with_hive";
         fullTestPath = hdfsPath + "orc_primitive_types_with_hive";
 
@@ -208,7 +193,7 @@ public class OrcWriteTest extends BaseFeature {
         hive.runQuery(ctasHiveQuery);
 
         // use the Hive JDBC profile to avoid using the PXF ORC reader implementation
-        String jdbcUrl = HIVE_JDBC_URL_PREFIX + hive.getHost() + ":10000/default";
+        String jdbcUrl = hive.getInternalJdbcUrl();
         ExternalTable exHiveJdbcTable = TableFactory.getPxfJdbcReadableTable(
                 gpdbTableNamePrefix + "_readable", ORC_PRIMITIVE_TABLE_COLUMNS_READ_FROM_HIVE,
                 hiveTable.getName() + "_ctas", HIVE_JDBC_DRIVER_CLASS, jdbcUrl, null);
@@ -220,7 +205,7 @@ public class OrcWriteTest extends BaseFeature {
         runSqlTest("features/orc/write/primitive_types_with_hive");
     }
 
-    @Test(groups = {"features", "gpdb", "security", "hcfs"})
+    @Test(groups = {"testcontainers", "testcontainers-hdfs"})
     public void orcWritePrimitivesWithNulls() throws Exception {
         gpdbTableNamePrefix = "pxf_orc_primitive_types_nulls";
         fullTestPath = hdfsPath + "orc_primitive_types_nulls";
@@ -232,7 +217,7 @@ public class OrcWriteTest extends BaseFeature {
         runSqlTest("features/orc/write/primitive_types_nulls");
     }
 
-    @Test(groups = {"features", "gpdb", "security", "hcfs"})
+    @Test(groups = {"testcontainers", "testcontainers-hdfs"})
     public void orcWritePrimitivesLargeDataset() throws Exception {
         gpdbTableNamePrefix = "pxf_orc_primitive_types_large";
         fullTestPath = hdfsPath + "orc_primitive_types_large";
@@ -245,7 +230,7 @@ public class OrcWriteTest extends BaseFeature {
         runSqlTest("features/orc/write/primitive_types_large");
     }
 
-    @Test(groups = {"features", "gpdb", "security", "hcfs"})
+    @Test(groups = {"testcontainers", "testcontainers-hdfs"})
     public void orcWriteTimestampWithTimezone() throws Exception {
         gpdbTableNamePrefix = "pxf_orc_timestamp_with_timezone";
         fullTestPath = hdfsPath + gpdbTableNamePrefix;
@@ -257,7 +242,7 @@ public class OrcWriteTest extends BaseFeature {
         runSqlTest("features/orc/write/timestamp_with_timezone_types");
     }
 
-    @Test(groups = {"features", "gpdb", "security", "hcfs"})
+    @Test(groups = {"testcontainers", "testcontainers-hdfs"})
     public void orcWritePrimitiveArraysWithNulls() throws Exception {
         gpdbTableNamePrefix = "orc_primitive_arrays";
         fullTestPath = hdfsPath + gpdbTableNamePrefix;
@@ -272,7 +257,7 @@ public class OrcWriteTest extends BaseFeature {
         runSqlTest("features/orc/write/primitive_types_array_with_nulls");
     }
 
-    @Test(groups = {"features", "gpdb", "security", "hcfs"})
+    @Test(groups = {"testcontainers", "testcontainers-hdfs"})
     public void orcWritePrimitiveArraysWithNullElements() throws Exception {
         gpdbTableNamePrefix = "orc_primitive_arrays_null_elements";
         fullTestPath = hdfsPath + gpdbTableNamePrefix;
@@ -287,7 +272,7 @@ public class OrcWriteTest extends BaseFeature {
         runSqlTest("features/orc/write/primitive_types_array_null_elements");
     }
 
-    @Test(groups = {"features", "gpdb", "security", "hcfs"})
+    @Test(groups = {"testcontainers", "testcontainers-hdfs"})
     public void orcWritePrimitiveArraysMultidimensional() throws Exception {
 
         gpdbTableNamePrefix = "orc_primitive_arrays_multi";
@@ -318,7 +303,7 @@ public class OrcWriteTest extends BaseFeature {
         runSqlTest("features/orc/write/primitive_types_array_multi");
     }
 
-    @Test(groups = {"features", "gpdb", "security", "hcfs"})
+    @Test(groups = {"testcontainers", "testcontainers-hdfs"})
     public void orcWriteDecimalWithLargePrecisionDefined() throws Exception {
         gpdbTableNamePrefix = "orc_decimals_with_large_precision";
         fullTestPath = hdfsPath + gpdbTableNamePrefix;
@@ -328,7 +313,7 @@ public class OrcWriteTest extends BaseFeature {
         runSqlTest("features/orc/write/decimal_with_large_precision_defined");
     }
 
-    @Test(groups = {"features", "gpdb", "security", "hcfs"})
+    @Test(groups = {"testcontainers", "testcontainers-hdfs"})
     public void orcWriteDecimalWithLargePrecisionNotDefined() throws Exception {
         gpdbTableNamePrefix = "orc_decimals_with_large_precision_not_defined";
         fullTestPath = hdfsPath + gpdbTableNamePrefix;
@@ -338,7 +323,7 @@ public class OrcWriteTest extends BaseFeature {
         runSqlTest("features/orc/write/decimal_with_large_precision_not_defined");
     }
 
-    @Test(groups = {"features", "gpdb", "security", "hcfs"})
+    @Test(groups = {"testcontainers", "testcontainers-hdfs"})
     public void orcWriteDecimalIntegerDigitCountOverflow() throws Exception {
         gpdbTableNamePrefix = "orc_decimals_with_large_integer_digit_count";
         fullTestPath = hdfsPath + gpdbTableNamePrefix;
@@ -348,7 +333,7 @@ public class OrcWriteTest extends BaseFeature {
         runSqlTest("features/orc/write/decimal_with_large_integer_digit");
     }
 
-    @Test(groups = {"features", "gpdb", "security", "hcfs"})
+    @Test(groups = {"testcontainers", "testcontainers-hdfs"})
     public void orcWriteDecimalScaleOverflow() throws Exception {
         gpdbTableNamePrefix = "orc_decimals_with_large_scale";
         fullTestPath = hdfsPath + gpdbTableNamePrefix;
@@ -508,12 +493,12 @@ public class OrcWriteTest extends BaseFeature {
     }
 
     private void prepareWritableExternalTable(String name, String[] fields, String path) throws Exception {
-        exTable = TableFactory.getPxfHcfsWritableTable(name + "_writable", fields, path, hdfs.getBasePath(), "orc");
+        exTable = getHdfsWritableTable(name + "_writable", fields, path, "orc");
         createTable(exTable);
     }
 
     private void prepareReadableExternalTable(String name, String[] fields, String path, boolean mapByPosition) throws Exception {
-        exTable = TableFactory.getPxfHcfsReadableTable(name + "_readable", fields, path, hdfs.getBasePath(), "orc");
+        exTable = getHdfsReadableTable(name + "_readable", fields, path, "orc");
         if (mapByPosition) {
             exTable.setUserParameters(new String[]{"MAP_BY_POSITION=true"});
         }
