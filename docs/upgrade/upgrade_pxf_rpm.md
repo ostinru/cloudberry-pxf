@@ -17,6 +17,13 @@ The PXF upgrade procedure has two parts. You perform one procedure before, and o
 
 Perform this procedure before you upgrade to a new version of PXF:
 
+The current PXF code requires **Java 17 or 21**. A package upgrade may preserve
+an old Java 11 or earlier `JAVA_HOME` in `$PXF_BASE/conf/pxf-env.sh`. Install a
+supported Java version on every host, update that path, verify
+`"$JAVA_HOME/bin/java" -version`, and synchronize the configuration before
+starting the new service. See
+[Installing Java for PXF](../administering/configuring/install_java.md).
+
 1. Log in to the Apache Cloudberry coordinator host. For example:
 
     ``` shell

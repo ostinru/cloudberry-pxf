@@ -47,7 +47,7 @@ dependencies {
 
 
     /*******************************
-     * These JARs below (and its transitive dependencies, other than txw2 [for writing XML docs]) are needed for Java 11
+     * These JARs below (and its transitive dependencies, other than txw2 [for writing XML docs]) are needed for Java 17
      * jcenter doesn't have full com.sun.xml.bind:jaxb-core/jaxb-impl packages, using glassfish distro
      *******************************/
 

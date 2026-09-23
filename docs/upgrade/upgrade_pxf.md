@@ -43,7 +43,7 @@ Perform this procedure before you upgrade to a new version of PXF:
 
 ## Step 2: Install the New PXF
 
-PXF requires **Java 11, 17, or 21**. Before installing the new PXF version,
+PXF requires **Java 17 or 21**. Before installing the new PXF version,
 install one of these Java versions on every Apache Cloudberry host and set
 `JAVA_HOME` in `$PXF_BASE/conf/pxf-env.sh` to its installation directory.
 Verify the configured executable with `"$JAVA_HOME/bin/java" -version`. See

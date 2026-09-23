@@ -47,8 +47,7 @@ Requires: procps-ng
 # installing on Cloudberry node, so inherit Cloudberry's dependencies
 # implicitly
 
-# Weak dependencies: OpenJDK 11 or 17
-Suggests: java-11-openjdk
+# Weak dependency: the minimum supported Java runtime
 Suggests: java-17-openjdk
 
 %description

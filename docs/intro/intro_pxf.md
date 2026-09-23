@@ -21,7 +21,7 @@ PXF is compatible with these operating system platforms and Apache Cloudberry ve
 
 ### Java
 
-PXF supports Java 11, 17 and 21.
+PXF supports Java 17 and 21.
 
 
 ### Hadoop
@@ -89,4 +89,3 @@ Certain PXF connectors and profiles support filter pushdown and column projectio
 
 - [About PXF Filter Pushdown](./filter_push.md)
 - [About Column Projection in PXF](./col_project.md)
-

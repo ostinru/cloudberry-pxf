@@ -4,7 +4,7 @@ description: Installing Java for the PXF service.
 sidebar_position: 4
 ---
 
-PXF is a Java service. It requires a Java 11, 17 or 21 installation on each Apache Cloudberry host.
+PXF is a Java service. It requires a Java 17 or 21 installation on each Apache Cloudberry host.
 
 
 ## Prerequisites
@@ -41,13 +41,13 @@ Perform the following procedure to install Java on the coordinator host, standby
     2. Install the Java package on each host. For example:
 
         ``` shell
-        gpadmin@coordinator$ gpssh -e -v -f gphostfile sudo yum -y install java-11-openjdk
+        gpadmin@coordinator$ gpssh -e -v -f gphostfile sudo yum -y install java-17-openjdk
         ```
 
 4. Identify the Java `$JAVA_HOME` setting for PXF. For example:
 
     ``` shell
-    JAVA_HOME=/usr/lib/jvm/java-11-openjdk-11.0.4.11-0.el7_6.x86_64
+    JAVA_HOME=/usr/lib/jvm/java-17-openjdk
     ```
 
     If the superuser configures the newly-installed Java alternative as the system default:
@@ -57,4 +57,3 @@ Perform the following procedure to install Java on the coordinator host, standby
     ```
 
 5. Note the `$JAVA_HOME` setting; you will need this value when you configure PXF.
-

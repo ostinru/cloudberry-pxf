@@ -46,12 +46,12 @@ Refer to the [Logging](../administering/advanced-config/cfg_logging.md) topic fo
 
 ## Java Version Errors After an Upgrade
 
-The current PXF classes target Java 11 (class-file version 55). Starting them
-with Java 8 can fail with `UnsupportedClassVersionError`, mentioning version
-`55.0` and a runtime that only recognizes versions up to `52.0`.
+The current PXF classes target Java 17 (class-file version 61). Starting them
+with Java 11 or earlier can fail with `UnsupportedClassVersionError`, mentioning
+version `61.0`; Java 11, for example, only recognizes versions up to `55.0`.
 
 Check `JAVA_HOME` in `$PXF_BASE/conf/pxf-env.sh` on every Apache Cloudberry host.
-Install/select Java 11, synchronize the PXF configuration, and restart the service.
+Install/select Java 17 or newer, synchronize the PXF configuration, and restart the service.
 See [Installing Java for PXF](../administering/configuring/install_java.md).
 
 
@@ -257,4 +257,3 @@ The workaround described in this section applies when all of the following hold 
     ````
 
 1. Try the query again.
-
