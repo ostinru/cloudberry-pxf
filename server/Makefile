@@ -41,10 +41,10 @@ check-jdk:
 		else \
 			echo "       JAVA_HOME is not set and javac is not on PATH."; \
 		fi; \
-		echo "       Install a JDK and point JAVA_HOME at it, for example:"; \
-		echo "         Debian/Ubuntu: sudo apt-get install -y openjdk-11-jdk"; \
-		echo "         RHEL/Rocky:    sudo dnf install -y java-11-openjdk-devel"; \
-		echo "         export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64"; \
+		echo "       Install JDK 17 or newer and point JAVA_HOME at it, for example:"; \
+		echo "         Debian/Ubuntu: sudo apt-get install -y openjdk-17-jdk"; \
+		echo "         RHEL/Rocky:    sudo dnf install -y java-17-openjdk-devel"; \
+		echo "         export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64"; \
 		echo "       If a build already failed here, also run './gradlew --stop'."; \
 		echo "       See TROUBLESHOOTING.md for details."; \
 		exit 2; \

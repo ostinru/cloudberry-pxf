@@ -3,10 +3,13 @@ package org.apache.cloudberry.pxf.automation.testplugin;
 
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.HConstants;
-import org.apache.hadoop.hbase.client.HTable;
+import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.client.Connection;
+import org.apache.hadoop.hbase.client.ConnectionFactory;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.client.Table;
 import org.apache.hadoop.hbase.filter.Filter;
 import org.apache.hadoop.hbase.util.Bytes;
 import org.apache.cloudberry.pxf.api.OneRow;
@@ -55,7 +58,8 @@ public class HBaseAccessorWithFilter extends BasePlugin implements Accessor {
     private static final TreeTraverser TRAVERSER = new TreeTraverser();
 
     private HBaseTupleDescription tupleDescription;
-    private HTable table;
+    private Connection connection;
+    private Table table;
     private List<SplitBoundary> splits;
     private Scan scanDetails;
     private ResultScanner currentScanner;
@@ -108,7 +112,15 @@ public class HBaseAccessorWithFilter extends BasePlugin implements Accessor {
      */
     @Override
     public void closeForRead() throws Exception {
-        table.close();
+        if (currentScanner != null) {
+            currentScanner.close();
+        }
+        if (table != null) {
+            table.close();
+        }
+        if (connection != null) {
+            connection.close();
+        }
     }
 
     /**
@@ -157,7 +169,8 @@ public class HBaseAccessorWithFilter extends BasePlugin implements Accessor {
     }
 
     private void openTable() throws IOException {
-        table = new HTable(HBaseConfiguration.create(configuration), context.getDataSource().getBytes());
+        connection = ConnectionFactory.createConnection(HBaseConfiguration.create(configuration));
+        table = connection.getTable(TableName.valueOf(context.getDataSource()));
     }
 
     /*

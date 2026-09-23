@@ -20,9 +20,9 @@
 ARG BASE_IMAGE=apache/incubator-cloudberry:cbdb-build-ubuntu22.04-latest
 FROM ${BASE_IMAGE}
 
-# Install Java 11: auto-detect OS package manager.
-# RHEL/Rocky 10 dropped OpenJDK 11 from its repos (only 21/25 remain), so take
-# it from Adoptium there and expose it as /usr/lib/jvm/java-11-openjdk, which
+# Install Java 17: auto-detect OS package manager.
+# RHEL/Rocky 10 does not provide OpenJDK 17 in its repos, so take it from
+# Adoptium there and expose it as /usr/lib/jvm/java-17-openjdk, which
 # is the path script/{pxf-env,entrypoint,build_pxf}.sh resolve JAVA_BUILD to.
 RUN if command -v apt-get >/dev/null 2>&1; then \
       export DEBIAN_FRONTEND=noninteractive && \
@@ -30,7 +30,7 @@ RUN if command -v apt-get >/dev/null 2>&1; then \
       sudo apt-get install -y --no-install-recommends \
         curl ca-certificates git unzip maven make \
         locales wget lsb-release openssh-server iproute2 sudo \
-        openjdk-11-jdk-headless; \
+        openjdk-17-jdk-headless; \
     elif command -v dnf >/dev/null 2>&1; then \
       sudo dnf install -y --allowerasing --nobest \
         curl ca-certificates wget maven unzip openssh-server iproute sudo \
@@ -40,13 +40,13 @@ RUN if command -v apt-get >/dev/null 2>&1; then \
         printf '[adoptium]\nname=Adoptium\nbaseurl=https://packages.adoptium.net/artifactory/rpm/rhel/%s/%s\nenabled=1\ngpgcheck=1\ngpgkey=https://packages.adoptium.net/artifactory/api/gpg/key/public\n' \
           "${VERSION_ID%%.*}" "$(uname -m)" \
           | sudo tee /etc/yum.repos.d/adoptium.repo >/dev/null && \
-        sudo dnf install -y --allowerasing --nobest temurin-11-jdk && \
-        javac_path=$(rpm -ql temurin-11-jdk | grep -m1 '/bin/javac$') && \
+        sudo dnf install -y --allowerasing --nobest temurin-17-jdk && \
+        javac_path=$(rpm -ql temurin-17-jdk | grep -m1 '/bin/javac$') && \
         [ -n "$javac_path" ] && \
-        sudo ln -sfn "$(dirname "$(dirname "$javac_path")")" /usr/lib/jvm/java-11-openjdk && \
-        test -x /usr/lib/jvm/java-11-openjdk/bin/javac; \
+        sudo ln -sfn "$(dirname "$(dirname "$javac_path")")" /usr/lib/jvm/java-17-openjdk && \
+        test -x /usr/lib/jvm/java-17-openjdk/bin/javac; \
       else \
-        sudo dnf install -y --allowerasing --nobest java-11-openjdk-devel; \
+        sudo dnf install -y --allowerasing --nobest java-17-openjdk-devel; \
       fi && \
       sudo dnf clean all; \
     fi

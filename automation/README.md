@@ -10,7 +10,7 @@ In order to run PXF automation tests the following are needed
 
 1. Running Hadoop cluster
 2. Running GPDB
-3. JDK 11+
+3. JDK 17+
 
 ## Build & Test
 

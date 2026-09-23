@@ -56,17 +56,17 @@ GPHOME=${GPHOME:-/usr/local/cloudberry-db}
 # GPDB demo master path is required by pg_hba reloads; define a default up front.
 COORDINATOR_DATA_DIRECTORY=${COORDINATOR_DATA_DIRECTORY:-/home/gpadmin/workspace/cloudberry/gpAux/gpdemo/datadirs/qddir/demoDataDir-1}
 
-# Java locations vary by arch; prefer Java 8 for Hadoop runtime and Java 11 for builds if needed.
-JAVA_11_ARM=/usr/lib/jvm/java-11-openjdk-arm64
-JAVA_11_AMD=/usr/lib/jvm/java-11-openjdk-amd64
+# Java locations vary by arch; prefer Java 8 for Hadoop runtime and Java 17 for PXF.
+JAVA_17_ARM=/usr/lib/jvm/java-17-openjdk-arm64
+JAVA_17_AMD=/usr/lib/jvm/java-17-openjdk-amd64
 JAVA_8_ARM=/usr/lib/jvm/java-8-openjdk-arm64
 JAVA_8_AMD=/usr/lib/jvm/java-8-openjdk-amd64
 
 detect_java_paths() {
   case "$(uname -m)" in
-    aarch64|arm64) JAVA_BUILD=${JAVA_BUILD:-${JAVA_11_ARM}}; JAVA_HADOOP=${JAVA_HADOOP:-${JAVA_8_ARM}} ;;
-    x86_64|amd64)  JAVA_BUILD=${JAVA_BUILD:-${JAVA_11_AMD}}; JAVA_HADOOP=${JAVA_HADOOP:-${JAVA_8_AMD}} ;;
-    *)             JAVA_BUILD=${JAVA_BUILD:-${JAVA_11_ARM}}; JAVA_HADOOP=${JAVA_HADOOP:-${JAVA_8_ARM}} ;;
+    aarch64|arm64) JAVA_BUILD=${JAVA_BUILD:-${JAVA_17_ARM}}; JAVA_HADOOP=${JAVA_HADOOP:-${JAVA_8_ARM}} ;;
+    x86_64|amd64)  JAVA_BUILD=${JAVA_BUILD:-${JAVA_17_AMD}}; JAVA_HADOOP=${JAVA_HADOOP:-${JAVA_8_AMD}} ;;
+    *)             JAVA_BUILD=${JAVA_BUILD:-${JAVA_17_ARM}}; JAVA_HADOOP=${JAVA_HADOOP:-${JAVA_8_ARM}} ;;
   esac
   export JAVA_BUILD JAVA_HADOOP
 }
@@ -627,9 +627,9 @@ EOF
 
   # Ensure JAVA_HOME is set for PXF CLI/runtime.
   if grep -q "^# export JAVA_HOME" /usr/local/pxf/conf/pxf-env.sh; then
-    sed -i "s|^# export JAVA_HOME.*|export JAVA_HOME=${JAVA_HOME}|" /usr/local/pxf/conf/pxf-env.sh
+    sed -i "s|^# export JAVA_HOME.*|export JAVA_HOME=${JAVA_BUILD}|" /usr/local/pxf/conf/pxf-env.sh
   elif ! grep -q "^export JAVA_HOME=" /usr/local/pxf/conf/pxf-env.sh; then
-    echo "export JAVA_HOME=${JAVA_HOME}" >> /usr/local/pxf/conf/pxf-env.sh
+    echo "export JAVA_HOME=${JAVA_BUILD}" >> /usr/local/pxf/conf/pxf-env.sh
   fi
   # Force principal/keytab at JVM level to survive any config reload quirks.
   local jvm_override="-Dpxf.service.kerberos.principal=pxf/${HOST_FQDN}@${REALM} -Dpxf.service.kerberos.keytab=${PXF_KEYTAB} -Dpxf.fs.basePath=${PXF_FS_BASE_PATH} -Ddfs.namenode.kerberos.principal=hdfs/${HOST_FQDN}@${REALM}"
@@ -943,13 +943,13 @@ start_yarn_secure() {
 start_pxf_secure() {
   log "start PXF (kerberos)"
   # Stop any stale PXF instance to free the actuator port.
-  sudo -u gpadmin env JAVA_HOME=${JAVA_HOME} PGPORT=${PGPORT:-7000} PGHOST=${HOST_FQDN} PGDATABASE=${PGDATABASE:-postgres}     PXF_BASE=${PXF_BASE} GPHOME=${GPHOME} /usr/local/pxf/bin/pxf cluster stop >/dev/null 2>&1 || true
+  sudo -u gpadmin env JAVA_HOME=${JAVA_BUILD} PGPORT=${PGPORT:-7000} PGHOST=${HOST_FQDN} PGDATABASE=${PGDATABASE:-postgres}     PXF_BASE=${PXF_BASE} GPHOME=${GPHOME} /usr/local/pxf/bin/pxf cluster stop >/dev/null 2>&1 || true
   sudo pkill -f pxf-app || true
   sudo rm -f /home/gpadmin/pxf-base/run/pxf-service.pid || true
   sudo -u gpadmin rm -rf "${PXF_BASE}"
-  sudo -u gpadmin env JAVA_HOME=${JAVA_HOME} PGPORT=${PGPORT:-7000} PGHOST=${HOST_FQDN} PGDATABASE=${PGDATABASE:-postgres}     PXF_BASE=${PXF_BASE} GPHOME=${GPHOME} /usr/local/pxf/bin/pxf cluster prepare
-  sudo -u gpadmin env JAVA_HOME=${JAVA_HOME} PGPORT=${PGPORT:-7000} PGHOST=${HOST_FQDN} PGDATABASE=${PGDATABASE:-postgres}     PXF_BASE=${PXF_BASE} GPHOME=${GPHOME} /usr/local/pxf/bin/pxf cluster init
-  sudo -u gpadmin env JAVA_HOME=${JAVA_HOME} PGPORT=${PGPORT:-7000} PGHOST=${HOST_FQDN} PGDATABASE=${PGDATABASE:-postgres}     PXF_BASE=${PXF_BASE} GPHOME=${GPHOME} /usr/local/pxf/bin/pxf cluster start
+  sudo -u gpadmin env JAVA_HOME=${JAVA_BUILD} PGPORT=${PGPORT:-7000} PGHOST=${HOST_FQDN} PGDATABASE=${PGDATABASE:-postgres}     PXF_BASE=${PXF_BASE} GPHOME=${GPHOME} /usr/local/pxf/bin/pxf cluster prepare
+  sudo -u gpadmin env JAVA_HOME=${JAVA_BUILD} PGPORT=${PGPORT:-7000} PGHOST=${HOST_FQDN} PGDATABASE=${PGDATABASE:-postgres}     PXF_BASE=${PXF_BASE} GPHOME=${GPHOME} /usr/local/pxf/bin/pxf cluster init
+  sudo -u gpadmin env JAVA_HOME=${JAVA_BUILD} PGPORT=${PGPORT:-7000} PGHOST=${HOST_FQDN} PGDATABASE=${PGDATABASE:-postgres}     PXF_BASE=${PXF_BASE} GPHOME=${GPHOME} /usr/local/pxf/bin/pxf cluster start
 }
 
 security_health_check() {
@@ -964,7 +964,7 @@ security_health_check() {
   if [ -f "${PXF_KEYTAB}" ]; then
     kinit -kt "${PXF_KEYTAB}" "pxf/${HOST_FQDN}@${REALM}" || true
   fi
-  sudo -u gpadmin env JAVA_HOME=${JAVA_HOME} PGPORT=${PGPORT:-7000} PGHOST=${HOST_FQDN} PGDATABASE=${PGDATABASE:-postgres} PXF_BASE=${PXF_BASE} GPHOME=${GPHOME} /usr/local/pxf/bin/pxf cluster restart || true
+  sudo -u gpadmin env JAVA_HOME=${JAVA_BUILD} PGPORT=${PGPORT:-7000} PGHOST=${HOST_FQDN} PGDATABASE=${PGDATABASE:-postgres} PXF_BASE=${PXF_BASE} GPHOME=${GPHOME} /usr/local/pxf/bin/pxf cluster restart || true
 
   sudo -u gpadmin env JAVA_HOME=${JAVA_HOME} HADOOP_CONF_DIR=${HADOOP_CONF_DIR} \
     ${GPHD_ROOT}/hadoop/bin/hdfs getconf -confKey hadoop.security.authentication
@@ -1159,7 +1159,7 @@ prepare_runtime_state() {
     hdfs_dfs -mkdir -p /pxf_automation_data >/dev/null 2>&1 || true
     hdfs_dfs -chmod 777 /pxf_automation_data >/dev/null 2>&1 || true
   fi
-  sudo -u gpadmin env JAVA_HOME=${JAVA_HOME} PGPORT=${PGPORT:-7000} PGHOST=${HOST_FQDN_LOCAL} PGDATABASE=${PGDATABASE:-postgres} PXF_BASE=${PXF_BASE} GPHOME=${GPHOME} /usr/local/pxf/bin/pxf cluster restart || true
+  sudo -u gpadmin env JAVA_HOME=${JAVA_BUILD} PGPORT=${PGPORT:-7000} PGHOST=${HOST_FQDN_LOCAL} PGDATABASE=${PGDATABASE:-postgres} PXF_BASE=${PXF_BASE} GPHOME=${GPHOME} /usr/local/pxf/bin/pxf cluster restart || true
   configure_pg_hba
   export AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:-pxf_dummy_access}
   export AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:-pxf_dummy_secret}

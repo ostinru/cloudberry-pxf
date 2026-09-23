@@ -4,6 +4,24 @@ jar {
     enabled = true
 }
 
+// RegionServers may use Java 8 while PXF itself requires Java 17.
+// Package only the filter comparators for the RegionServer classpath.
+def compileHBaseComparators = tasks.register("compileHBaseComparators", JavaCompile) {
+    source = fileTree("src/main/java") {
+        include "org/apache/cloudberry/pxf/plugins/hbase/utilities/HBase*Comparator.java"
+    }
+    classpath = sourceSets.main.compileClasspath
+    destinationDirectory = layout.buildDirectory.dir("classes/java/hbaseComparators")
+    options.release = 8
+}
+
+tasks.register("hbaseComparatorsJar", Jar) {
+    archiveBaseName = "pxf-hbase-comparators"
+    from(compileHBaseComparators) {
+        include "**/*.class"
+    }
+}
+
 dependencies {
     /*******************************
      * API Dependencies

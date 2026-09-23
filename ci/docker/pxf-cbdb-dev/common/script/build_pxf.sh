@@ -26,25 +26,25 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck disable=SC1091
 source "${SCRIPT_DIR}/utils.sh"
 
-# Auto-detect Java 11 path
-if [ -d /usr/lib/jvm/java-11-openjdk-amd64 ]; then
-  JAVA_HOME=${JAVA_HOME:-/usr/lib/jvm/java-11-openjdk-amd64}
-elif [ -d /usr/lib/jvm/java-11-openjdk-arm64 ]; then
-  JAVA_HOME=${JAVA_HOME:-/usr/lib/jvm/java-11-openjdk-arm64}
+# Auto-detect Java 17 path
+if [ -d /usr/lib/jvm/java-17-openjdk-amd64 ]; then
+  JAVA_HOME=${JAVA_HOME:-/usr/lib/jvm/java-17-openjdk-amd64}
+elif [ -d /usr/lib/jvm/java-17-openjdk-arm64 ]; then
+  JAVA_HOME=${JAVA_HOME:-/usr/lib/jvm/java-17-openjdk-arm64}
 else
-  JAVA_HOME=${JAVA_HOME:-/usr/lib/jvm/java-11-openjdk}
+  JAVA_HOME=${JAVA_HOME:-/usr/lib/jvm/java-17-openjdk}
 fi
 export PATH=$JAVA_HOME/bin:$PATH
 export GPHOME=/usr/local/cloudberry-db
 source /usr/local/cloudberry-db/cloudberry-env.sh
 export PATH=$GPHOME/bin:$PATH
 
-# Install Java 11 JDK and Maven
+# Install Java 17 JDK and Maven
 if command -v apt-get >/dev/null 2>&1; then
   retry sudo apt update
-  retry sudo apt install -y openjdk-11-jdk maven
+  retry sudo apt install -y openjdk-17-jdk maven
 elif command -v dnf >/dev/null 2>&1; then
-  retry sudo dnf install -y --nobest java-11-openjdk-devel maven
+  retry sudo dnf install -y --nobest java-17-openjdk-devel maven
 fi
 
 cd /home/gpadmin/workspace/cloudberry-pxf

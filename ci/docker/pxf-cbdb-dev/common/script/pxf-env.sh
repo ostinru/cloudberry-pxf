@@ -23,21 +23,21 @@
 # --------------------------------------------------------------------
 # Architecture-aware Java selections (auto-detect OS)
 # --------------------------------------------------------------------
-if [ -d /usr/lib/jvm/java-11-openjdk-amd64 ] || [ -d /usr/lib/jvm/java-11-openjdk-arm64 ]; then
+if [ -d /usr/lib/jvm/java-17-openjdk-amd64 ] || [ -d /usr/lib/jvm/java-17-openjdk-arm64 ]; then
   # Debian/Ubuntu: paths include architecture suffix
   case "$(uname -m)" in
     aarch64|arm64)
-      JAVA_BUILD=${JAVA_BUILD:-/usr/lib/jvm/java-11-openjdk-arm64}
+      JAVA_BUILD=${JAVA_BUILD:-/usr/lib/jvm/java-17-openjdk-arm64}
       JAVA_HADOOP=${JAVA_HADOOP:-/usr/lib/jvm/java-8-openjdk-arm64}
       ;;
     *)
-      JAVA_BUILD=${JAVA_BUILD:-/usr/lib/jvm/java-11-openjdk-amd64}
+      JAVA_BUILD=${JAVA_BUILD:-/usr/lib/jvm/java-17-openjdk-amd64}
       JAVA_HADOOP=${JAVA_HADOOP:-/usr/lib/jvm/java-8-openjdk-amd64}
       ;;
   esac
 else
   # RHEL/Rocky: architecture-independent symlinks
-  JAVA_BUILD=${JAVA_BUILD:-/usr/lib/jvm/java-11-openjdk}
+  JAVA_BUILD=${JAVA_BUILD:-/usr/lib/jvm/java-17-openjdk}
   JAVA_HADOOP=${JAVA_HADOOP:-/usr/lib/jvm/java-1.8.0-openjdk}
 fi
 

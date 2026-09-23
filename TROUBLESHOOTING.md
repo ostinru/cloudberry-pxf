@@ -7,35 +7,36 @@
 ```
 Execution failed for task ':pxf-api:compileJava'.
 > Error while evaluating property 'javaCompiler' of task ':pxf-api:compileJava'.
-   > Toolchain installation '/usr/lib/jvm/java-11-openjdk-amd64' does not provide
+   > Toolchain installation '/usr/lib/jvm/java-17-openjdk-amd64' does not provide
      the required capabilities: [JAVA_COMPILER]
 ```
 
 The JVM Gradle is running on has no `javac`, so it is a JRE rather than a JDK.
 Gradle itself starts fine on a JRE, which is why the build gets as far as
-`:pxf-api:compileJava` before failing. Install a JDK and point `JAVA_HOME` at it:
+`:pxf-api:compileJava` before failing. Install JDK 17 or newer and point
+`JAVA_HOME` at it:
 
 ```
 # Debian/Ubuntu
-sudo apt-get install -y openjdk-11-jdk
-export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
+sudo apt-get install -y openjdk-17-jdk
+export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
 
 # RHEL/Rocky
-sudo dnf install -y java-11-openjdk-devel
-export JAVA_HOME=/usr/lib/jvm/java-11-openjdk
+sudo dnf install -y java-17-openjdk-devel
+export JAVA_HOME=/usr/lib/jvm/java-17-openjdk
 ```
 
 Two things make this easy to misdiagnose:
 
-* On Debian/Ubuntu the JRE is installed into `/usr/lib/jvm/java-11-openjdk-amd64`,
+* On Debian/Ubuntu the JRE is installed into `/usr/lib/jvm/java-17-openjdk-amd64`,
   the same directory a JDK would use, so `java -version` and `ls /usr/lib/jvm` both
   look healthy while `javac` is absent. The `maven` package depends on
   `default-jre-headless` and does **not** pull in a JDK. (On RHEL/Rocky,
-  `dnf install maven` does install one, via `maven-jdk-binding`.)
+  `dnf install maven` may install one via `maven-jdk-binding`.)
 * Installing the JDK is not sufficient on its own. The Gradle daemon caches JVM
   installation metadata for its whole lifetime and never re-checks the filesystem,
-  and because the JDK lands in the same *path*, Gradle reuses the daemon left behind
-  by the failed build and reports the identical error. Stop it first:
+  and because the JDK lands in the same *path*, Gradle can reuse the daemon left
+  behind by the failed build and report the identical error. Stop it first:
 
   ```
   cd server && ./gradlew --stop
