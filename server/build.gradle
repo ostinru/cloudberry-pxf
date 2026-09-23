@@ -358,9 +358,9 @@ private static void printResults(result) {
 task stage(type: Copy) {
     description "Build PXF server and stage resulting artifacts for packaging."
     dependsOn ":pxf-service:bootJar"
+    dependsOn ":pxf-hbase:hbaseComparatorsJar"
 
-    // Provide the pxf-hbase jar. The pxf-hbase.jar is required for the PXF
-    // HBase connector to support filter push down
+    // Include the Java 8 comparator jar for HBase RegionServers.
     from("pxf-hbase/build/libs") { into 'share' }
     from("pxf-service/build/libs") {
         into 'application'
