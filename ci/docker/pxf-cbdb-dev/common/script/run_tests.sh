@@ -121,7 +121,7 @@ start_hbase() {
     echo "[run_tests] HBase HMaster already running, skipping start"
   else
     echo "[run_tests] starting HBase..."
-    "${GPHD_ROOT}/bin/start-hbase.sh"
+    JAVA_HOME="${JAVA_HADOOP}" "${GPHD_ROOT}/bin/start-hbase.sh"
   fi
   echo "[run_tests] waiting for HBase ZooKeeper on 127.0.0.1:2181..."
   wait_port 127.0.0.1 2181 30 2 || { echo "[run_tests] ERROR: HBase ZooKeeper did not become ready on 127.0.0.1:2181"; return 1; }
@@ -137,7 +137,7 @@ cleanup_hbase_state() {
         disable 'hbase_null_table'; drop 'hbase_null_table';
         disable 'long_qualifiers_hbase_table'; drop 'long_qualifiers_hbase_table';
         disable 'empty_table'; drop 'empty_table';" \
-    | hbase shell -n >/dev/null 2>&1 || true
+    | JAVA_HOME="${JAVA_HADOOP}" hbase shell -n >/dev/null 2>&1 || true
 }
 
 restart_hiveserver2() {
