@@ -45,7 +45,6 @@ extern "C" {
     pub fn pxf_cb_is_dispatcher() -> bool;
     pub fn pxf_cb_string_value(node: *mut pg_sys::Node) -> *const c_char;
     pub fn pxf_cb_collation_is_c(collation: pg_sys::Oid) -> bool;
-    pub fn pxf_cb_clear_slot(slot: *mut pg_sys::TupleTableSlot);
     pub fn pxf_cb_copy_from_setup(
         state: pg_sys::CopyFromState,
         rel: pg_sys::Relation,
@@ -54,7 +53,6 @@ extern "C" {
         log_errors: bool,
         resource: *const c_char,
     );
-    pub fn pxf_cb_copy_from_count(state: pg_sys::CopyFromState);
     pub fn pxf_cb_copy_to_begin(
         rel: pg_sys::Relation,
         options: *mut pg_sys::List,
@@ -108,9 +106,9 @@ extern "C" {
         values: *mut pg_sys::Datum,
         nulls: *mut bool,
     ) -> pg_sys::HeapTuple;
-    pub fn pxf_cb_next_copy(
+    pub fn pxf_cb_iterate_copy(
         state: pg_sys::CopyFromState,
         resource: *const c_char,
         slot: *mut pg_sys::TupleTableSlot,
-    ) -> bool;
+    );
 }

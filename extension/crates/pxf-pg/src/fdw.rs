@@ -24,7 +24,10 @@ use pxf_core::{
     request::Metadata,
     transport::{Config, Download, Upload},
 };
-use std::{ffi::c_void, ptr::null_mut};
+use std::{
+    ffi::{c_void, CString},
+    ptr::null_mut,
+};
 
 pub fn handler() -> PgBox<pg_sys::FdwRoutine> {
     unsafe {
@@ -160,6 +163,8 @@ fn endpoint(options: &FdwOptions, operation: &str) -> String {
 }
 
 struct Scan {
+    // Owned by the scan, independent of PostgreSQL per-tuple memory resets.
+    resource: CString,
     relation: pg_sys::Relation,
     options: FdwOptions,
     metadata: Metadata,
@@ -198,7 +203,7 @@ unsafe fn start_scan(state: *mut Scan) {
             state_ref.options.reject_limit,
             state_ref.options.reject_rows,
             state_ref.options.log_errors,
-            pstr(&state_ref.options.resource),
+            state_ref.resource.as_ptr(),
         );
     }
 }
@@ -259,6 +264,8 @@ unsafe extern "C" fn begin_scan(node: *mut pg_sys::ForeignScanState, flags: i32)
         let owner = context::managed(
             (*(*node).ss.ps.state).es_query_cxt,
             Scan {
+                resource: CString::new(options.resource.clone())
+                    .expect("database resource contains NUL"),
                 relation,
                 options,
                 metadata,
@@ -277,22 +284,17 @@ unsafe extern "C" fn iterate_scan(
 ) -> *mut pg_sys::TupleTableSlot {
     unsafe {
         let slot = (*node).ss.ss_ScanTupleSlot;
-        abi::pxf_cb_clear_slot(slot);
-        if (*node).fdw_state.is_null() {
-            return slot;
-        }
-        let state = (*(*node).fdw_state.cast::<Option<Scan>>())
-            .as_mut()
-            .unwrap();
-        let copy = state.copy;
-        let resource = pstr(&state.options.resource);
-        // The COPY callback re-enters Scan through its raw pointer.
-        let found = abi::pxf_cb_next_copy(copy, resource, slot);
-        pg_sys::pfree(resource.cast());
-        if found {
-            abi::pxf_cb_copy_from_count(copy);
-            pg_sys::ExecStoreVirtualTuple(slot);
-        }
+        let (copy, resource) = if (*node).fdw_state.is_null() {
+            (null_mut(), std::ptr::null())
+        } else {
+            let state = (*(*node).fdw_state.cast::<Option<Scan>>())
+                .as_ref()
+                .unwrap();
+            (state.copy, state.resource.as_ptr())
+        };
+        // End the Scan borrow before COPY can re-enter it through read().
+        // Keep all per-row PostgreSQL operations inside one guarded ABI call.
+        abi::pxf_cb_iterate_copy(copy, resource, slot);
         slot
     }
 }

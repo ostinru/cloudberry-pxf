@@ -69,6 +69,8 @@ class Handler(BaseHTTPRequestHandler):
             self.reply(b"")
         elif resource == "/badrows":
             self.reply(b"bad,first\n1,one\noops,second\n2,two\n")
+        elif resource == "/latebad":
+            self.reply(b"1,one\n2,two\nbad,third\n")
         elif resource == "/marker":
             self.reply(b",,PXFERRMSG> fixture data error\n")
         elif resource == "/nonutf8":

@@ -53,6 +53,22 @@ SELECT test_assert((SELECT count(*) FROM dropped WHERE name='two')=1, 'dropped-c
 CREATE FOREIGN TABLE badrows(id int,name text) SERVER rust_fixture OPTIONS(resource '/badrows',format 'csv',reject_limit '3',log_errors 'true');
 SELECT test_assert((SELECT count(*) FROM badrows)=2, 'SREH ignore malformed rows');
 SELECT test_assert((SELECT count(*) FROM gp_read_error_log('badrows'))=2, 'SREH error log');
+-- The resource name must survive per-tuple memory resets and error recovery.
+CREATE FOREIGN TABLE latebad(id int,name text) SERVER rust_fixture OPTIONS(resource '/latebad',format 'csv');
+DO $$DECLARE context text; attempt int; BEGIN
+    FOR attempt IN 1..2 LOOP
+        BEGIN
+            PERFORM * FROM latebad;
+            RAISE EXCEPTION 'expected late conversion failure';
+        EXCEPTION WHEN invalid_text_representation THEN
+            GET STACKED DIAGNOSTICS context=PG_EXCEPTION_CONTEXT;
+            IF context NOT LIKE '%Foreign table latebad, record 3 of /latebad, column id: "bad"%' THEN
+                RAISE EXCEPTION 'unexpected COPY error context: %', context;
+            END IF;
+        END;
+        PERFORM test_assert((SELECT count(*) FROM fixture)=2, 'same session after conversion error');
+    END LOOP;
+END $$;
 CREATE FOREIGN TABLE marker(id int,name text) SERVER rust_fixture OPTIONS(resource '/marker',format 'csv');
 DO $$BEGIN
     PERFORM * FROM marker;

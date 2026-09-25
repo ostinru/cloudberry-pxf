@@ -54,7 +54,6 @@ void pxf_cb_environment(PxfEnvironment *out) {
 bool pxf_cb_is_dispatcher(void) { return Gp_role == GP_ROLE_DISPATCH; }
 const char *pxf_cb_string_value(Node *node) { return strVal(node); }
 bool pxf_cb_collation_is_c(Oid collation) { return lc_collate_is_c(collation); }
-void pxf_cb_clear_slot(TupleTableSlot *slot) { ExecClearTuple(slot); }
 
 void pxf_cb_copy_from_setup(CopyFromState state, Relation rel, int limit,
                             bool rows, bool log_errors, const char *resource) {
@@ -70,10 +69,6 @@ void pxf_cb_copy_from_setup(CopyFromState state, Relation rel, int limit,
     state->fe_msgbuf = makeStringInfo();
     state->rowcontext = AllocSetContextCreate(CurrentMemoryContext, "Pxf Rust COPY row",
                                              ALLOCSET_DEFAULT_SIZES);
-}
-
-void pxf_cb_copy_from_count(CopyFromState state) {
-    if (state->cdbsreh) state->cdbsreh->processed++;
 }
 
 CopyToState pxf_cb_copy_to_begin(Relation rel, List *options) {
@@ -258,24 +253,32 @@ pxf_cb_copy_error(void *arg)
                    state->cur_relname, state->cur_lineno, context->resource);
 }
 
-bool
-pxf_cb_next_copy(CopyFromState state, const char *resource, TupleTableSlot *slot)
+void
+pxf_cb_iterate_copy(CopyFromState state, const char *resource, TupleTableSlot *slot)
 {
     PxfCopyErrorContext context = { state, resource };
     ErrorContextCallback callback = {0};
-    bool found = false;
+    /* The dispatcher has no COPY state for an all-segments scan. */
+    ExecClearTuple(slot);
+    if (state == NULL)
+        return;
     callback.callback = pxf_cb_copy_error;
     callback.arg = &context;
     callback.previous = error_context_stack;
     error_context_stack = &callback;
     PG_TRY();
     {
-        found = NextCopyFrom(state, NULL, slot->tts_values, slot->tts_isnull);
+        if (NextCopyFrom(state, NULL, slot->tts_values, slot->tts_isnull))
+        {
+            /* NextCopyFrom already counts rejected rows for SREH. */
+            if (state->cdbsreh)
+                state->cdbsreh->processed++;
+            ExecStoreVirtualTuple(slot);
+        }
     }
     PG_FINALLY();
     {
         error_context_stack = callback.previous;
     }
     PG_END_TRY();
-    return found;
 }
