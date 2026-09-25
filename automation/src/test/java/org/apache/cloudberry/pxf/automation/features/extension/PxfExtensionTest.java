@@ -118,4 +118,22 @@ public class PxfExtensionTest extends AbstractTestcontainersTest {
         extensionDb.runQuery("ALTER EXTENSION pxf UPDATE TO '2.1'");
         regress.runSqlTest("features/extension_tests_2_2/upgrade_downgrade/step_3_after_downgrade_2_1");
     }
+
+    @Test(groups = {"testcontainers", "pxf-extension"})
+    public void testRustCreateExtension30() throws Exception {
+        extensionDb.runQuery("CREATE EXTENSION pxf VERSION '3.0'");
+        extensionDb.runQuery("DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_proc WHERE proname = 'pxf_read' AND probin = '$libdir/pxf_rust') THEN RAISE EXCEPTION 'Rust library is not installed'; END IF; END $$");
+        regress.runSqlTest("features/extension_tests_3_0/create_extension");
+    }
+
+    @Test(groups = {"testcontainers", "pxf-extension"})
+    public void testRustUpgrade30PreservesFunctionIdentity() throws Exception {
+        extensionDb.runQuery("CREATE EXTENSION pxf VERSION '2.2'");
+        extensionDb.runQuery("CREATE TEMP TABLE rust_function_identity AS SELECT oid FROM pg_proc WHERE proname = 'pxf_read'");
+        extensionDb.runQuery("GRANT EXECUTE ON FUNCTION pxf_read() TO PUBLIC");
+        extensionDb.runQuery("ALTER EXTENSION pxf UPDATE TO '3.0'");
+        extensionDb.runQuery("DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_proc p JOIN rust_function_identity b ON b.oid=p.oid WHERE p.probin = '$libdir/pxf_rust') THEN RAISE EXCEPTION 'upgrade changed function identity'; END IF; END $$");
+        extensionDb.runQuery("DROP TABLE rust_function_identity");
+        regress.runSqlTest("features/extension_tests_3_0/create_extension");
+    }
 }

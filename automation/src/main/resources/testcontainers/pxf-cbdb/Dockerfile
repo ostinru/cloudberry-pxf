@@ -94,3 +94,13 @@ RUN git clone --depth 1 -b ${CLOUDBERRY_BRANCH} \
 # Copy and run the build script (demo cluster is created at runtime)
 COPY script/build_cloudberry.sh /tmp/build_cloudberry.sh
 RUN bash /tmp/build_cloudberry.sh
+
+# Rust extensions use pgrx/bindgen against the installed Cloudberry headers.
+RUN if command -v apt-get >/dev/null 2>&1; then \
+      sudo apt-get update -qq && sudo apt-get install -y --no-install-recommends clang libclang-dev; \
+    else sudo dnf install -y clang clang-devel; fi
+ARG RUST_VERSION=1.85.1
+RUN curl --proto '=https' --tlsv1.2 -fsSL https://sh.rustup.rs -o /tmp/pxf-rustup.sh && \
+    sh /tmp/pxf-rustup.sh -y --profile minimal --default-toolchain ${RUST_VERSION} --component rustfmt --component clippy && \
+    rm /tmp/pxf-rustup.sh
+ENV PATH="/home/gpadmin/.cargo/bin:${PATH}"

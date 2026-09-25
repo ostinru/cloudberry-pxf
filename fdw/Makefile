@@ -1,33 +1,28 @@
-EXTENSION   = pxf_fdw
-DATA        = pxf_fdw--2.0.sql pxf_fdw--1.0--2.0.sql pxf_fdw--2.0--1.0.sql pxf_fdw--1.0.sql
-MODULE_big  = pxf_fdw
-OBJS        = pxf_fdw.o pxf_bridge.o pxf_deparse.o pxf_filter.o pxf_header.o pxf_option.o libchurl.o
-REGRESS     = pxf_fdw_wrapper pxf_fdw_server pxf_fdw_user_mapping pxf_fdw_foreign_table
-SHLIB_LINK += -lcurl
+# Licensed to the Apache Software Foundation (ASF) under one
+# or more contributor license agreements. See the NOTICE file
+# distributed with this work for additional information
+# regarding copyright ownership. The ASF licenses this file
+# to you under the Apache License, Version 2.0 (the
+# "License"); you may not use this file except in compliance
+# with the License. You may obtain a copy of the License at
+#
+#   http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing,
+# software distributed under the License is distributed on an
+# "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+# KIND, either express or implied. See the License for the
+# specific language governing permissions and limitations
+# under the License.
 
-PXF_API_VERSION := $(shell cat ../api_version)
-PG_CPPFLAGS     := -DPXF_API_VERSION=\"$(PXF_API_VERSION)\"
-
+# Compatibility entry point. Production implementation lives in extension/.
+.DEFAULT_GOAL := all
 PG_CONFIG ?= pg_config
-PGXS := $(shell $(PG_CONFIG) --pgxs)
-ifndef PGXS
-    $(error Make sure the Cloudberry installation binaries are in your PATH. i.e. export PATH=<path to your Cloudberry installation>/bin:$$PATH)
-endif
-include $(PGXS)
-
-
-.PHONY: stage
-stage: pxf_fdw.so
-	mkdir -p build/stage/fdw
-	install -c -m 755 pxf_fdw.so build/stage/fdw/pxf_fdw.so
-	install -c -m 644 pxf_fdw.control build/stage/fdw/
-	install -c -m 644 $(DATA) build/stage/fdw/
-	@echo "cloudberry.version=$(GP_VERSION)" > build/stage/fdw/metadata
-	@echo "cloudberry.major-version=$(GP_MAJORVERSION)" >> build/stage/fdw/metadata
-
-.PHONY: clean-all
-clean-all: clean
-	rm -rf build
-
-.PHONY: test
-test: install installcheck
+PROFILE ?= release
+.PHONY: all install stage clean clean-all installcheck test
+all install stage:
+	$(MAKE) -C ../extension $(@:all=build)-fdw PG_CONFIG="$(PG_CONFIG)" PROFILE="$(PROFILE)"
+clean clean-all:
+	$(MAKE) -C ../extension clean-fdw
+test installcheck:
+	$(MAKE) -C ../extension regress-fdw PG_CONFIG="$(PG_CONFIG)"

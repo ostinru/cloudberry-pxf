@@ -40,6 +40,11 @@
           <consoleOutput>true</consoleOutput>
           <excludeSubProjects>false</excludeSubProjects>
           <excludes>
+            <!-- Cargo-generated lockfile and build artifacts. -->
+            <exclude>extension/Cargo.lock</exclude>
+            <exclude>extension/target/**</exclude>
+            <exclude>extension/**/build/**</exclude>
+            <exclude>extension/**/__pycache__/**</exclude>
             <!--
                 The following files are part of the original Greenplum
                 PXF open-source files, licensed under the Apache
@@ -55,24 +60,24 @@
                 retaining them in the source distribution.
             -->
   
-            <exclude>external-table/test/pxfbridge_test.c</exclude>
-            <exclude>external-table/test/Makefile</exclude>
-            <exclude>external-table/test/mock/**</exclude>
-            <exclude>external-table/test/pxfutils_test.c</exclude>
-            <exclude>external-table/test/libchurl_test.c</exclude>
-            <exclude>external-table/test/pxffragment_test.c</exclude>
-            <exclude>external-table/pxf.control</exclude>
-            <exclude>external-table/Makefile</exclude>
-            <exclude>external-table/pxf--1.0--2.0.sql</exclude>
-            <exclude>external-table/README.md</exclude>
-            <exclude>external-table/pxf--2.1--2.0.sql</exclude>
-            <exclude>external-table/pxf--2.0--2.1.sql</exclude>
-            <exclude>external-table/pxf--1.0.sql</exclude>
-            <exclude>external-table/pxf--2.1.sql</exclude>
-            <exclude>external-table/pxf--2.0.sql</exclude>
-            <exclude>external-table/src/pxfutils.h</exclude>
-            <exclude>external-table/src/pxfutils.c</exclude>
-            <exclude>external-table/sql/**</exclude>
+            <exclude>extension/tests/legacy/external-table/test/pxfbridge_test.c</exclude>
+            <exclude>extension/tests/legacy/external-table/test/Makefile</exclude>
+            <exclude>extension/tests/legacy/external-table/test/mock/**</exclude>
+            <exclude>extension/tests/legacy/external-table/test/pxfutils_test.c</exclude>
+            <exclude>extension/tests/legacy/external-table/test/libchurl_test.c</exclude>
+            <exclude>extension/tests/legacy/external-table/test/pxffragment_test.c</exclude>
+            <exclude>extension/tests/legacy/external-table/pxf.control</exclude>
+            <exclude>extension/tests/legacy/external-table/Makefile</exclude>
+            <exclude>extension/tests/legacy/external-table/pxf--1.0--2.0.sql</exclude>
+            <exclude>extension/tests/legacy/external-table/README.md</exclude>
+            <exclude>extension/tests/legacy/external-table/pxf--2.1--2.0.sql</exclude>
+            <exclude>extension/tests/legacy/external-table/pxf--2.0--2.1.sql</exclude>
+            <exclude>extension/tests/legacy/external-table/pxf--1.0.sql</exclude>
+            <exclude>extension/tests/legacy/external-table/pxf--2.1.sql</exclude>
+            <exclude>extension/tests/legacy/external-table/pxf--2.0.sql</exclude>
+            <exclude>extension/tests/legacy/external-table/src/pxfutils.h</exclude>
+            <exclude>extension/tests/legacy/external-table/src/pxfutils.c</exclude>
+            <exclude>extension/tests/legacy/external-table/sql/**</exclude>
 
             <exclude>ci/.yamllint</exclude>
             <exclude>ci/singlecluster/bin/**</exclude>
@@ -1266,20 +1271,20 @@
             <exclude>automation/src/main/java/reporters/CustomAutomationReport.java</exclude>
             <exclude>automation/src/main/java/listeners/**</exclude>
 
-            <exclude>fdw/pxf_fdw--1.0--2.0.sql</exclude>
-            <exclude>fdw/pxf_option.c</exclude>
-            <exclude>fdw/pxf_fdw--2.0.sql</exclude>
-            <exclude>fdw/PXF_FDW.md</exclude>
-            <exclude>fdw/Makefile</exclude>
-            <exclude>fdw/pxf_fdw.h</exclude>
-            <exclude>fdw/pxf_fdw--1.0.sql</exclude>
-            <exclude>fdw/README.md</exclude>
-            <exclude>fdw/pxf_fdw.control</exclude>
-            <exclude>fdw/pxf_option.h</exclude>
-            <exclude>fdw/pxf_fdw--2.0--1.0.sql</exclude>
-            <exclude>fdw/pxf_deparse.c</exclude>
-            <exclude>fdw/pxf_fdw.c</exclude>
-            <exclude>fdw/sql/**</exclude>
+            <exclude>extension/tests/legacy/fdw/pxf_fdw--1.0--2.0.sql</exclude>
+            <exclude>extension/tests/legacy/fdw/pxf_option.c</exclude>
+            <exclude>extension/tests/legacy/fdw/pxf_fdw--2.0.sql</exclude>
+            <exclude>extension/tests/legacy/fdw/PXF_FDW.md</exclude>
+            <exclude>extension/tests/legacy/fdw/Makefile</exclude>
+            <exclude>extension/tests/legacy/fdw/pxf_fdw.h</exclude>
+            <exclude>extension/tests/legacy/fdw/pxf_fdw--1.0.sql</exclude>
+            <exclude>extension/tests/legacy/fdw/README.md</exclude>
+            <exclude>extension/tests/legacy/fdw/pxf_fdw.control</exclude>
+            <exclude>extension/tests/legacy/fdw/pxf_option.h</exclude>
+            <exclude>extension/tests/legacy/fdw/pxf_fdw--2.0--1.0.sql</exclude>
+            <exclude>extension/tests/legacy/fdw/pxf_deparse.c</exclude>
+            <exclude>extension/tests/legacy/fdw/pxf_fdw.c</exclude>
+            <exclude>extension/tests/legacy/fdw/sql/**</exclude>
 
             <exclude>package/install_deb</exclude>
             <exclude>package/DEBIAN/**</exclude>

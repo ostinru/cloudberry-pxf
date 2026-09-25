@@ -374,13 +374,13 @@ jobs:
         include:
           - distro: ubuntu
             base_image: apache/incubator-cloudberry:cbdb-build-ubuntu22.04-latest
-            image_tag: pxf/cbdb-testcontainer-ubuntu:1
+            image_tag: pxf/cbdb-testcontainer-ubuntu:2
           - distro: rocky9
             base_image: apache/incubator-cloudberry:cbdb-build-rocky9-latest
-            image_tag: pxf/cbdb-testcontainer-rocky9:1
+            image_tag: pxf/cbdb-testcontainer-rocky9:2
           - distro: rocky10
             base_image: apache/incubator-cloudberry:cbdb-build-rocky10-latest
-            image_tag: pxf/cbdb-testcontainer-rocky10:1
+            image_tag: pxf/cbdb-testcontainer-rocky10:2
     steps:
       - name: Get month number
         id: get-month
@@ -466,6 +466,13 @@ jobs:
         fi
         rpm -Uvh --force "${packages[0]}"
 
+    - name: Install Rust extension toolchain
+      run: |
+        dnf install -y clang clang-devel
+        curl --proto '=https' --tlsv1.2 -fsSL https://sh.rustup.rs -o /tmp/pxf-rustup.sh
+        sh /tmp/pxf-rustup.sh -y --profile minimal --default-toolchain 1.85.1
+        echo "$HOME/.cargo/bin" >> "$GITHUB_PATH"
+
     - name: Build native extensions
       run: |
         source /usr/local/cloudberry-db/cloudberry-env.sh
@@ -478,10 +485,9 @@ jobs:
           echo "Expected PostgreSQL ${{ matrix.cloudberry.pg_major }}, got $actual_version"
           exit 1
         fi
-        make -C external-table clean
-        make -C external-table
-        make -C fdw clean
-        make -C fdw
+        make -C extension clean
+        make -C extension external-table
+        make -C extension fdw
 
   # Stage 2: Parallel test jobs using matrix strategy
   pxf-test:
@@ -1050,6 +1056,22 @@ jobs:
         fi
 
 
+  rust-extension-test:
+    name: Rust extensions / Cloudberry PG14
+    needs: [build-pxf-cbdb-testcontainer-image]
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: pxf-cbdb-testcontainer-image-ubuntu
+          path: /tmp
+      - name: Load Cloudberry automation image
+        run: docker load < /tmp/pxf-cbdb-testcontainer-ubuntu.tar
+      - name: Build and test both Rust extensions
+        run: bash extension/tests/automation.sh
+
   # Stage 2c: Testcontainers-based tests
   pxf-testcontainer-test:
     name: "TC Test - ${{ matrix.tc_group }} (${{ matrix.use_fdw == 'true' && 'fdw' || 'external-table' }}, ${{ matrix.distro }})"
@@ -1234,7 +1256,7 @@ jobs:
   # Stage 3: Summary job
   test-summary:
     name: Test Summary
-    needs: [native-extension-compatibility, pxf-test, pxf-test-rocky9, pxf-test-rocky10, pxf-testcontainer-test]
+    needs: [native-extension-compatibility, rust-extension-test, pxf-test, pxf-test-rocky9, pxf-test-rocky10, pxf-testcontainer-test]
     if: always()
     runs-on: ubuntu-latest
     steps:
@@ -1329,6 +1351,11 @@ jobs:
 
         if [ "${{ needs['native-extension-compatibility'].result }}" != "success" ]; then
           echo "::error::Cloudberry 2.x/3.x native extension compatibility check failed"
+          EXIT_CODE=1
+        fi
+
+        if [ "${{ needs['rust-extension-test'].result }}" != "success" ]; then
+          echo "::error::Rust extension integration tests failed"
           EXIT_CODE=1
         fi
 

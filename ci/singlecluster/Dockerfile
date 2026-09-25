@@ -20,6 +20,16 @@
 ARG BASE_IMAGE=apache/incubator-cloudberry:cbdb-build-ubuntu22.04-latest
 FROM ${BASE_IMAGE}
 
+# Rust extensions use pgrx/bindgen against the installed Cloudberry headers.
+RUN if command -v apt-get >/dev/null 2>&1; then \
+      sudo apt-get update -qq && sudo apt-get install -y --no-install-recommends clang libclang-dev; \
+    else sudo dnf install -y clang clang-devel; fi
+ARG RUST_VERSION=1.85.1
+RUN curl --proto '=https' --tlsv1.2 -fsSL https://sh.rustup.rs -o /tmp/pxf-rustup.sh && \
+    sh /tmp/pxf-rustup.sh -y --profile minimal --default-toolchain ${RUST_VERSION} --component rustfmt --component clippy && \
+    rm /tmp/pxf-rustup.sh
+ENV PATH="/home/gpadmin/.cargo/bin:${PATH}"
+
 # Install Java 8 & 11: auto-detect OS package manager.
 # Hadoop 3.1.2 runs on JDK 8 (JAVA_HADOOP) and the PXF server builds with
 # JDK 11 (JAVA_BUILD), so both are needed on every distro. RHEL/Rocky 10
