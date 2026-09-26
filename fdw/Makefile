@@ -21,7 +21,7 @@ PG_CONFIG ?= pg_config
 PROFILE ?= release
 .PHONY: all install stage clean clean-all installcheck test
 all install stage:
-	$(MAKE) -C ../extension $(@:all=build)-fdw PG_CONFIG="$(PG_CONFIG)" PROFILE="$(PROFILE)"
+	$(MAKE) -C ../extension $(patsubst all,build,$@)-fdw PG_CONFIG="$(PG_CONFIG)" PROFILE="$(PROFILE)"
 clean clean-all:
 	$(MAKE) -C ../extension clean-fdw
 test installcheck:
