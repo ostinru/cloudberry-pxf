@@ -238,6 +238,16 @@ pxf_cb_copy_error(void *arg)
         message = strstr(state->line_buf.data, "PXFERRMSG> ");
     if (message)
         errmsg("%s", message + strlen("PXFERRMSG> "));
+    /* The transport reports HTTP errors as CONNECTION_EXCEPTION. Both those
+     * failures and PXFERRMSG records describe a remote operation, not a bad
+     * input row; COPY's current line number is not a source row location. */
+    if (!state->cur_attname &&
+        (message || geterrcode() == ERRCODE_CONNECTION_EXCEPTION))
+    {
+        errcontext("Foreign table %s, resource %s",
+                   state->cur_relname, context->resource);
+        return;
+    }
     if (state->cur_attname && state->cur_attval)
     {
         char *value = limit_printout_length(state->cur_attval);

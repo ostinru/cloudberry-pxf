@@ -70,19 +70,25 @@ DO $$DECLARE context text; attempt int; BEGIN
     END LOOP;
 END $$;
 CREATE FOREIGN TABLE marker(id int,name text) SERVER rust_fixture OPTIONS(resource '/marker',format 'csv');
-DO $$BEGIN
+DO $$DECLARE context text; BEGIN
     PERFORM * FROM marker;
     RAISE EXCEPTION 'expected PXF marker failure';
 EXCEPTION WHEN OTHERS THEN
-    IF SQLERRM NOT LIKE '%fixture data error%' THEN RAISE; END IF;
+    GET STACKED DIAGNOSTICS context=PG_EXCEPTION_CONTEXT;
+    IF SQLERRM NOT LIKE '%fixture data error%'
+       OR context NOT LIKE '%Foreign table marker, resource /marker%'
+       OR context LIKE '%Foreign table marker, record %' THEN RAISE; END IF;
 END $$;
 CREATE FOREIGN TABLE http_error(id int,name text) SERVER rust_fixture OPTIONS(resource '/error',format 'csv');
-DO $$DECLARE hint text; BEGIN
+DO $$DECLARE hint text; context text; BEGIN
     PERFORM * FROM http_error;
     RAISE EXCEPTION 'expected HTTP failure';
 EXCEPTION WHEN OTHERS THEN
-    GET STACKED DIAGNOSTICS hint=PG_EXCEPTION_HINT;
-    IF SQLSTATE <> '08000' OR SQLERRM NOT LIKE 'PXF server error%fixture error%' OR hint NOT LIKE '%fixture hint%' THEN RAISE; END IF;
+    GET STACKED DIAGNOSTICS hint=PG_EXCEPTION_HINT, context=PG_EXCEPTION_CONTEXT;
+    IF SQLSTATE <> '08000' OR SQLERRM NOT LIKE 'PXF server error%fixture error%'
+       OR hint NOT LIKE '%fixture hint%'
+       OR context NOT LIKE '%Foreign table http_error, resource /error%'
+       OR context LIKE '%Foreign table http_error, record %' THEN RAISE; END IF;
 END $$;
 SET client_min_messages=log;
 DO $$DECLARE detail text; BEGIN
