@@ -95,6 +95,10 @@ public class PXFCloudberryContainer extends GenericContainer<PXFCloudberryContai
                 }
             })
             .withStartupTimeout(Duration.ofMinutes(25))
+            // Both independent extensions share the Rust workspace.
+            .withCopyToContainer(
+                    MountableFile.forHostPath(root.resolve("extension").toString()),
+                    CONTAINER_REPO_DIR + "/extension")
             // Copy directories to the container at runtime:
             .withCopyToContainer(
                     MountableFile.forHostPath(root.resolve("external-table").toString()),
@@ -140,7 +144,7 @@ public class PXFCloudberryContainer extends GenericContainer<PXFCloudberryContai
         if (instance == null) {
             String repo = resolveProperty("pxf.test.repo.path", AutomationUtils.findRepoRoot().toString());
             String distro = resolveDistro();
-            String imageName = "pxf/cbdb-testcontainer-" + distro + ":1";
+            String imageName = resolveProperty("pxf.test.image", "pxf/cbdb-testcontainer-" + distro + ":2");
             String baseImage = BASE_IMAGES.getOrDefault(distro, BASE_IMAGES.get("ubuntu"));
 
             ClasspathDockerContainerBuilder.ensureImageExists(

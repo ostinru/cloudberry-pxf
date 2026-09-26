@@ -114,6 +114,14 @@ psql --no-align --tuples-only --command "SELECT datname FROM pg_catalog.pg_datab
         echo "skipping database '${dbname}'" >>"${log_file}"
         continue
     fi
+    # Rust 3.x has different library names and pgrx entry points. Its SQL
+    # definitions already refer to the Rust libraries; retain those definitions
+    # when the target-ABI libraries are installed at the same paths.
+    extension_version=$(psql --dbname="${dbname}" --no-align --tuples-only --command "SELECT extversion FROM pg_catalog.pg_extension WHERE extname = 'pxf'")
+    if [[ ${extension_version%%.*} -ge 3 ]]; then
+        echo "retaining Rust PXF ${extension_version} function definitions in '${dbname}'" >>"${log_file}"
+        continue
+    fi
     echo "updating PXF extension UDFs in database '${dbname}'" >>"${log_file}"
     psql --dbname="${dbname}" --set ON_ERROR_STOP=on &>>"${log_file}" <<-END_OF_SQL
 		CREATE OR REPLACE FUNCTION pg_catalog.pxf_write() RETURNS integer

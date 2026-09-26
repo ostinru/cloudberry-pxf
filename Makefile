@@ -11,7 +11,7 @@ export SKIP_FDW_BUILD_REASON
 export SKIP_EXTERNAL_TABLE_PACKAGE_REASON
 export SKIP_FDW_PACKAGE_REASON
 
-SOURCE_EXTENSION_DIR = external-table
+SOURCE_EXTENSION_DIR = extension/external-table
 TARGET_EXTENSION_DIR = gpextable
 
 LICENSE ?= ASL 2.0
@@ -35,6 +35,7 @@ else
 	@echo "Skipping building external-table extension because $(SKIP_EXTERNAL_TABLE_BUILD_REASON)"
 endif
 
+fdw:
 ifeq ($(SKIP_FDW_BUILD_REASON),)
 	@echo "===> Compiling [$@] module <==="
 	make -C fdw
@@ -48,7 +49,7 @@ cli server:
 
 clean:
 	rm -rf build
-	make -C $(SOURCE_EXTENSION_DIR) clean-all
+	make -C extension clean
 	make -C cli clean
 	make -C server clean
 	make -C fdw clean
@@ -86,7 +87,7 @@ install-server:
 
 stage:
 	rm -rf build/stage
-	make -C $(SOURCE_EXTENSION_DIR) stage
+	make -C extension stage-external-table PROFILE=release
 ifeq ($(SKIP_FDW_PACKAGE_REASON),)
 	make -C fdw stage
 else
@@ -109,7 +110,7 @@ endif
 	mkdir -p build/stage/$${PXF_PACKAGE_NAME} ;\
 	cp -a $(SOURCE_EXTENSION_DIR)/build/stage/* build/stage/$${PXF_PACKAGE_NAME} ;\
 	if [[ -z "$${SKIP_FDW_PACKAGE_REASON:-}" ]]; then \
-		cp -a fdw/build/stage/* build/stage/$${PXF_PACKAGE_NAME} ;\
+		cp -a extension/fdw/build/stage/* build/stage/$${PXF_PACKAGE_NAME} ;\
 	fi ;\
 	cp -a cli/build/stage/* build/stage/$${PXF_PACKAGE_NAME} ;\
 	cp -a server/build/stage/* build/stage/$${PXF_PACKAGE_NAME} ;\
@@ -180,8 +181,8 @@ deb: stage
 	rm -rf build/debbuild ;\
 	mkdir -p build/debbuild/usr/local/cloudberry-pxf/$(TARGET_EXTENSION_DIR) ;\
 	cp -a $(SOURCE_EXTENSION_DIR)/build/stage/* build/debbuild/usr/local/cloudberry-pxf/ ;\
-	if [[ -z "$${SKIP_FDW_PACKAGE_REASON:-}" ]] && [[ -d fdw/build/stage ]]; then \
-		cp -a fdw/build/stage/* build/debbuild/usr/local/cloudberry-pxf/ ;\
+	if [[ -z "$${SKIP_FDW_PACKAGE_REASON:-}" ]] && [[ -d extension/fdw/build/stage ]]; then \
+		cp -a extension/fdw/build/stage/* build/debbuild/usr/local/cloudberry-pxf/ ;\
 	fi ;\
 	cp -a cli/build/stage/* build/debbuild/usr/local/cloudberry-pxf ;\
 	cp -a server/build/stage/* build/debbuild/usr/local/cloudberry-pxf ;\

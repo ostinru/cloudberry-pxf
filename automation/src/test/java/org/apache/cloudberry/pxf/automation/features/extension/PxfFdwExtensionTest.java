@@ -84,4 +84,22 @@ public class PxfFdwExtensionTest extends AbstractTestcontainersTest {
         extensionDb.runQuery("ALTER EXTENSION pxf_fdw UPDATE TO '2.0'");
         regress.runSqlTest("features/fdw_extension_tests/downgrade_then_upgrade/step_3_after_alter_extension_upgrade");
     }
+
+    @Test(groups = {"testcontainers", "pxf-fdw-extension"})
+    public void testRustCreateExtension30() throws Exception {
+        extensionDb.runQuery("CREATE EXTENSION pxf_fdw VERSION '3.0'");
+        extensionDb.runQuery("DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_proc WHERE proname = 'pxf_fdw_handler' AND probin = '$libdir/pxf_fdw_rust') THEN RAISE EXCEPTION 'Rust library is not installed'; END IF; END $$");
+        regress.runSqlTest("features/fdw_extension_tests_3_0/create_extension");
+    }
+
+    @Test(groups = {"testcontainers", "pxf-fdw-extension"})
+    public void testRustUpgrade30PreservesFunctionIdentity() throws Exception {
+        extensionDb.runQuery("CREATE EXTENSION pxf_fdw VERSION '2.0'");
+        extensionDb.runQuery("CREATE TEMP TABLE rust_function_identity AS SELECT oid FROM pg_proc WHERE proname = 'pxf_fdw_handler'");
+        extensionDb.runQuery("GRANT EXECUTE ON FUNCTION pxf_fdw_handler() TO PUBLIC");
+        extensionDb.runQuery("ALTER EXTENSION pxf_fdw UPDATE TO '3.0'");
+        extensionDb.runQuery("DO $$ BEGIN IF NOT EXISTS (SELECT 1 FROM pg_proc p JOIN rust_function_identity b ON b.oid=p.oid WHERE p.probin = '$libdir/pxf_fdw_rust') THEN RAISE EXCEPTION 'upgrade changed function identity'; END IF; END $$");
+        extensionDb.runQuery("DROP TABLE rust_function_identity");
+        regress.runSqlTest("features/fdw_extension_tests_3_0/create_extension");
+    }
 }

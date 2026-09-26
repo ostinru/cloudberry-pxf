@@ -29,7 +29,7 @@ elif [ -d /usr/lib/jvm/java-11-openjdk-arm64 ]; then
 else
   JAVA_HOME=${JAVA_HOME:-/usr/lib/jvm/java-11-openjdk}
 fi
-export PATH=$JAVA_HOME/bin:$PATH
+export PATH=$HOME/.cargo/bin:$JAVA_HOME/bin:$PATH
 export GPHOME=/usr/local/cloudberry-db
 source /usr/local/cloudberry-db/cloudberry-env.sh
 export PATH=$GPHOME/bin:$PATH
@@ -51,8 +51,10 @@ cd /home/gpadmin/workspace/cloudberry-pxf
 # container, so a plain `make install` would silently reuse a .so linked
 # against the host's glibc instead of rebuilding for this container's glibc.
 # Force a clean rebuild here.
-make -C external-table clean install
-make -C fdw clean install
+make -C extension clean
+make -C extension install-external-table install-fdw PROFILE=release
+# Older-version tests use frozen C fixtures; new databases default to Rust 3.0.
+bash extension/tests/install-legacy.sh
 make -C server install-server
 make -C server install-jdbc-drivers
 

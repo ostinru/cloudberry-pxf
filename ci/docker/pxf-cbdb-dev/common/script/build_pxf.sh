@@ -85,6 +85,9 @@ export PXF_HOME=/usr/local/pxf
 sudo mkdir -p "$PXF_HOME"
 sudo chown -R gpadmin:gpadmin "$PXF_HOME"
 
+# Rust is installed for gpadmin by ci/singlecluster/Dockerfile.
+export PATH="$HOME/.cargo/bin:$PATH"
+
 # Build and Install PXF
 make -C external-table install
 make -C fdw install

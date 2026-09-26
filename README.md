@@ -38,8 +38,8 @@ This project is derived from [greenplum/pxf](https://github.com/greenplum-db/pxf
 
 ## Repository Contents
 
-* `external-table/` : Contains the Cloudberry extension implementing an External Table protocol handler
-* `fdw/` : Contains the Cloudberry extension implementing a Foreign Data Wrapper (FDW) for PXF
+* `extension/` : Rust external-table and FDW extensions, shared crates, SQL upgrades and tests; see [build and migration instructions](extension/README.md)
+* `external-table/`, `fdw/` : Compatibility Makefile entry points for the Rust builds
 * `server/` : Contains the server side code of PXF along with the PXF Service and all the Plugins
 * `cli/` : Contains command line interface code for PXF
 * `automation/` : Contains the automation and integration tests for PXF against the various datasources
