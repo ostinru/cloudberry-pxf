@@ -120,3 +120,34 @@ CREATE EXTERNAL TABLE pxf_gsc_json(location text, month text, num_orders int, to
 FORMAT 'CUSTOM' (FORMATTER='pxfwritable_import');
 </pre>
 
+## Limiting the Number of Files Read
+
+When you query an external table that references a directory or a wildcard, PXF lists all of the matching files before it reads any data. On an object store, a path or wildcard can match a very large number of objects; listing them can consume significant memory on the PXF server and, in extreme cases, fail with an out-of-memory error that is difficult to interrupt.
+
+To guard against this, PXF caps the number of files that a single read request may resolve when accessing an object store with the `s3:*`, `gs:*`, `wasbs:*`, and `abfss:*` profiles. When a query matches more files than the limit, it fails with an error similar to:
+
+```
+The number of files to process exceeds the configured limit of <N>. Raise the FILES_LIMIT external table option or the pxf.fs.fragmenter.files.limit server property, or narrow the path or wildcard.
+```
+
+The default limit is 10000000 (ten million) files. You can change it in either of the following ways, listed from highest to lowest precedence:
+
+1. Per external table, with the `FILES_LIMIT` option in the `LOCATION` URI. For example, to allow at most 500000 files for a single table:
+
+    <pre>
+    CREATE EXTERNAL TABLE pxf_s3_many_files(location text, month text, num_orders int, total_sales float8)
+      LOCATION ('pxf://S3_BUCKET/pxf_examples/*.parquet?<b>PROFILE=s3:parquet&SERVER=s3srvcfg&FILES_LIMIT=500000</b>')
+    FORMAT 'CUSTOM' (FORMATTER='pxfwritable_import');
+    </pre>
+
+2. Per server, with the `pxf.fs.fragmenter.files.limit` property in the server's `pxf-site.xml` configuration file:
+
+    <pre>
+    &lt;property&gt;
+        &lt;name&gt;pxf.fs.fragmenter.files.limit&lt;/name&gt;
+        &lt;value&gt;500000&lt;/value&gt;
+    &lt;/property&gt;
+    </pre>
+
+Set the value to `0`, or to a negative number, to disable the limit. The limit applies only to object stores; reads from HDFS and the local file system are not affected.
+

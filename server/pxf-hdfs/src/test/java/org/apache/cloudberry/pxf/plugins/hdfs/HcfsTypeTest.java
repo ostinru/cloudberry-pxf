@@ -11,8 +11,10 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class HcfsTypeTest {
 
@@ -28,6 +30,17 @@ public class HcfsTypeTest {
         context = new RequestContext();
         context.setDataSource("/foo/bar.txt");
         context.setConfiguration(configuration);
+    }
+
+    @Test
+    public void testIsObjectStore() {
+        for (HcfsType type : new HcfsType[]{HcfsType.S3, HcfsType.S3A, HcfsType.S3N,
+                HcfsType.GS, HcfsType.ABFSS, HcfsType.WASBS}) {
+            assertTrue(type.isObjectStore(), type + " should be an object store");
+        }
+        for (HcfsType type : new HcfsType[]{HcfsType.HDFS, HcfsType.FILE, HcfsType.CUSTOM}) {
+            assertFalse(type.isObjectStore(), type + " should not be an object store");
+        }
     }
 
     @Test

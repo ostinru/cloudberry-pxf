@@ -116,4 +116,16 @@
         </description>
     </property>
 
+    <property>
+        <name>pxf.fs.fragmenter.files.limit</name>
+        <value>10000000</value>
+        <description>
+            Maximum number of files a single read request may resolve when accessing an object store
+            (S3, GCS, Azure) with the s3:*, gs:*, wasbs:*, and abfss:* profiles. A query whose path or
+            wildcard matches more files than this limit fails fast with an error instead of risking an
+            out-of-memory while listing. Set to 0 or a negative value to disable the limit.
+            Can be overridden per external table with the FILES_LIMIT option.
+        </description>
+    </property>
+
 </configuration>
