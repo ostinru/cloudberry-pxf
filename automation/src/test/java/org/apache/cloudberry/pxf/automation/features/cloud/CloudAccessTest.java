@@ -26,7 +26,7 @@ import org.apache.cloudberry.pxf.automation.applications.PXFApplication;
 import org.apache.cloudberry.pxf.automation.applications.S3Application;
 import org.apache.cloudberry.pxf.automation.structures.tables.pxf.ExternalTable;
 import org.apache.cloudberry.pxf.automation.structures.tables.utils.TableFactory;
-import org.apache.cloudberry.pxf.automation.testcontainers.MinIOContainer;
+import org.apache.cloudberry.pxf.automation.testcontainers.RustFSContainer;
 import org.testng.annotations.Test;
 
 import java.io.IOException;
@@ -57,7 +57,7 @@ public class CloudAccessTest extends AbstractTestcontainersTest {
 
     private final SmallDataFactory dataFactory = new SmallDataFactory();
 
-    private MinIOContainer s3Server;
+    private RustFSContainer s3Server;
     private S3Application s3Application;
     private String s3PathRead;
     private String s3PathWrite;
@@ -66,26 +66,26 @@ public class CloudAccessTest extends AbstractTestcontainersTest {
 
     @Override
     public void beforeClass() throws Exception {
-        s3Server = new MinIOContainer(container.getSharedNetwork());
+        s3Server = new RustFSContainer(container.getSharedNetwork());
         s3Server.start();
         s3Application = new S3Application(s3Server);
-        s3Application.createBucket(MinIOContainer.DEFAULT_BUCKET);
+        s3Application.createBucket(RustFSContainer.DEFAULT_BUCKET);
 
         String random = UUID.randomUUID().toString();
         readObjectKeyPrefix = String.format("tmp/pxf_automation_data_read/%s/", random);
         writeObjectKeyPrefix = String.format("tmp/pxf_automation_data_write/%s/", random);
-        s3PathRead = MinIOContainer.DEFAULT_BUCKET + "/" + readObjectKeyPrefix;
-        s3PathWrite = MinIOContainer.DEFAULT_BUCKET + "/" + writeObjectKeyPrefix;
+        s3PathRead = RustFSContainer.DEFAULT_BUCKET + "/" + readObjectKeyPrefix;
+        s3PathWrite = RustFSContainer.DEFAULT_BUCKET + "/" + writeObjectKeyPrefix;
     }
 
     @Override
     public void afterClass() throws Exception {
         if (s3Application != null) {
             if (readObjectKeyPrefix != null) {
-                s3Application.deletePrefix(MinIOContainer.DEFAULT_BUCKET, readObjectKeyPrefix);
+                s3Application.deletePrefix(RustFSContainer.DEFAULT_BUCKET, readObjectKeyPrefix);
             }
             if (writeObjectKeyPrefix != null) {
-                s3Application.deletePrefix(MinIOContainer.DEFAULT_BUCKET, writeObjectKeyPrefix);
+                s3Application.deletePrefix(RustFSContainer.DEFAULT_BUCKET, writeObjectKeyPrefix);
             }
             s3Application.shutdown();
         }
@@ -96,7 +96,7 @@ public class CloudAccessTest extends AbstractTestcontainersTest {
 
     @Override
     protected void beforeMethod() throws Exception {
-        uploadSmallCsvFixture(MinIOContainer.DEFAULT_BUCKET, readObjectKeyPrefix + fileName);
+        uploadSmallCsvFixture(RustFSContainer.DEFAULT_BUCKET, readObjectKeyPrefix + fileName);
     }
 
     // Uploads small CSV test data (see BaseTCFunctionality#getSmallData()) to the given S3 object.
@@ -113,8 +113,8 @@ public class CloudAccessTest extends AbstractTestcontainersTest {
     @Override
     protected void afterMethod() throws Exception {
         if (s3Application != null) {
-            s3Application.deletePrefix(MinIOContainer.DEFAULT_BUCKET, readObjectKeyPrefix);
-            s3Application.deletePrefix(MinIOContainer.DEFAULT_BUCKET, writeObjectKeyPrefix);
+            s3Application.deletePrefix(RustFSContainer.DEFAULT_BUCKET, readObjectKeyPrefix);
+            s3Application.deletePrefix(RustFSContainer.DEFAULT_BUCKET, writeObjectKeyPrefix);
         }
     }
 
@@ -207,7 +207,7 @@ public class CloudAccessTest extends AbstractTestcontainersTest {
         String serverParam = (server == null) ? null : "server=" + server;
         exTable.setServer(serverParam);
         if (creds) {
-            exTable.setUserParameters(new String[]{"accesskey=" + MinIOContainer.ACCESS_KEY, "secretkey=" + MinIOContainer.SECRET_KEY});
+            exTable.setUserParameters(new String[]{"accesskey=" + RustFSContainer.ACCESS_KEY, "secretkey=" + RustFSContainer.SECRET_KEY});
         }
         cloudberry.createTableAndVerify(exTable);
 
@@ -222,7 +222,7 @@ public class CloudAccessTest extends AbstractTestcontainersTest {
         String serverParam = (server == null) ? null : "server=" + server;
         exTable.setServer(serverParam);
         if (creds) {
-            exTable.setUserParameters(new String[]{"accesskey=" + MinIOContainer.ACCESS_KEY, "secretkey=" + MinIOContainer.SECRET_KEY});
+            exTable.setUserParameters(new String[]{"accesskey=" + RustFSContainer.ACCESS_KEY, "secretkey=" + RustFSContainer.SECRET_KEY});
         }
         cloudberry.createTableAndVerify(exTable);
 
@@ -232,7 +232,7 @@ public class CloudAccessTest extends AbstractTestcontainersTest {
         exTable.setProfile("s3:text");
         exTable.setServer(serverParam);
         if (creds) {
-            exTable.setUserParameters(new String[]{"accesskey=" + MinIOContainer.ACCESS_KEY, "secretkey=" + MinIOContainer.SECRET_KEY});
+            exTable.setUserParameters(new String[]{"accesskey=" + RustFSContainer.ACCESS_KEY, "secretkey=" + RustFSContainer.SECRET_KEY});
         }
         cloudberry.createTableAndVerify(exTable);
 
