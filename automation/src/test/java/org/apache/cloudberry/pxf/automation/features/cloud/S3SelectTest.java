@@ -19,6 +19,7 @@ package org.apache.cloudberry.pxf.automation.features.cloud;
  * under the License.
  */
 
+import annotations.WorksWithFDW;
 import org.apache.cloudberry.pxf.automation.AbstractTestcontainersTest;
 import org.apache.cloudberry.pxf.automation.applications.S3Application;
 import org.apache.cloudberry.pxf.automation.structures.tables.pxf.ReadableExternalTable;
@@ -35,6 +36,7 @@ import java.util.UUID;
 import static org.apache.cloudberry.pxf.automation.features.tpch.LineItem.LINEITEM_SCHEMA;
 
 /** Functional S3 Select Test */
+@WorksWithFDW
 public class S3SelectTest extends AbstractTestcontainersTest {
 
     private static final String[] PXF_S3_SELECT_INVALID_COLS = {
