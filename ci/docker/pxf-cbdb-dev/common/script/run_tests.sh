@@ -38,7 +38,7 @@ export PXF_SKIP_TINC=${PXF_SKIP_TINC:-false}
 export EXCLUDED_GROUPS=${EXCLUDED_GROUPS:-}
 # Keep test data on HDFS between classes to avoid missing inputs
 export PXF_TEST_KEEP_DATA=${PXF_TEST_KEEP_DATA:-true}
-# Provide S3 credentials so MinIO seeding and user-parameter overrides succeed.
+# Provide S3 credentials so RustFS seeding and user-parameter overrides succeed.
 export AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:-admin}
 export AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:-password}
 

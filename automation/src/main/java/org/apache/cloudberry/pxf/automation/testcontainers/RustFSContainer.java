@@ -25,37 +25,37 @@ import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.utility.DockerImageName;
 
 /**
- * TestContainers wrapper around MinIO for S3 / S3 Select automation tests.
- * The container joins a shared Docker network with alias minio, so PXF inside the
- * Cloudberry container can reach it at http://minio:9000.
+ * TestContainers wrapper around RustFS for S3 / S3 Select automation tests.
+ * The container joins a shared Docker network with alias rustfs, so PXF inside the
+ * Cloudberry container can reach it at http://rustfs:9000.
  *
  * This class only manages the container lifecycle and exposes endpoint /
  * credential accessors. S3 API access (buckets, objects) lives in
  * {@link org.apache.cloudberry.pxf.automation.applications.S3Application}.
  */
-public class MinIOContainer extends GenericContainer<MinIOContainer> {
+public class RustFSContainer extends GenericContainer<RustFSContainer> {
 
-    private static final String DEFAULT_IMAGE = "quay.io/minio/minio:RELEASE.2024-11-07T00-52-20Z";
-    private static final String NETWORK_ALIAS = "minio";
+    private static final String DEFAULT_IMAGE = "rustfs/rustfs:1.0.0@sha256:8cc9801755448b71a786705ce76692c77e14936cccd87cf2fc31842e58f4d1ff";
+    private static final String NETWORK_ALIAS = "rustfs";
 
     public static final int API_PORT = 9000;
-    public static final int CONSOLE_PORT = 9001;
 
     public static final String ACCESS_KEY = "admin";
     public static final String SECRET_KEY = "password";
     public static final String DEFAULT_BUCKET = "gpdb-ud-scratch";
 
-    public MinIOContainer(Network network) {
+    public RustFSContainer(Network network) {
         super(DockerImageName.parse(DEFAULT_IMAGE));
 
         withNetwork(network)
                 .withNetworkAliases(NETWORK_ALIAS)
-                .withExposedPorts(API_PORT, CONSOLE_PORT)
-                .withEnv("MINIO_ROOT_USER", ACCESS_KEY)
-                .withEnv("MINIO_ROOT_PASSWORD", SECRET_KEY)
-                .withEnv("MINIO_API_SELECT_PARQUET", "on")
-                .withCommand("server", "/data", "--console-address", ":" + CONSOLE_PORT)
-                .waitingFor(Wait.forHttp("/minio/health/live").forPort(API_PORT));
+                .withExposedPorts(API_PORT)
+                .withEnv("RUSTFS_ACCESS_KEY", ACCESS_KEY)
+                .withEnv("RUSTFS_SECRET_KEY", SECRET_KEY)
+                .withEnv("RUSTFS_ADDRESS", ":" + API_PORT)
+                .withEnv("RUSTFS_CONSOLE_ENABLE", "false")
+                .withCommand("/data")
+                .waitingFor(Wait.forHttp("/health/ready").forPort(API_PORT));
     }
 
     /** S3 API endpoint reachable from the test JVM (mapped port). */

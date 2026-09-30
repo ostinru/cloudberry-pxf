@@ -29,7 +29,7 @@ import com.amazonaws.services.s3.model.ListObjectsV2Request;
 import com.amazonaws.services.s3.model.ListObjectsV2Result;
 import com.amazonaws.services.s3.model.PutObjectRequest;
 import com.amazonaws.services.s3.model.S3ObjectSummary;
-import org.apache.cloudberry.pxf.automation.testcontainers.MinIOContainer;
+import org.apache.cloudberry.pxf.automation.testcontainers.RustFSContainer;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -38,16 +38,16 @@ import java.util.List;
 
 /**
  * S3 API access wrapper used by automation tests to seed and clean fixtures
- * in a MinIO bucket. Owns the AmazonS3 client; callers should call
+ * in a RustFS bucket. Owns the AmazonS3 client; callers should call
  * `shutdown()` when done (typically in afterClass before stopping the
- * MinIO container).
+ * RustFS container).
  */
 public class S3Application implements AutoCloseable {
 
     private final AmazonS3 s3Client;
 
-    public S3Application(MinIOContainer minio) {
-        this.s3Client = buildS3Client(minio.getHostEndpoint(), minio.getAccessKey(), minio.getSecretKey());
+    public S3Application(RustFSContainer s3Server) {
+        this.s3Client = buildS3Client(s3Server.getHostEndpoint(), s3Server.getAccessKey(), s3Server.getSecretKey());
     }
 
     public void createBucket(String bucket) {

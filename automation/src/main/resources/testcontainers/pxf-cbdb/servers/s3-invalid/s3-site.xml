@@ -13,7 +13,7 @@
 <!--
     Pre-baked PXF server 's3-invalid' configuration for testcontainers automation.
 
-    Endpoint points at the MinIO sidecar, but the credentials are deliberately
+    Endpoint points at the RustFS sidecar, but the credentials are deliberately
     invalid. Used by CloudAccessTest to verify PXF credential-resolution
     precedence: a server config with bad keys should surface an authentication
     failure unless the external table provides overriding credentials (in
@@ -25,7 +25,7 @@
 <configuration>
     <property>
         <name>fs.s3a.endpoint</name>
-        <value>http://minio:9000</value>
+        <value>http://rustfs:9000</value>
     </property>
     <property>
         <name>fs.s3a.access.key</name>

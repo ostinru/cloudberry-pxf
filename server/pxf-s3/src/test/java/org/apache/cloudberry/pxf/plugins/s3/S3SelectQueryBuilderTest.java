@@ -48,6 +48,17 @@ public class S3SelectQueryBuilderTest {
     }
 
     @Test
+    public void testUnprojectedColumnsHaveDistinctAliases() {
+        context.getTupleDescription().get(1).setProjected(false);
+        context.getTupleDescription().get(3).setProjected(false);
+
+        assertEquals("SELECT s._1, null AS pxf_unused_2, s._3, null AS pxf_unused_4, s._5, s._6, s._7, s._8, s._9 FROM S3Object s",
+                builderPosition.buildSelectQuery());
+        assertEquals("SELECT s.\"id\", null AS pxf_unused_2, s.\"amt\", null AS pxf_unused_4, s.\"pass\", s.\"weight\", s.\"col_varchar\", s.\"col_char\", s.\"col_numeric\" FROM S3Object s",
+                builderNoPosition.buildSelectQuery());
+    }
+
+    @Test
     public void testIdFilter() {
         context.setFilterString("a0c20s1d1o5"); // id = 1
         assertEquals(SQL_POSITION + " WHERE CAST (s._1 AS int) = 1", builderPosition.buildSelectQuery());

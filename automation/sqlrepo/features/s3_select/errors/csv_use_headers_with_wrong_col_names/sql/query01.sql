@@ -12,8 +12,8 @@
 -- m/file:.*;/
 -- s/file:.*; lineNumber: \d+; columnNumber: \d+;/SOME_ERROR_LOCATION/g
 --
--- m/Some headers in the query are missing from the file.*/
--- s/Some headers in the query are missing from the file.*/Some headers in the query are missing from the file. Please check the file and try again./
+-- m/PXF server error.*(A column name or a path provided does not exist in the SQL expression|S3 returned an error: column .* not found).*/
+-- s/PXF server error.*/PXF server error : S3 Select column not found/
 --
 -- m/DETAIL/
 -- s/DETAIL/CONTEXT/

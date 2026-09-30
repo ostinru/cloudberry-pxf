@@ -7,7 +7,7 @@
 -- # create a match/subs
 --
 -- m/PXF server error.*(doesBucketExist|com.amazonaws).*/
--- s/PXF server error.*/PXF server error : com.amazonaws.services.s3.model.AmazonS3Exception: Forbidden/
+-- s/PXF server error.*/PXF server error : com.amazonaws.services.s3.model.AmazonS3Exception: Invalid credentials/
 --
 -- m/DETAIL/
 -- s/DETAIL/CONTEXT/

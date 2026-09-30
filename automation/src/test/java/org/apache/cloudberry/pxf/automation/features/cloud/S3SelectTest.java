@@ -19,10 +19,11 @@ package org.apache.cloudberry.pxf.automation.features.cloud;
  * under the License.
  */
 
+import annotations.WorksWithFDW;
 import org.apache.cloudberry.pxf.automation.AbstractTestcontainersTest;
 import org.apache.cloudberry.pxf.automation.applications.S3Application;
 import org.apache.cloudberry.pxf.automation.structures.tables.pxf.ReadableExternalTable;
-import org.apache.cloudberry.pxf.automation.testcontainers.MinIOContainer;
+import org.apache.cloudberry.pxf.automation.testcontainers.RustFSContainer;
 import org.apache.cloudberry.pxf.automation.utils.AutomationUtils;
 import org.testng.annotations.Test;
 
@@ -35,6 +36,7 @@ import java.util.UUID;
 import static org.apache.cloudberry.pxf.automation.features.tpch.LineItem.LINEITEM_SCHEMA;
 
 /** Functional S3 Select Test */
+@WorksWithFDW
 public class S3SelectTest extends AbstractTestcontainersTest {
 
     private static final String[] PXF_S3_SELECT_INVALID_COLS = {
@@ -56,7 +58,7 @@ public class S3SelectTest extends AbstractTestcontainersTest {
             "invalid_comment        VARCHAR(44)"
     };
 
-    private MinIOContainer s3Server;
+    private RustFSContainer s3Server;
     private S3Application s3Application;
     private String s3Path;
     private String objectKeyPrefix;
@@ -86,23 +88,23 @@ public class S3SelectTest extends AbstractTestcontainersTest {
      */
     @Override
     public void beforeClass() throws Exception {
-        s3Server = new MinIOContainer(container.getSharedNetwork());
+        s3Server = new RustFSContainer(container.getSharedNetwork());
         s3Server.start();
         s3Application = new S3Application(s3Server);
-        s3Application.createBucket(MinIOContainer.DEFAULT_BUCKET);
+        s3Application.createBucket(RustFSContainer.DEFAULT_BUCKET);
 
         String uuid = UUID.randomUUID().toString();
         objectKeyPrefix = "tmp/pxf_automation_data/" + uuid + "/s3select/";
-        s3Path = MinIOContainer.DEFAULT_BUCKET + "/" + objectKeyPrefix;
+        s3Path = RustFSContainer.DEFAULT_BUCKET + "/" + objectKeyPrefix;
 
-        uploadFixtures(MinIOContainer.DEFAULT_BUCKET, objectKeyPrefix);
+        uploadFixtures(RustFSContainer.DEFAULT_BUCKET, objectKeyPrefix);
         // Server 's3' is pre-baked into the container image by entrypoint.sh.
     }
 
     @Override
     public void afterClass() throws Exception {
         if (s3Application != null && objectKeyPrefix != null) {
-            s3Application.deletePrefix(MinIOContainer.DEFAULT_BUCKET, objectKeyPrefix);
+            s3Application.deletePrefix(RustFSContainer.DEFAULT_BUCKET, objectKeyPrefix);
             s3Application.shutdown();
         }
         if (s3Server != null) {
@@ -110,7 +112,7 @@ public class S3SelectTest extends AbstractTestcontainersTest {
         }
     }
 
-    // Uploads committed S3 Select fixture files from src/test/resources/data/s3select/ into MinIO.
+    // Uploads committed S3 Select fixture files from src/test/resources/data/s3select/ into RustFS.
     private void uploadFixtures(String bucket, String objectKeyPrefix) throws IOException {
         Path fixturesDir = resolveFixturesDirectory();
         for (String filename : FIXTURE_FILES) {
