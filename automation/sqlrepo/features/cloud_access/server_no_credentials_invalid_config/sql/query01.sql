@@ -6,8 +6,8 @@
 --
 -- # create a match/subs
 --
--- m/PXF server error.*(com.amazonaws.services.s3.model.AmazonS3Exception: Forbidden).*/
--- s/PXF server error.*/PXF server error : com.amazonaws.services.s3.model.AmazonS3Exception: Forbidden/
+-- m/PXF server error.*(com.amazonaws.services.s3.model.AmazonS3Exception: (Forbidden|The Access Key Id you provided does not exist in our records)).*/
+-- s/PXF server error.*/PXF server error : com.amazonaws.services.s3.model.AmazonS3Exception: Invalid credentials/
 --
 -- m/DETAIL/
 -- s/DETAIL/CONTEXT/

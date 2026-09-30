@@ -61,8 +61,10 @@ public class S3SelectQueryBuilder extends SQLQueryBuilder {
 
     @Override
     protected String buildColumnsQuery() {
+        // Give placeholder values distinct names for S3 Select implementations that reject
+        // duplicate expressions in the SELECT list (for example, RustFS 1.0.0).
         return columns.stream()
-                .map(c -> c.isProjected() ? getColumnName(c) : "null")
+                .map(c -> c.isProjected() ? getColumnName(c) : String.format("null AS pxf_unused_%d", c.columnIndex() + 1))
                 .collect(Collectors.joining(", "));
     }
 
