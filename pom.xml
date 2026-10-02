@@ -1327,6 +1327,25 @@
 
             <!-- End of the legacy Greenplum PXF files -->
 
+            <!--
+                The following files are part of the Greengage PXF
+                open-source files, licensed under the Apache
+                License 2.0 by Greenplum/Pivotal/VMware.
+
+                Original files located:
+                  https://github.com/GreengageDB/pxf
+
+                These files do not contain license headers or recognizable
+                license markers, but are Apache-licensed by virtue of their
+                inclusion in the Greengage project. We exclude them
+                from Apache RAT scans to avoid false positives, while
+                retaining them in the source distribution.
+            -->
+            <exclude>server/pxf-hbase-lib/build.gradle</exclude>
+
+            <!-- End of the Greengage files -->
+
+
             <!-- The following files are introduced by Cloudberry,
                 but need to be excluded from the RAT scan.
             -->
