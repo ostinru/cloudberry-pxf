@@ -27,7 +27,7 @@ Perform the following procedure to install Java on the coordinator host, standby
     gpadmin@coordinator$ rpm -qa | grep java
     ```
 
-3. If the system does not include a Java 17 or 21 installation, install it on the coordinator host, standby coordinator host, and on each Apache Cloudberry segment host.
+3. If the system does not include a Java installation, install it on the coordinator host, standby coordinator host, and on each Apache Cloudberry segment host.
 
     1. Create a text file that lists your Apache Cloudberry standby coordinator host and segment hosts, one host name per line. For example, a file named `gphostfile` may include:
 
