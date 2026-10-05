@@ -21,7 +21,7 @@ PXF is compatible with these operating system platforms and Apache Cloudberry ve
 
 ### Java
 
-PXF supports Java 11, 17 and 21.
+PXF supports Java 17 and 21.
 
 
 ### Hadoop

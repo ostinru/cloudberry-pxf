@@ -7,7 +7,7 @@
 ```
 Execution failed for task ':pxf-api:compileJava'.
 > Error while evaluating property 'javaCompiler' of task ':pxf-api:compileJava'.
-   > Toolchain installation '/usr/lib/jvm/java-11-openjdk-amd64' does not provide
+   > Toolchain installation '/usr/lib/jvm/java-17-openjdk-amd64' does not provide
      the required capabilities: [JAVA_COMPILER]
 ```
 
@@ -17,17 +17,17 @@ Gradle itself starts fine on a JRE, which is why the build gets as far as
 
 ```
 # Debian/Ubuntu
-sudo apt-get install -y openjdk-11-jdk
-export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
+sudo apt-get install -y openjdk-17-jdk
+export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
 
 # RHEL/Rocky
-sudo dnf install -y java-11-openjdk-devel
-export JAVA_HOME=/usr/lib/jvm/java-11-openjdk
+sudo dnf install -y java-17-openjdk-devel
+export JAVA_HOME=/usr/lib/jvm/java-17-openjdk
 ```
 
 Two things make this easy to misdiagnose:
 
-* On Debian/Ubuntu the JRE is installed into `/usr/lib/jvm/java-11-openjdk-amd64`,
+* On Debian/Ubuntu the JRE is installed into `/usr/lib/jvm/java-17-openjdk-amd64`,
   the same directory a JDK would use, so `java -version` and `ls /usr/lib/jvm` both
   look healthy while `javac` is absent. The `maven` package depends on
   `default-jre-headless` and does **not** pull in a JDK. (On RHEL/Rocky,
