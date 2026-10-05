@@ -424,7 +424,7 @@ public class HdfsWritableTextTest extends BaseWritableFeature {
                     String.valueOf(j + 1000),
                     String.valueOf(j + 10),
                     ("b#!?bbb_" + (j + 1)),
-                    new Timestamp((System.currentTimeMillis()) - timeZoneOffset).toString(),
+                    new Timestamp((System.currentTimeMillis()) - timeZoneOffset).toString().replaceFirst("\\.0$", ""),
                     ("<(" + (j + 1) + "\\," + (j + 1) + ")\\," + (j + 1)) + ">"});
         }
 
