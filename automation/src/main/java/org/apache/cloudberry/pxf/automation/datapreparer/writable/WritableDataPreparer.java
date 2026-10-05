@@ -26,7 +26,7 @@ public class WritableDataPreparer implements IDataPreparer {
 					String.valueOf(i + 1000),
 					String.valueOf(i + 10),
 					("b#!?bbb_" + (i + 1)),
-					new Timestamp((System.currentTimeMillis()) - timeZoneOffset).toString().replaceFirst("\\.0$", ""),
+					new Timestamp((System.currentTimeMillis()) - timeZoneOffset).toString(),
 					("<(" + (i + 1) + "\\," + (i + 1) + ")\\," + (i + 1)) + ">" });
 		}
 		return null;
