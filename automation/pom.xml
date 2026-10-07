@@ -257,7 +257,7 @@
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
-            <version>42.7.8</version>
+            <version>42.7.13</version>
         </dependency>
 
         <dependency>
@@ -294,7 +294,7 @@
         <dependency>
             <groupId>org.springframework</groupId>
             <artifactId>spring-beans</artifactId>
-            <version>6.2.15</version>
+            <version>6.2.19</version>
             <scope>provided</scope>
         </dependency>
 

@@ -115,7 +115,7 @@ configure(javaProjects) {
             dependency("org.mortbay.jetty:jetty-util:6.1.26")
             dependency("org.objenesis:objenesis:2.1")
 
-            dependency("org.postgresql:postgresql:42.7.8")
+            dependency("org.postgresql:postgresql:42.7.13")
 
             dependency("org.threeten:threeten-extra:1.5.0")
             dependency("org.tukaani:xz:1.8")
@@ -230,6 +230,10 @@ configure(javaProjects) {
 
             dependency("org.apache.logging.log4j:log4j-spring-boot:2.25.4")
         }
+    }
+
+    dependencies {
+        testRuntimeOnly("org.junit.platform:junit-platform-launcher")
     }
 
     task removeIdeaOutDirectory(type: Delete) {
