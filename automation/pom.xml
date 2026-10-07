@@ -14,7 +14,7 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <java.version>11</java.version>
+        <java.version>17</java.version>
         <gphd.home>${GPHD_ROOT}</gphd.home>
         <pxf.lib>${user.home}/automation_tmp_lib</pxf.lib>
         <hdp.hadoop.version>2.10.2</hdp.hadoop.version>
@@ -474,6 +474,12 @@
             <groupId>org.apache.hbase</groupId>
             <artifactId>hbase-server</artifactId>
             <version>${hdp.hbase.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.apache.zookeeper</groupId>
+            <artifactId>zookeeper</artifactId>
+            <version>3.8.6</version>
         </dependency>
 
         <dependency>
