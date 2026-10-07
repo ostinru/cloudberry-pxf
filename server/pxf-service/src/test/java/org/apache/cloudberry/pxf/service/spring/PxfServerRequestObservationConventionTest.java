@@ -17,17 +17,17 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class PxfServerRequestObservationConventionTest {
 
-    private PxfServerRequestObservationConvention convention;
+    private PxfServerRequestObservationConvention contributor;
     private MockHttpServletRequest mockRequest;
 
     @BeforeEach
     public void setup() {
-        convention = new PxfServerRequestObservationConvention(new HttpHeaderDecoder());
+        contributor = new PxfServerRequestObservationConvention(new HttpHeaderDecoder());
         mockRequest = new MockHttpServletRequest();
     }
 
     @Test
-    public void testPxfServerRequestObservationConvention_pxfEndpoint_namedServer() {
+    public void testPxfWebMvcTagsContributor_pxfEndpoint_namedServer() {
         mockRequest.addHeader("X-GP-USER", "Alex");
         mockRequest.addHeader("X-GP-SEGMENT-ID", "5");
         mockRequest.addHeader("X-GP-OPTIONS-PROFILE", "test:text");
@@ -39,14 +39,14 @@ public class PxfServerRequestObservationConventionTest {
                 .and("server", "test_server")
                 .stream().collect(Collectors.toList());
 
-        Iterable<KeyValue> tagsIterable = convention.getLowCardinalityKeyValues(new ServerRequestObservationContext(mockRequest, new MockHttpServletResponse()));
+        Iterable<KeyValue> tagsIterable = contributor.getLowCardinalityKeyValues(new ServerRequestObservationContext(mockRequest, new MockHttpServletResponse()));
         List<KeyValue> tags = StreamSupport.stream(tagsIterable.spliterator(), false).collect(Collectors.toList());
 
         assertTrue(tags.containsAll(expectedTags));
     }
 
     @Test
-    public void testPxfServerRequestObservationConvention_pxfEndpoint_defaultServer() {
+    public void testPxfWebMvcTagsContributor_pxfEndpoint_defaultServer() {
         mockRequest.addHeader("X-GP-USER", "Alex");
         mockRequest.addHeader("X-GP-SEGMENT-ID", "5");
         mockRequest.addHeader("X-GP-OPTIONS-PROFILE", "test:text");
@@ -57,14 +57,14 @@ public class PxfServerRequestObservationConventionTest {
                 .and("server", "default")
                 .stream().collect(Collectors.toList());
 
-        Iterable<KeyValue> tagsIterable = convention.getLowCardinalityKeyValues(new ServerRequestObservationContext(mockRequest, new MockHttpServletResponse()));
+        Iterable<KeyValue> tagsIterable = contributor.getLowCardinalityKeyValues(new ServerRequestObservationContext(mockRequest, new MockHttpServletResponse()));
         List<KeyValue> tags = StreamSupport.stream(tagsIterable.spliterator(), false).collect(Collectors.toList());
 
         assertTrue(tags.containsAll(expectedTags));
     }
 
     @Test
-    public void testPxfServerRequestObservationConvention_pxfEndpoint_encoded() {
+    public void testPxfWebMvcTagsContributor_pxfEndpoint_encoded() {
         mockRequest.addHeader("X-GP-ENCODED-HEADER-VALUES", "true");
         mockRequest.addHeader("X-GP-USER", "Alex");
         mockRequest.addHeader("X-GP-SEGMENT-ID", "5");
@@ -77,21 +77,21 @@ public class PxfServerRequestObservationConventionTest {
                 .and("server", "test_server")
                 .stream().collect(Collectors.toList());
 
-        Iterable<KeyValue> tagsIterable = convention.getLowCardinalityKeyValues(new ServerRequestObservationContext(mockRequest, new MockHttpServletResponse()));
+        Iterable<KeyValue> tagsIterable = contributor.getLowCardinalityKeyValues(new ServerRequestObservationContext(mockRequest, new MockHttpServletResponse()));
         List<KeyValue> tags = StreamSupport.stream(tagsIterable.spliterator(), false).collect(Collectors.toList());
 
         assertTrue(tags.containsAll(expectedTags));
     }
 
     @Test
-    public void testPxfServerRequestObservationConvention_nonPxfEndpoint() {
+    public void testPxfWebMvcTagsContributor_nonPxfEndpoint() {
         List<KeyValue> expectedTags = KeyValues.of("user", "unknown")
                 .and("segment", "unknown")
                 .and("profile", "unknown")
                 .and("server", "unknown")
                 .stream().collect(Collectors.toList());
 
-        Iterable<KeyValue> tagsIterable = convention.getLowCardinalityKeyValues(new ServerRequestObservationContext(mockRequest, new MockHttpServletResponse()));
+        Iterable<KeyValue> tagsIterable = contributor.getLowCardinalityKeyValues(new ServerRequestObservationContext(mockRequest, new MockHttpServletResponse()));
         List<KeyValue> tags = StreamSupport.stream(tagsIterable.spliterator(), false).collect(Collectors.toList());
 
         assertTrue(tags.containsAll(expectedTags));
