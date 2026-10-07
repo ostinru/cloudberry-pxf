@@ -115,9 +115,9 @@ public class PxfMetricsIT {
                 .expectStatus().isOk()
                 .expectBody(String.class).returnResult().getResponseBody();
         assertNotNull(prometheusResponse);
-        assertTrue(prometheusResponse.contains("http_server_requests_seconds_count{application=\"pxf-service\",error=\"none\",exception=\"none\",method=\"GET\",outcome=\"SUCCESS\",profile=\"profile:test\",segment=\"77\",server=\"speedy\",status=\"200\",uri=\"/pxf/read\",user=\"reader\",} 1.0\n"));
-        assertTrue(prometheusResponse.contains("http_server_requests_seconds_count{application=\"pxf-service\",error=\"none\",exception=\"none\",method=\"POST\",outcome=\"SUCCESS\",profile=\"profile:test\",segment=\"77\",server=\"speedy\",status=\"200\",uri=\"/pxf/write\",user=\"writer\",} 1.0\n"));
-        assertTrue(prometheusResponse.contains("http_server_requests_seconds_count{application=\"pxf-service\",error=\"none\",exception=\"none\",method=\"GET\",outcome=\"SUCCESS\",profile=\"unknown\",segment=\"unknown\",server=\"unknown\",status=\"200\",uri=\"/actuator/health\",user=\"unknown\",} 1.0\n"));
+        assertTrue(prometheusResponse.contains("http_server_requests_seconds_count{application=\"pxf-service\",error=\"none\",exception=\"none\",method=\"GET\",outcome=\"SUCCESS\",profile=\"profile:test\",segment=\"77\",server=\"speedy\",status=\"200\",uri=\"/pxf/read\",user=\"reader\"} 1\n"));
+        assertTrue(prometheusResponse.contains("http_server_requests_seconds_count{application=\"pxf-service\",error=\"none\",exception=\"none\",method=\"POST\",outcome=\"SUCCESS\",profile=\"profile:test\",segment=\"77\",server=\"speedy\",status=\"200\",uri=\"/pxf/write\",user=\"writer\"} 1\n"));
+        assertTrue(prometheusResponse.contains("http_server_requests_seconds_count{application=\"pxf-service\",error=\"none\",exception=\"none\",method=\"GET\",outcome=\"SUCCESS\",profile=\"unknown\",segment=\"unknown\",server=\"unknown\",status=\"200\",uri=\"/actuator/health\",user=\"unknown\"} 1\n"));
     }
 
     private void mockServices() throws Exception {
