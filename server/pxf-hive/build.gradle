@@ -29,6 +29,7 @@ dependencies {
     implementation("org.apache.hive:hive-exec:${hiveVersion}:core")  { transitive = false }
     implementation("org.apache.hive:hive-metastore")                 { transitive = false }
     implementation("org.apache.hive:hive-serde")                     { transitive = false }
+    implementation("javax.servlet:javax.servlet-api:4.0.1")          { transitive = false }
     implementation("com.esotericsoftware:kryo")                      { transitive = false }
 
     /*******************************

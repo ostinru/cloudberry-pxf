@@ -62,7 +62,7 @@ dependencies {
     testCompileOnly("org.apache.hadoop:hadoop-annotations")
     testImplementation("com.esotericsoftware:kryo")
     testImplementation("commons-io:commons-io")
-    testImplementation("org.simplify4u:slf4j-mock") // for MDC mocking
+    testImplementation('org.mockito:mockito-inline')
 
     developmentOnly('org.springframework.boot:spring-boot-devtools')
     testImplementation('org.springframework.boot:spring-boot-starter-test')
