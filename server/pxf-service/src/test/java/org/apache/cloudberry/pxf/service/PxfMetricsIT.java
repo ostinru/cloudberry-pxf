@@ -1,10 +1,11 @@
 package org.apache.cloudberry.pxf.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Charsets;
 import org.apache.cloudberry.pxf.api.model.RequestContext;
 import org.apache.cloudberry.pxf.service.controller.ReadService;
 import org.apache.cloudberry.pxf.service.controller.WriteService;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mock;
 import org.mockito.stubbing.Answer;
@@ -12,13 +13,22 @@ import org.springframework.boot.test.autoconfigure.actuate.observability.AutoCon
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.web.server.LocalServerPort;
-import org.springframework.test.web.reactive.server.WebTestClient;
 import org.springframework.util.MultiValueMap;
 
+import java.io.IOException;
 import java.io.OutputStream;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.time.Duration;
+import java.util.Arrays;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.same;
@@ -44,80 +54,105 @@ public class PxfMetricsIT {
     @Mock
     private RequestContext mockContext;
 
-    private WebTestClient client;
-
-    @BeforeEach
-    public void setUp() {
-        client = WebTestClient.bindToServer().baseUrl("http://localhost:" + port).build();
-    }
+    private final HttpClient client = HttpClient.newBuilder()
+            .version(HttpClient.Version.HTTP_1_1)
+            .connectTimeout(Duration.ofSeconds(5))
+            .build();
+    private final ObjectMapper mapper = new ObjectMapper();
 
     @Test
     public void test_HttpServerRequests_Metric() throws Exception {
         mockServices();
         // call PXF read API
-        client.get().uri("/pxf/read")
+        String readResponse = send(request("/pxf/read")
                 .header("X-GP-ENCODED-HEADER-VALUES", "true")
                 .header("X-GP-USER", "reader")
                 .header("X-GP-SEGMENT-ID", "77")
                 .header("X-GP-OPTIONS-PROFILE", "profile%3Atest")
-                .header("X-GP-OPTIONS-SERVER", "speedy")
-                .exchange().expectStatus().isOk()
-                .expectBody(String.class).isEqualTo("Hello from read!");
+                .header("X-GP-OPTIONS-SERVER", "speedy"));
+        assertEquals("Hello from read!", readResponse);
 
         // assert metric got reported with proper tags
-        client.get().uri("/actuator/metrics/http.server.requests?tag=uri:/pxf/read")
-                .exchange().expectStatus().isOk().expectBody()
-                .jsonPath("$.measurements[?(@.statistic == 'COUNT')].value").isEqualTo(1.0)
-                .jsonPath("$.measurements[?(@.statistic == 'TOTAL_TIME' && @.value < 0.5)]").doesNotHaveJsonPath()
-                .jsonPath("$.availableTags[?(@.tag == 'application')].values[0]").isEqualTo("pxf-service")
-                .jsonPath("$.availableTags[?(@.tag == 'user')].values[0]").isEqualTo("reader")
-                .jsonPath("$.availableTags[?(@.tag == 'segment')].values[0]").isEqualTo("77")
-                .jsonPath("$.availableTags[?(@.tag == 'profile')].values[0]").isEqualTo("profile:test")
-                .jsonPath("$.availableTags[?(@.tag == 'server')].values[0]").isEqualTo("speedy");
+        JsonNode readMetrics = mapper.readTree(send(request("/actuator/metrics/http.server.requests?tag=uri:/pxf/read")));
+        assertEquals(1.0, measurementValue(readMetrics, "COUNT"));
+        assertTrue(measurementValue(readMetrics, "TOTAL_TIME") >= 0.5);
+        assertTag(readMetrics, "application", "pxf-service");
+        assertTag(readMetrics, "user", "reader");
+        assertTag(readMetrics, "segment", "77");
+        assertTag(readMetrics, "profile", "profile:test");
+        assertTag(readMetrics, "server", "speedy");
 
         // call PXF write API
-        client.post().uri("/pxf/write")
+        String writeResponse = send(request("/pxf/write")
+                .POST(HttpRequest.BodyPublishers.noBody())
                 .header("X-GP-USER", "writer")
                 .header("X-GP-SEGMENT-ID", "77")
                 .header("X-GP-OPTIONS-PROFILE", "profile:test")
-                .header("X-GP-OPTIONS-SERVER", "speedy")
-                .exchange().expectStatus().isOk()
-                .expectBody(String.class).isEqualTo("Hello from write!");
+                .header("X-GP-OPTIONS-SERVER", "speedy"));
+        assertEquals("Hello from write!", writeResponse);
 
         // assert metric got reported with proper tags
-        client.get().uri("/actuator/metrics/http.server.requests?tag=uri:/pxf/write")
-                .exchange().expectStatus().isOk().expectBody()
-                .jsonPath("$.measurements[?(@.statistic == 'COUNT')].value").isEqualTo(1.0)
-                .jsonPath("$.availableTags[?(@.tag == 'application')].values[0]").isEqualTo("pxf-service")
-                .jsonPath("$.availableTags[?(@.tag == 'user')].values[0]").isEqualTo("writer")
-                .jsonPath("$.availableTags[?(@.tag == 'segment')].values[0]").isEqualTo("77")
-                .jsonPath("$.availableTags[?(@.tag == 'profile')].values[0]").isEqualTo("profile:test")
-                .jsonPath("$.availableTags[?(@.tag == 'server')].values[0]").isEqualTo("speedy");
+        JsonNode writeMetrics = mapper.readTree(send(request("/actuator/metrics/http.server.requests?tag=uri:/pxf/write")));
+        assertEquals(1.0, measurementValue(writeMetrics, "COUNT"));
+        assertTag(writeMetrics, "application", "pxf-service");
+        assertTag(writeMetrics, "user", "writer");
+        assertTag(writeMetrics, "segment", "77");
+        assertTag(writeMetrics, "profile", "profile:test");
+        assertTag(writeMetrics, "server", "speedy");
 
         // assert metric for segment access is aggregate
-        client.get().uri("/actuator/metrics/http.server.requests?tag=segment:77")
-                .exchange().expectStatus().isOk().expectBody()
-                .jsonPath("$.measurements[?(@.statistic == 'COUNT')].value").isEqualTo(2.0)
-                .jsonPath("$.availableTags[?(@.tag == 'application')].values[0]").isEqualTo("pxf-service")
-                .jsonPath("$.availableTags[?(@.tag == 'user')].values[0]").isEqualTo("reader")
-                .jsonPath("$.availableTags[?(@.tag == 'user')].values[1]").isEqualTo("writer")
-                .jsonPath("$.availableTags[?(@.tag == 'profile')].values[0]").isEqualTo("profile:test")
-                .jsonPath("$.availableTags[?(@.tag == 'server')].values[0]").isEqualTo("speedy");
+        JsonNode segmentMetrics = mapper.readTree(send(request("/actuator/metrics/http.server.requests?tag=segment:77")));
+        assertEquals(2.0, measurementValue(segmentMetrics, "COUNT"));
+        assertTag(segmentMetrics, "application", "pxf-service");
+        assertTag(segmentMetrics, "user", "reader", "writer");
+        assertTag(segmentMetrics, "profile", "profile:test");
+        assertTag(segmentMetrics, "server", "speedy");
 
         // hit the actuator health endpoint
-        client.get().uri("/actuator/health")
-                .exchange().expectStatus().isOk().expectBody()
-                .json("{\"status\":\"UP\",\"groups\":[\"liveness\",\"readiness\"]}");
+        JsonNode health = mapper.readTree(send(request("/actuator/health")));
+        assertEquals("UP", health.path("status").asText());
+        String[] healthGroups = mapper.treeToValue(health.path("groups"), String[].class);
+        Arrays.sort(healthGroups);
+        assertArrayEquals(new String[]{"liveness", "readiness"}, healthGroups);
 
         // assert prometheus endpoint reflects the metric as well
-        String prometheusResponse = client.get().uri("/actuator/prometheus")
-                .exchange()
-                .expectStatus().isOk()
-                .expectBody(String.class).returnResult().getResponseBody();
+        String prometheusResponse = send(request("/actuator/prometheus"));
         assertNotNull(prometheusResponse);
         assertTrue(prometheusResponse.contains("http_server_requests_seconds_count{application=\"pxf-service\",error=\"none\",exception=\"none\",method=\"GET\",outcome=\"SUCCESS\",profile=\"profile:test\",segment=\"77\",server=\"speedy\",status=\"200\",uri=\"/pxf/read\",user=\"reader\"} 1\n"));
         assertTrue(prometheusResponse.contains("http_server_requests_seconds_count{application=\"pxf-service\",error=\"none\",exception=\"none\",method=\"POST\",outcome=\"SUCCESS\",profile=\"profile:test\",segment=\"77\",server=\"speedy\",status=\"200\",uri=\"/pxf/write\",user=\"writer\"} 1\n"));
         assertTrue(prometheusResponse.contains("http_server_requests_seconds_count{application=\"pxf-service\",error=\"none\",exception=\"none\",method=\"GET\",outcome=\"SUCCESS\",profile=\"unknown\",segment=\"unknown\",server=\"unknown\",status=\"200\",uri=\"/actuator/health\",user=\"unknown\"} 1\n"));
+    }
+
+    private HttpRequest.Builder request(String path) {
+        return HttpRequest.newBuilder(URI.create("http://localhost:" + port + path))
+                .timeout(Duration.ofSeconds(5));
+    }
+
+    private String send(HttpRequest.Builder request) throws IOException, InterruptedException {
+        HttpResponse<String> response = client.send(request.build(), HttpResponse.BodyHandlers.ofString());
+        assertEquals(200, response.statusCode(), response.body());
+        return response.body();
+    }
+
+    private double measurementValue(JsonNode metrics, String statistic) {
+        for (JsonNode measurement : metrics.path("measurements")) {
+            if (statistic.equals(measurement.path("statistic").asText())) {
+                JsonNode value = measurement.path("value");
+                assertTrue(value.isNumber(), "Expected a numeric measurement: " + statistic);
+                return value.doubleValue();
+            }
+        }
+        return fail("Missing measurement: " + statistic);
+    }
+
+    private void assertTag(JsonNode metrics, String name, String... values) {
+        for (JsonNode tag : metrics.path("availableTags")) {
+            if (name.equals(tag.path("tag").asText())) {
+                assertEquals(mapper.valueToTree(values), tag.path("values"), name);
+                return;
+            }
+        }
+        fail("Missing metric tag: " + name);
     }
 
     private void mockServices() throws Exception {
