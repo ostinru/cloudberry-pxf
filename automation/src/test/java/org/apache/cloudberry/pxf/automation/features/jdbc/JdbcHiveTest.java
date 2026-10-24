@@ -80,18 +80,18 @@ public class JdbcHiveTest extends BaseFeature {
 
     /*
      * GPDB columns when writing from GPDB to Hive with the JDBC profile.
-     * These writes use PXF's Hive JDBC driver (1.1.0), not the automation client.
+     * Types excluded for older driver limitations still require end-to-end validation.
      */
     private static final String[] GPDB_WRITE_TYPES_TABLE_FIELDS = new String[] {
             "t1    text",
             "t2    text",
             "num1  int",
             "dub1  double precision",
-            // Hive JDBC driver 1.1.0 does not support BigDecimal
+            // Hive JDBC driver 1.1.0 did not support BigDecimal
             // https://issues.apache.org/jira/browse/HIVE-13614
             // fixed in 2.3.0
             // "dec1   numeric",
-            // Hive JDBC driver does not quote value as required
+            // Older Hive JDBC drivers did not quote the value as required
             // https://issues.apache.org/jira/browse/HIVE-11748
             // fixed in 2.0.0
             // "tm    timestamp",
@@ -100,7 +100,7 @@ public class JdbcHiveTest extends BaseFeature {
             "b     boolean",
             "tn    smallint",
             "sml   smallint",
-            // Hive JDBC driver does not quote value as required
+            // Older Hive JDBC drivers did not quote the value as required
             // https://issues.apache.org/jira/browse/HIVE-11024
             // fixed in 1.3.0, 2.0.0
             // "dt    date",
