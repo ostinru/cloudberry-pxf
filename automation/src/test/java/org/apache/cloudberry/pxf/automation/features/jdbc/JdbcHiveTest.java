@@ -80,36 +80,20 @@ public class JdbcHiveTest extends BaseFeature {
 
     /*
      * GPDB columns when writing from GPDB to Hive with the JDBC profile.
-     * Types excluded for older driver limitations still require end-to-end validation.
      */
     private static final String[] GPDB_WRITE_TYPES_TABLE_FIELDS = new String[] {
             "t1    text",
             "t2    text",
             "num1  int",
             "dub1  double precision",
-            // Hive JDBC driver 1.1.0 did not support BigDecimal
-            // https://issues.apache.org/jira/browse/HIVE-13614
-            // fixed in 2.3.0
-            // "dec1   numeric",
-            // Older Hive JDBC drivers did not quote the value as required
-            // https://issues.apache.org/jira/browse/HIVE-11748
-            // fixed in 2.0.0
-            // "tm    timestamp",
             "r     real",
             "bg    bigint",
             "b     boolean",
             "tn    smallint",
             "sml   smallint",
-            // Older Hive JDBC drivers did not quote the value as required
-            // https://issues.apache.org/jira/browse/HIVE-11024
-            // fixed in 1.3.0, 2.0.0
-            // "dt    date",
             "vc1   varchar(5)",
             "c1    char(3)",
-            // Hive JDBC driver does not support setBytes()
-            // https://github.com/apache/hive/blob/dc8891ec9459d2eff5a23154383ec3bd19481fd2/jdbc/src/java/org/apache/hive/jdbc/HivePreparedStatement.java#L251-L254
-            // not yet fixed
-            //"bin   bytea"
+            "dec1  numeric(38,18)"
     };
 
     private static final String[] HIVE_WRITE_TYPES_TABLE_FIELDS = new String[] {
@@ -123,7 +107,8 @@ public class JdbcHiveTest extends BaseFeature {
             "tn    tinyint",
             "sml   smallint",
             "vc1   varchar(5)",
-            "c1    char(3)"
+            "c1    char(3)",
+            "dec1  decimal(38,18)"
     };
 
     private Hive hive;
@@ -246,7 +231,7 @@ public class JdbcHiveTest extends BaseFeature {
         runSqlTest("features/jdbc/hive");
     }
 
-    @Test(enabled = false, groups = {"features", "gpdb", "security"})
+    @Test(groups = {"features", "gpdb", "security"})
     public void jdbcHiveWrite() throws Exception {
         prepareDataForWriteTest();
         createTablesForWriteTest(hive, "hive", "db-hive");
