@@ -79,20 +79,26 @@ public class JdbcHiveTest extends BaseFeature {
     };
 
     /*
-     * GPDB columns when writing from GPDB to Hive with the JDBC profile.
+     * GPDB columns when writing from GPDB to Hive with the JDBC profile
      */
     private static final String[] GPDB_WRITE_TYPES_TABLE_FIELDS = new String[] {
             "t1    text",
             "t2    text",
             "num1  int",
             "dub1  double precision",
+            // Hive JDBC driver does not support setObject(LocalDateTime)
+            // "tm    timestamp",
             "r     real",
             "bg    bigint",
             "b     boolean",
             "tn    smallint",
             "sml   smallint",
+            // Hive JDBC driver does not support setObject(LocalDate)
+            // "dt    date",
             "vc1   varchar(5)",
             "c1    char(3)",
+            // Hive JDBC driver does not support setBytes()
+            // "bin   bytea",
             "dec1  numeric(38,18)"
     };
 
