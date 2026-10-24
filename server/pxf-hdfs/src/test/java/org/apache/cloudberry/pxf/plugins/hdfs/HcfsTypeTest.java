@@ -70,9 +70,9 @@ public class HcfsTypeTest {
     @Test
     public void testFailsToGetTypeWhenDefaultFSIsSetWithoutColon() {
         configuration.set("fs.defaultFS", "/");
-        Exception e = assertThrows(IllegalStateException.class,
+        Exception e = assertThrows(IllegalArgumentException.class,
                 () -> HcfsType.getHcfsType(context));
-        assertEquals("No scheme for property fs.defaultFS=/", e.getMessage());
+        assertEquals("No scheme in default FS: /", e.getMessage());
     }
 
     @Test

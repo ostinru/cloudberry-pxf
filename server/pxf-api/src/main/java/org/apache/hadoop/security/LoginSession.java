@@ -4,6 +4,7 @@ import org.apache.commons.lang.builder.ToStringBuilder;
 import org.apache.commons.lang.builder.ToStringStyle;
 
 import javax.security.auth.Subject;
+import javax.security.auth.kerberos.KeyTab;
 import java.util.Objects;
 
 /**
@@ -27,6 +28,7 @@ public class LoginSession {
     private UserGroupInformation loginUser;
     private Subject subject;
     private User user;
+    private final boolean fromKeytab;
 
     /**
      * Creates a new session object with a config directory
@@ -77,6 +79,9 @@ public class LoginSession {
         this.keytabPath = keytabPath;
         this.loginUser = loginUser;
         this.subject = subject;
+        // Hadoop 3 UGI only recognizes Hadoop-owned JAAS contexts, not PXF's.
+        // Retain the initial state even if a failed relogin removes credentials.
+        this.fromKeytab = subject != null && !subject.getPrivateCredentials(KeyTab.class).isEmpty();
         if (subject != null) {
             this.user = subject.getPrincipals(User.class).iterator().next();
         }
@@ -91,6 +96,10 @@ public class LoginSession {
      */
     public UserGroupInformation getLoginUser() {
         return loginUser;
+    }
+
+    public boolean isFromKeytab() {
+        return fromKeytab;
     }
 
     /**

@@ -10,6 +10,7 @@ dependencies {
      *******************************/
 
     api(project(':pxf-api'))
+    compileOnly("org.apache.hadoop:hadoop-annotations")              { transitive = false }
 
     /*******************************
      * Implementation Dependencies

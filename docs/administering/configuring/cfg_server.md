@@ -46,10 +46,6 @@ For example, the contents of the `s3-site.xml` template file follow:
         <name>fs.s3a.secret.key</name>
         <value>YOUR_AWS_SECRET_ACCESS_KEY</value>
     </property>
-    <property>
-        <name>fs.s3a.fast.upload</name>
-        <value>true</value>
-    </property>
 </configuration>
 ```
 
