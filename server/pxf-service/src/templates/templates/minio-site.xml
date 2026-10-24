@@ -13,10 +13,6 @@
         <value>YOUR_AWS_SECRET_ACCESS_KEY</value>
     </property>
     <property>
-        <name>fs.s3a.fast.upload</name>
-        <value>true</value>
-    </property>
-    <property>
         <name>fs.s3a.path.style.access</name>
         <value>true</value>
     </property>

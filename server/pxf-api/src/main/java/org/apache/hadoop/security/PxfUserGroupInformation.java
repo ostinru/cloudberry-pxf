@@ -137,8 +137,8 @@ public class PxfUserGroupInformation {
         UserGroupInformation ugi = loginSession.getLoginUser();
 
         if (ugi.getAuthenticationMethod() != UserGroupInformation.AuthenticationMethod.KERBEROS ||
-                !ugi.isFromKeytab()) {
-            LOG.error("Did not attempt to relogin from keytab: auth={}, fromKeyTab={}", ugi.getAuthenticationMethod(), ugi.isFromKeytab());
+                !loginSession.isFromKeytab()) {
+            LOG.error("Did not attempt to relogin from keytab: auth={}, fromKeyTab={}", ugi.getAuthenticationMethod(), loginSession.isFromKeytab());
             return;
         }
 

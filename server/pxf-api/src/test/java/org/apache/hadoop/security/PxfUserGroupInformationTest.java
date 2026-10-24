@@ -261,6 +261,21 @@ public class PxfUserGroupInformationTest {
     /* ---------- Test below follow full login path via a few alternatives ---------- */
 
     @Test
+    public void testReloginAfterCredentialsWereRemoved() throws Exception {
+        user.setLogin(mockLoginContext);
+        ugi = new UserGroupInformation(subjectWithKerberosKeyTab);
+        ugi.setAuthenticationMethod(UserGroupInformation.AuthenticationMethod.KERBEROS);
+        session = new LoginSession("config", "principal", "keytab", ugi, subjectWithKerberosKeyTab, 1, 0.8f);
+        subjectWithKerberosKeyTab.getPrivateCredentials().clear();
+
+        pxfUserGroupInformation.reloginFromKeytab(serverName, session);
+
+        assertTrue(session.isFromKeytab());
+        verify(mockLoginContext).logout();
+        verify(mockLoginContext).login();
+    }
+
+    @Test
     public void testReloginFromKeytabNoValidTGT() throws Exception {
 
         assertEquals(2, subjectWithKerberosKeyTab.getPrivateCredentials().size()); // subject has 2 tickets
