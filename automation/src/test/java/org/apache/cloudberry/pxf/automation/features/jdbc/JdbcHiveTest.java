@@ -79,7 +79,8 @@ public class JdbcHiveTest extends BaseFeature {
     };
 
     /*
-     * GPDB columns when writing from GPDB to Hive with the JDBC profile
+     * GPDB columns when writing from GPDB to Hive with the JDBC profile.
+     * These writes use PXF's Hive JDBC driver (1.1.0), not the automation client.
      */
     private static final String[] GPDB_WRITE_TYPES_TABLE_FIELDS = new String[] {
             "t1    text",

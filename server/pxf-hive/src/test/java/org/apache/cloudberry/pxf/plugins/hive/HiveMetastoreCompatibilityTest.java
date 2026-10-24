@@ -5,7 +5,6 @@ import org.apache.hadoop.hive.conf.HiveConf;
 import org.apache.hadoop.hive.metastore.HiveMetaStore;
 import org.apache.hadoop.hive.metastore.HiveMetaStoreClientCompatibility1xx;
 import org.apache.hadoop.hive.metastore.IMetaStoreClient;
-import org.apache.hadoop.hive.metastore.api.GetTableResult;
 import org.apache.hadoop.hive.metastore.api.MetaException;
 import org.apache.hadoop.hive.metastore.api.NoSuchObjectException;
 import org.apache.hadoop.hive.metastore.api.Table;
@@ -29,6 +28,8 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.mockConstruction;
 import static org.mockito.Mockito.mockConstructionWithAnswer;
 import static org.mockito.Mockito.mockStatic;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class HiveMetastoreCompatibilityTest {
@@ -65,7 +66,7 @@ public class HiveMetastoreCompatibilityTest {
             hiveMetaStoreMockedStatic.when(() -> HiveMetaStore.newRetryingHMSHandler(any(String.class), any(), any(Boolean.class)))
                     .thenReturn(mockThriftClient);
 
-            when(mockThriftClient.get_table_req(any())).thenThrow(new MetaException("some meta failure"));
+            when(mockThriftClient.get_table("default", name)).thenThrow(new MetaException("some meta failure"));
 
             hiveCompatiblityClient = new HiveMetaStoreClientCompatibility1xx(newHiveConf());
             Exception e = assertThrows(MetaException.class,
@@ -83,7 +84,7 @@ public class HiveMetastoreCompatibilityTest {
             hiveMetaStoreMockedStatic.when(() -> HiveMetaStore.newRetryingHMSHandler(any(String.class), any(), any(Boolean.class)))
                     .thenReturn(mockThriftClient);
 
-            when(mockThriftClient.get_table_req(any())).thenThrow(new NoSuchObjectException("where's my table"));
+            when(mockThriftClient.get_table("default", name)).thenThrow(new NoSuchObjectException("where's my table"));
 
             hiveCompatiblityClient = new HiveMetaStoreClientCompatibility1xx(newHiveConf());
             Exception e = assertThrows(NoSuchObjectException.class,
@@ -104,12 +105,14 @@ public class HiveMetastoreCompatibilityTest {
             hiveMetaStoreMockedStatic.when(() -> HiveMetaStore.newRetryingHMSHandler(any(String.class), any(), any(Boolean.class)))
                     .thenReturn(mockThriftClient);
 
-            when(mockThriftClient.get_table_req(any())).thenThrow(new TApplicationException("fallback"));
-            when(mockThriftClient.get_table("default", name)).thenReturn(hiveTable);
+            when(mockThriftClient.get_table("default", name))
+                    .thenThrow(new TApplicationException("fallback"))
+                    .thenReturn(hiveTable);
 
             hiveCompatiblityClient = new HiveMetaStoreClientCompatibility1xx(newHiveConf());
             Table resultTable = hiveCompatiblityClient.getTable("default", name);
             assertEquals(name, resultTable.getTableName());
+            verify(mockThriftClient, times(2)).get_table("default", name);
         }
     }
 
@@ -122,8 +125,9 @@ public class HiveMetastoreCompatibilityTest {
             hiveMetaStoreMockedStatic.when(() -> HiveMetaStore.newRetryingHMSHandler(any(String.class), any(), any(Boolean.class)))
                     .thenReturn(mockThriftClient);
 
-            when(mockThriftClient.get_table_req(any())).thenThrow(new TApplicationException("fallback"));
-            when(mockThriftClient.get_table("default", name)).thenThrow(new TTransportException("oops. where's the metastore?"));
+            when(mockThriftClient.get_table("default", name))
+                    .thenThrow(new TApplicationException("fallback"))
+                    .thenThrow(new TTransportException("oops. where's the metastore?"));
 
             hiveCompatiblityClient = new HiveMetaStoreClientCompatibility1xx(newHiveConf());
             Exception e = assertThrows(TTransportException.class,
@@ -141,7 +145,7 @@ public class HiveMetastoreCompatibilityTest {
             hiveMetaStoreMockedStatic.when(() -> HiveMetaStore.newRetryingHMSHandler(any(String.class), any(), any(Boolean.class)))
                     .thenReturn(mockThriftClient);
 
-            when(mockThriftClient.get_table_req(any())).thenThrow(new TTransportException("oops. where's the metastore?"));
+            when(mockThriftClient.get_table("default", name)).thenThrow(new TTransportException("oops. where's the metastore?"));
 
             hiveCompatiblityClient = new HiveMetaStoreClientCompatibility1xx(newHiveConf());
             Exception e = assertThrows(TTransportException.class,
@@ -162,7 +166,6 @@ public class HiveMetastoreCompatibilityTest {
             hiveMetaStoreMockedStatic.when(() -> HiveMetaStore.newRetryingHMSHandler(any(String.class), any(), any(Boolean.class)))
                     .thenReturn(mockThriftClient);
 
-            when(mockThriftClient.get_table_req(any())).thenThrow(new TApplicationException("fallback"));
             when(mockThriftClient.get_table("default", name))
                     .thenThrow(new TTransportException("oops. where's the metastore? 1"))
                     .thenThrow(new TTransportException("oops. where's the metastore? 2"))
@@ -192,7 +195,6 @@ public class HiveMetastoreCompatibilityTest {
                 when(mockSocket.isOpen()).thenReturn(true));
              MockedConstruction<ThriftHiveMetastore.Client> thriftHiveMetastoreClientMockedConstruction = mockConstruction(ThriftHiveMetastore.Client.class,
                 (mockClient, context) -> {
-                    when(mockClient.get_table_req(any())).thenThrow(new TApplicationException("fallback"));
                     when(mockClient.get_table("default", name))
                             .thenThrow(new TTransportException("oops. where's the metastore?"));
                 }
@@ -225,16 +227,15 @@ public class HiveMetastoreCompatibilityTest {
              MockedConstruction<ThriftHiveMetastore.Client> thriftHiveMetastoreClientMockedConstruction = mockConstructionWithAnswer(ThriftHiveMetastore.Client.class,
                      // first run through
                      invocation ->  {
-                         if (invocation.getMethod().getName().equals("get_table_req")) {
+                         if (invocation.getMethod().getName().equals("get_table")) {
                              throw new TTransportException("oops. where's the metastore? 1");
                          }
                          return null;
                      },
                      // second run through (retry 1 = success)
                      invocation ->  {
-                         if (invocation.getMethod().getName().equals("get_table_req")) {
-                             GetTableResult tempRes = new GetTableResult(hiveTable);
-                             return tempRes;
+                         if (invocation.getMethod().getName().equals("get_table")) {
+                             return hiveTable;
                          }
                          return null;
                      }
@@ -267,36 +268,28 @@ public class HiveMetastoreCompatibilityTest {
              MockedConstruction<ThriftHiveMetastore.Client> thriftHiveMetastoreClientMockedConstruction = mockConstructionWithAnswer(ThriftHiveMetastore.Client.class,
                      // first run through
                      invocation -> {
-                         if (invocation.getMethod().getName().equals("get_table_req")) {
-                             throw new TApplicationException("fallback 1");
-                         } else if (invocation.getMethod().getName().equals("get_table")) {
+                         if (invocation.getMethod().getName().equals("get_table")) {
                              throw new TTransportException("oops. where's the metastore? 1");
                          }
                          return null;
                      },
                      // second run through (retry 1)
                      invocation -> {
-                         if (invocation.getMethod().getName().equals("get_table_req")) {
-                             throw new TApplicationException("fallback 2");
-                         } else if (invocation.getMethod().getName().equals("get_table")) {
+                         if (invocation.getMethod().getName().equals("get_table")) {
                              throw new TTransportException("oops. where's the metastore? 2");
                          }
                          return null;
                      },
                      // third run through (retry 2)
                      invocation -> {
-                         if (invocation.getMethod().getName().equals("get_table_req")) {
-                             throw new TApplicationException("fallback 3");
-                         } else if (invocation.getMethod().getName().equals("get_table")) {
+                         if (invocation.getMethod().getName().equals("get_table")) {
                              throw new TTransportException("oops. where's the metastore? 3");
                          }
                          return null;
                      },
                      // final run through (retry 3 = success)
                      invocation -> {
-                         if (invocation.getMethod().getName().equals("get_table_req")) {
-                             throw new TApplicationException("fallback");
-                         } else if (invocation.getMethod().getName().equals("get_table")) {
+                         if (invocation.getMethod().getName().equals("get_table")) {
                              return hiveTable;
                          }
                          return null;

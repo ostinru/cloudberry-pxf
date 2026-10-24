@@ -13,9 +13,10 @@ import org.slf4j.LoggerFactory;
 
 /**
  * This class provides backwards compatibility for Hive 1.x.x servers.
- * In Hive 1.x.x, an API call get_table_req is made, however this API
- * call was introduced in Hive version 2. This class provides a fallback
- * for older Hive servers to still be able query metadata.
+ * Earlier Hive 2.x clients called get_table_req, which Hive 1.x servers
+ * do not implement. This class provides a fallback to get_table.
+ * Hive 2.3.10 already calls get_table directly; the fallback is retained
+ * for TApplicationException handling.
  * <p>
  * The motivation for this approach is taken from here:
  * https://github.com/HotelsDotCom/waggle-dance/pull/133/files
