@@ -30,9 +30,9 @@ import static org.mockito.Mockito.mockStatic;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-public class HiveMetastoreClientTest {
+public class HiveMetastoreCompatibilityTest {
 
-    private IMetaStoreClient hiveClient;
+    private IMetaStoreClient hiveCompatiblityClient;
     private HiveClientWrapper hiveClientWrapper;
     private HiveClientWrapper.HiveClientFactory hiveClientFactory;
     private ThriftHiveMetastore.Client mockThriftClient;
@@ -66,9 +66,9 @@ public class HiveMetastoreClientTest {
 
             when(mockThriftClient.get_table("default", name)).thenThrow(new MetaException("some meta failure"));
 
-            hiveClient = hiveClientFactory.initHiveClient(newHiveConf()).getClient();
+            hiveCompatiblityClient = hiveClientFactory.initHiveClient(newHiveConf()).getClient();
             Exception e = assertThrows(MetaException.class,
-                    () -> hiveClient.getTable("default", name));
+                    () -> hiveCompatiblityClient.getTable("default", name));
             assertEquals("some meta failure", e.getMessage());
         }
     }
@@ -84,9 +84,9 @@ public class HiveMetastoreClientTest {
 
             when(mockThriftClient.get_table("default", name)).thenThrow(new NoSuchObjectException("where's my table"));
 
-            hiveClient = hiveClientFactory.initHiveClient(newHiveConf()).getClient();
+            hiveCompatiblityClient = hiveClientFactory.initHiveClient(newHiveConf()).getClient();
             Exception e = assertThrows(NoSuchObjectException.class,
-                    () -> hiveClient.getTable("default", name));
+                    () -> hiveCompatiblityClient.getTable("default", name));
             assertEquals("where's my table", e.getMessage());
         }
     }
@@ -103,9 +103,9 @@ public class HiveMetastoreClientTest {
             when(mockThriftClient.get_table("default", name))
                     .thenThrow(new TApplicationException(TApplicationException.UNKNOWN_METHOD, "unknown method"));
 
-            hiveClient = hiveClientFactory.initHiveClient(newHiveConf()).getClient();
+            hiveCompatiblityClient = hiveClientFactory.initHiveClient(newHiveConf()).getClient();
             TApplicationException e = assertThrows(TApplicationException.class,
-                    () -> hiveClient.getTable("default", name));
+                    () -> hiveCompatiblityClient.getTable("default", name));
             assertEquals(TApplicationException.UNKNOWN_METHOD, e.getType());
             assertEquals("unknown method", e.getMessage());
             verify(mockThriftClient).get_table("default", name);
@@ -123,9 +123,9 @@ public class HiveMetastoreClientTest {
 
             when(mockThriftClient.get_table("default", name)).thenThrow(new TTransportException("oops. where's the metastore?"));
 
-            hiveClient = hiveClientFactory.initHiveClient(newHiveConf()).getClient();
+            hiveCompatiblityClient = hiveClientFactory.initHiveClient(newHiveConf()).getClient();
             Exception e = assertThrows(TTransportException.class,
-                    () -> hiveClient.getTable("default", name));
+                    () -> hiveCompatiblityClient.getTable("default", name));
             assertEquals("oops. where's the metastore?", e.getMessage());
         }
     }
@@ -190,7 +190,7 @@ public class HiveMetastoreClientTest {
     }
 
     @Test
-    public void getTableFailedToConnectToMetastore1Retry2ndSuccess() throws Exception {
+    public void getTableFailedToConnectToMetastoreNoFallback1Retry2ndSuccess() throws Exception {
 
         String name = "orphan";
         Table hiveTable = new Table();
