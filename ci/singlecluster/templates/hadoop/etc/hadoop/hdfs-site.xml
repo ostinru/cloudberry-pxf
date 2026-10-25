@@ -35,9 +35,9 @@
     </property>
    <property>
 	   <name>dfs.datanode.socket.write.timeout</name>
-	   <value>0</value>
+	   <value>60000</value>
 	   <description>
-		   used for sockets to and from datanodes. It is 8 minutes by default. Some users set this to 0, effectively disabling the write timeout.
+		   Timeout for DataNode writes in milliseconds.
 	   </description>
    </property>
    <property>
