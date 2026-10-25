@@ -31,7 +31,6 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.Seekable;
 import org.apache.hadoop.hdfs.DFSInputStream;
-import org.apache.hadoop.hdfs.ReadStatistics;
 import org.apache.hadoop.io.IOUtils;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.compress.CodecPool;
@@ -78,17 +77,6 @@ public class ChunkRecordReader implements
             IOUtils.closeStream(fileIn);
             throw new IncompatibleInputStreamException(inputStream.getClass());
         }
-    }
-
-    /**
-     * Returns statistics of the input stream's read operation: total bytes
-     * read, bytes read locally, bytes read in short-circuit (directly from file
-     * descriptor).
-     *
-     * @return an instance of ReadStatistics class
-     */
-    public ReadStatistics getReadStatistics() throws IncompatibleInputStreamException {
-        return getInputStream().getReadStatistics();
     }
 
     /**

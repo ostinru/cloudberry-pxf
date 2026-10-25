@@ -37,7 +37,7 @@
 	   <name>dfs.datanode.socket.write.timeout</name>
 	   <value>60000</value>
 	   <description>
-		   Timeout for DataNode writes in milliseconds.
+		   Timeout for DataNode writes in milliseconds; Hadoop 3.3.6 fails ACK waits when this is 0.
 	   </description>
    </property>
    <property>

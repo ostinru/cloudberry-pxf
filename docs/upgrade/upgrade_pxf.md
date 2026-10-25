@@ -76,6 +76,8 @@ After you install the new version of PXF, perform the following procedure:
 
 1. Review the [CHANGELOG](/releases) for the release you are upgrading to. If a release introduces new configuration properties or changes default behavior, update the affected `pxf-site.xml`, `pxf-application.properties`, or related files in `$PXF_BASE` accordingly.
 
+1. If you are upgrading from a PXF version that uses Hadoop 2, check `dfs.datanode.socket.write.timeout` in each copied `hdfs-site.xml`. With Hadoop 3.3.6, a value of `0` can cause HDFS writes to fail while waiting for DataNode acknowledgements. Set a positive timeout, such as `60000` milliseconds.
+
 1. Synchronize the PXF configuration from the coordinator host to the standby coordinator host and each Apache Cloudberry segment host. For example:
 
     ``` shell

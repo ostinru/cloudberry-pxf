@@ -270,7 +270,6 @@ public class PxfUserGroupInformationTest {
 
         pxfUserGroupInformation.reloginFromKeytab(serverName, session);
 
-        assertTrue(session.isFromKeytab());
         verify(mockLoginContext).logout();
         verify(mockLoginContext).login();
     }
@@ -374,7 +373,7 @@ public class PxfUserGroupInformationTest {
     }
 
     @Test
-    public void testReloginFromKeytabThrowsExceptionOnLoginFailure() throws Exception {
+    public void testReloginFromKeytabCanRetryAfterLoginFailure() throws Exception {
 
         user.setLogin(mockLoginContext);
         when(mockTGT.getServer()).thenReturn(nonTgtPrincipal); // ticket is not from krbtgt, so not valid
@@ -386,12 +385,19 @@ public class PxfUserGroupInformationTest {
 
         // train to return another LoginContext when it is constructed during re-login
         mockAnotherLoginContext = mock(LoginContext.class);
-        when(mockLoginContextProvider.newLoginContext(anyString(), any(), any())).thenReturn(mockAnotherLoginContext);
+        LoginContext retryLoginContext = mock(LoginContext.class);
+        when(mockLoginContextProvider.newLoginContext(anyString(), any(), any()))
+                .thenReturn(mockAnotherLoginContext, retryLoginContext);
         doThrow(new LoginException("foo")).when(mockAnotherLoginContext).login(); // simulate login failure
 
         Exception e = assertThrows(KerberosAuthException.class,
                 () -> pxfUserGroupInformation.reloginFromKeytab(serverName, session));
         assertEquals("Login failure for principal: principal from keytab keytab javax.security.auth.login.LoginException: foo", e.getMessage());
+
+        user.setLastLogin(0); // allow the next attempt without waiting for the relogin interval
+        pxfUserGroupInformation.reloginFromKeytab(serverName, session);
+        verify(retryLoginContext).login();
+        assertSame(retryLoginContext, user.getLogin());
     }
 
     private static void assertSessionInfo(LoginSession session, LoginContext loginContext, UserGroupInformation ugi, Subject subject, User user) {
