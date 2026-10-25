@@ -88,7 +88,6 @@ dependencies {
     implementation("org.apache.hadoop:hadoop-azure-datalake")        { transitive = false }
     implementation("com.microsoft.azure:azure-data-lake-store-sdk")  { transitive = false }
     implementation("org.wildfly.openssl:wildfly-openssl")            { transitive = false }
-    implementation("org.mortbay.jetty:jetty-util")                   { transitive = false }
     implementation("org.eclipse.jetty:jetty-util")                   { transitive = false }
     implementation("org.eclipse.jetty:jetty-util-ajax")              { transitive = false }
 
