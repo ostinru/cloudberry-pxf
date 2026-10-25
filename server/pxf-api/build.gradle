@@ -46,6 +46,7 @@ dependencies {
     implementation("org.apache.commons:commons-lang3")
 
     implementation("org.apache.hadoop:hadoop-auth")                  { transitive = false }
+    implementation("dnsjava:dnsjava")                                { transitive = false }
     implementation("org.codehaus.woodstox:stax2-api")                { transitive = false }
     implementation("com.fasterxml.woodstox:woodstox-core")           { transitive = false }
     implementation("com.esotericsoftware:kryo")                      { transitive = false }
