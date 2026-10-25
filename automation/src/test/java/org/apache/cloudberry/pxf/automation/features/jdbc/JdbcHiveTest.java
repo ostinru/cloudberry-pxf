@@ -211,7 +211,8 @@ public class JdbcHiveTest extends BaseFeature {
             hiveReadable = TableFactory.getPxfJdbcReadableTable(
                     hiveReadableName, GPDB_WRITE_TYPES_TABLE_FIELDS, targetHiveTable.getFullName(), serverName);
         } else {
-            String jdbcUrl = String.format("%s%s:10000/default;auth=noSasl", HIVE_JDBC_URL_PREFIX, hive.getHost());
+            // Run the small per-row INSERTs locally instead of scheduling a YARN job for each row.
+            String jdbcUrl = String.format("%s%s:10000/default;auth=noSasl?tez.local.mode=true", HIVE_JDBC_URL_PREFIX, hive.getHost());
             // create GPDB external table for writing data from GPDB to Hive with JDBC profile
             hiveWritable = TableFactory.getPxfJdbcWritableTable(
                     hiveWritableName, GPDB_WRITE_TYPES_TABLE_FIELDS, targetHiveTable.getFullName(),
