@@ -6,8 +6,8 @@
 --
 -- # create a match/subs
 --
--- m/PXF server error.*(com.amazonaws.AmazonClientException: No AWS Credentials provided by BasicAWSCredentialsProvider).*/
--- s/PXF server error.*/PXF server error : com.amazonaws.AmazonClientException: No AWS Credentials provided by BasicAWSCredentialsProvider/
+-- m/PXF server error.*org.apache.hadoop.fs.s3a.auth.NoAuthWithAWSException: No AWS Credentials provided.*/
+-- s/PXF server error.*/PXF server error : org.apache.hadoop.fs.s3a.auth.NoAuthWithAWSException: No AWS Credentials provided/
 --
 -- m/Check the PXF logs located in the.*/
 -- s/Check the PXF logs located in the.*/Check the PXF logs located in the 'logs-dir' directory on host 'mdw' or 'set client_min_messages=LOG' for additional details./

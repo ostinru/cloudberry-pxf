@@ -261,6 +261,20 @@ public class PxfUserGroupInformationTest {
     /* ---------- Test below follow full login path via a few alternatives ---------- */
 
     @Test
+    public void testReloginAfterCredentialsWereRemoved() throws Exception {
+        user.setLogin(mockLoginContext);
+        ugi = new UserGroupInformation(subjectWithKerberosKeyTab);
+        ugi.setAuthenticationMethod(UserGroupInformation.AuthenticationMethod.KERBEROS);
+        session = new LoginSession("config", "principal", "keytab", ugi, subjectWithKerberosKeyTab, 1, 0.8f);
+        subjectWithKerberosKeyTab.getPrivateCredentials().clear();
+
+        pxfUserGroupInformation.reloginFromKeytab(serverName, session);
+
+        verify(mockLoginContext).logout();
+        verify(mockLoginContext).login();
+    }
+
+    @Test
     public void testReloginFromKeytabNoValidTGT() throws Exception {
 
         assertEquals(2, subjectWithKerberosKeyTab.getPrivateCredentials().size()); // subject has 2 tickets
@@ -359,7 +373,7 @@ public class PxfUserGroupInformationTest {
     }
 
     @Test
-    public void testReloginFromKeytabThrowsExceptionOnLoginFailure() throws Exception {
+    public void testReloginFromKeytabCanRetryAfterLoginFailure() throws Exception {
 
         user.setLogin(mockLoginContext);
         when(mockTGT.getServer()).thenReturn(nonTgtPrincipal); // ticket is not from krbtgt, so not valid
@@ -371,12 +385,19 @@ public class PxfUserGroupInformationTest {
 
         // train to return another LoginContext when it is constructed during re-login
         mockAnotherLoginContext = mock(LoginContext.class);
-        when(mockLoginContextProvider.newLoginContext(anyString(), any(), any())).thenReturn(mockAnotherLoginContext);
+        LoginContext retryLoginContext = mock(LoginContext.class);
+        when(mockLoginContextProvider.newLoginContext(anyString(), any(), any()))
+                .thenReturn(mockAnotherLoginContext, retryLoginContext);
         doThrow(new LoginException("foo")).when(mockAnotherLoginContext).login(); // simulate login failure
 
         Exception e = assertThrows(KerberosAuthException.class,
                 () -> pxfUserGroupInformation.reloginFromKeytab(serverName, session));
         assertEquals("Login failure for principal: principal from keytab keytab javax.security.auth.login.LoginException: foo", e.getMessage());
+
+        user.setLastLogin(0); // allow the next attempt without waiting for the relogin interval
+        pxfUserGroupInformation.reloginFromKeytab(serverName, session);
+        verify(retryLoginContext).login();
+        assertSame(retryLoginContext, user.getLogin());
     }
 
     private static void assertSessionInfo(LoginSession session, LoginContext loginContext, UserGroupInformation ugi, Subject subject, User user) {

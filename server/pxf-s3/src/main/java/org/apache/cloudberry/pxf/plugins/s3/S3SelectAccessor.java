@@ -14,7 +14,10 @@ import com.amazonaws.services.s3.model.SelectObjectContentEventVisitor;
 import com.amazonaws.services.s3.model.SelectObjectContentRequest;
 import com.amazonaws.services.s3.model.SelectObjectContentResult;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.hadoop.fs.s3a.Constants;
 import org.apache.hadoop.fs.s3a.DefaultS3ClientFactory;
+import org.apache.hadoop.fs.s3a.S3AUtils;
+import org.apache.hadoop.fs.s3a.S3ClientFactory.S3ClientCreationParameters;
 import org.apache.cloudberry.pxf.api.OneRow;
 import org.apache.cloudberry.pxf.api.model.Accessor;
 import org.apache.cloudberry.pxf.api.model.BasePlugin;
@@ -310,7 +313,10 @@ public class S3SelectAccessor extends BasePlugin implements Accessor {
         try {
             DefaultS3ClientFactory factory = new DefaultS3ClientFactory();
             factory.setConf(configuration);
-            return factory.createS3Client(name);
+            return factory.createS3Client(name, new S3ClientCreationParameters()
+                    .withCredentialSet(S3AUtils.createAWSCredentialProviderSet(name, configuration))
+                    .withEndpoint(configuration.getTrimmed(Constants.ENDPOINT, Constants.DEFAULT_ENDPOINT))
+                    .withPathStyleAccess(configuration.getBoolean(Constants.PATH_STYLE_ACCESS, false)));
         } catch (IOException e) {
             throw new RuntimeException("Unable to create S3 Client connection", e);
         }

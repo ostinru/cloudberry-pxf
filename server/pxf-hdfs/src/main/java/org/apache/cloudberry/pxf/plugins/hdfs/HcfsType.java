@@ -94,11 +94,12 @@ public enum HcfsType {
     private static String getScheme(RequestContext context) {
         // if defaultFs is defined and not file://, it takes precedence over protocol
         String schemeFromContext = context.getProfileScheme();
-        URI defaultFS = FileSystem.getDefaultUri(context.getConfiguration());
-        String defaultFSScheme = defaultFS.getScheme();
-        if (StringUtils.isBlank(defaultFSScheme)) {
-            throw new IllegalStateException(String.format("No scheme for property %s=%s", FS_DEFAULT_NAME_KEY, defaultFS));
+        String defaultFsName = context.getConfiguration().get(FS_DEFAULT_NAME_KEY);
+        // Hadoop accepts names without a slash as legacy HDFS authorities.
+        if (defaultFsName != null && defaultFsName.contains("/") && URI.create(defaultFsName).getScheme() == null) {
+            throw new IllegalStateException(String.format("No scheme for property %s=%s", FS_DEFAULT_NAME_KEY, defaultFsName));
         }
+        String defaultFSScheme = FileSystem.getDefaultUri(context.getConfiguration()).getScheme();
 
         // protocol from RequestContext will take precedence over defaultFS
         if (StringUtils.isNotBlank(schemeFromContext)) {

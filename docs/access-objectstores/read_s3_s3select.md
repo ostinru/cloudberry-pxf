@@ -6,6 +6,8 @@ sidebar_position: 11
 
 The PXF S3 connector supports reading certain CSV-format and Parquet-format data from S3 using the Amazon S3 Select service. S3 Select provides direct query-in-place features on data stored in Amazon S3.
 
+> **Note:** Amazon S3 Select is no longer available to new AWS customers. Existing customers can continue to use it. See the [Amazon S3 Select documentation](https://docs.aws.amazon.com/AmazonS3/latest/userguide/selecting-content-from-objects.html).
+
 When you enable it, PXF uses S3 Select to filter the contents of S3 objects to retrieve the subset of data that you request. This typically reduces both the amount of data transferred to Apache Cloudberry and the query time.
 
 You can use the PXF S3 Connector with S3 Select to read:
