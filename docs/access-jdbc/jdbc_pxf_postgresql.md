@@ -159,6 +159,17 @@ Perform the following procedure to create a PXF external table that references t
 
 Perform the following procedure to insert some data into the `forpxf_table1` Postgres table and then read from the table. You must create a new external table for the write operation.
 
+For bulk writes, consider enabling the PostgreSQL JDBC driver's [`reWriteBatchedInserts`](https://jdbc.postgresql.org/documentation/use/#connection-parameters) option in the `pgsrvcfg/jdbc-site.xml` file:
+
+``` xml
+<property>
+    <name>jdbc.connection.property.reWriteBatchedInserts</name>
+    <value>true</value>
+</property>
+```
+
+PXF batches inserts by default. With this option, the driver combines compatible batched inserts into multi-row `INSERT` statements, which can improve write throughput. It has no effect when batching is disabled with `BATCH_SIZE=0` or `BATCH_SIZE=1`.
+
 1. Create a writable PXF external table specifying the `jdbc` profile. For example:
 
     ``` sql
